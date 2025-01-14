@@ -1,0 +1,76 @@
+name: Java CI with Gradle
+
+# dev 브랜치로 PR할 때 CI 적용
+on:
+  pull_request:
+    branches: [ "dev" ]
+    types: [ opened, synchronize ]
+  push:
+    branches:
+      - dev
+
+# build 작업
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      # 코드 체크아웃
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # JDK 17 설치
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # Redis 실행
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.1.0
+        with:
+          redis-version: 6
+
+      # main의 resources 디렉토리 생성
+      - name: Create main resources directory
+        run: mkdir -p src/main/resources
+
+      # test의 resources 디렉토리 생성
+      - name: Create test resources directory
+        run: mkdir -p src/test/resources
+
+      # main의 application.yml 생성
+      - name: Set Release YML File
+        run: |
+          echo "${{ secrets.APPLICATION_YML }}" > src/main/resources/application.yml
+
+      # test의 data.sql 생성
+      - name: Set Test DATA SQL File
+        run: |
+          echo "${{ secrets.TEST_DATA_SQL }}" > src/test/resources/data.sql
+
+      # test의 application.yml 생성
+      - name: Set Release Test YML File
+        run: |
+          echo "${{ secrets.APPLICATION_TEST_YML }}" > src/test/resources/application.yml
+
+      # Firebase Admin Key 파일 생성
+      - name: Write Firebase Admin Key to File
+        env:
+          FIREBASE_ADMIN: ${{ secrets.FIREBASE_ADMIN }}
+        run: |
+          echo "$FIREBASE_ADMIN" > ildan-project-firebase-adminsdk-rcb58-766d3dd75f.json
+
+      # Gradle 설정 및 의존성 다운
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3.1.0
+
+      # gradlew 파일 실행 권한 부여
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      # 빌드 작업 실행(테스트 포함)
+      - name: Build with Gradle Wrapper
+        run: ./gradlew build
