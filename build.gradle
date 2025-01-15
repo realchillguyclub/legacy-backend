@@ -2,6 +2,11 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.2.1'
     id 'io.spring.dependency-management' version '1.1.4'
+
+    // REST Docs
+    id "org.asciidoctor.jvm.convert" version "3.3.2"
+    id 'com.epages.restdocs-api-spec' version '0.19.2'
+    id 'org.hidetake.swagger.generator' version '2.18.2'
 }
 
 group = 'server'
@@ -73,8 +78,73 @@ dependencies {
 
     // Health-Check
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // REST Docs & Swagger
+    testImplementation 'com.epages:restdocs-api-spec-mockmvc:0.19.2'
+    testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc:3.0.0'
+    testImplementation 'com.squareup.okhttp3:mockwebserver'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
+}
+
+// REST Docs & Swagger 설정
+ext {
+    snippetsDir = file('build/generated-snippets')
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+    outputs.dir snippetsDir
+}
+
+sourceSets {
+    test {
+        java {
+            srcDirs = ['src/test/java']
+        }
+    }
+}
+
+def serverUrl = "https://prev-illdan.store"
+
+openapi3 {
+    server = serverUrl
+    title = "Legacy Illdan API Documentation"
+    description = "Spring REST Docs with Swagger UI."
+    version = "1.0.0"
+    outputFileNamePrefix = 'open-api-3.0.1'
+    format = 'json'
+    outputDirectory = 'build/resources/main/static/docs'
+}
+
+tasks.withType(GenerateSwaggerUI).configureEach {
+    dependsOn 'openapi3'
+
+    delete file('src/main/resources/static/docs/')
+    copy {
+        from "build/resources/main/static/docs"
+        into "src/main/resources/static/docs/"
+    }
+}
+
+tasks.named('asciidoctor') {
+    inputs.dir snippetsDir
+    dependsOn test
+}
+
+tasks.named("bootJar") {
+    dependsOn asciidoctor
+    from("${asciidoctor.outputDir}") {
+        into 'static/docs'
+    }
+    dependsOn ':openapi3'
+}
+
+tasks.register('copyDocument', Copy) {
+    dependsOn asciidoctor
+    from file(project.layout.buildDirectory.dir("docs/asciidoc").get().asFile.path)
+    into file("src/main/resources/static/docs")
+}
+
+tasks.named("build") {
+    dependsOn copyDocument
 }
