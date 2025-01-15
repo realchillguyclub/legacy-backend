@@ -51,3 +51,12 @@ firebase:
 logging:
   level:
     org.springframework.web: DEBUG
+
+management:
+  endpoint:
+    health:
+      show-details: never
+  endpoints:
+    web:
+      exposure:
+        include: health
