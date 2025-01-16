@@ -1,0 +1,16 @@
+{
+  "openapi" : "3.0.1",
+  "info" : {
+    "title" : "Legacy Illdan API Documentation",
+    "description" : "Spring REST Docs with Swagger UI.",
+    "version" : "1.0.0"
+  },
+  "servers" : [ {
+    "url" : "https://prev-illdan.store"
+  } ],
+  "tags" : [ ],
+  "paths" : { },
+  "components" : {
+    "schemas" : { }
+  }
+}
