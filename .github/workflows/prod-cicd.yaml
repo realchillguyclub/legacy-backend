@@ -1,16 +1,16 @@
 name: 🚀 Build & Deploy workflow on production environment
 
 on:
-  push:
-    branches: [develop, main]
   pull_request:
-    branches: [develop, main]
+    branches: [main]
+    types: [closed] # PR이 main에 merge될 때 실행
 
 permissions:
   contents: read
 
 jobs:
   build:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       # 1. GitHub 리포지토리에서 코드 체크아웃
@@ -30,6 +30,7 @@ jobs:
 
   deploy:
     needs: build
+    environment: production
     runs-on: ubuntu-latest
     steps:
       # 1. GitHub 리포지토리에서 코드 체크아웃
@@ -61,13 +62,13 @@ jobs:
         env:
           FIREBASE_ADMIN: ${{ secrets.FIREBASE_ADMIN }}
         run: |
-          echo "$FIREBASE_ADMIN" > ildan-project-firebase-adminsdk-rcb58-86c1645e90.json
+          echo "$FIREBASE_ADMIN" > illdan-firebase-adminsdk-fbsvc-f2e4b78293.json
 
       # 7. 필요한 파일 압축
       - name: 📦 배포 패키지 압축
         run: |
           mkdir temp_deploy_package
-          cp -r *.jar .env ildan-project-firebase-adminsdk-rcb58-86c1645e90.json Dockerfile docker-compose.yaml appspec.yml deploy/ temp_deploy_package/
+          cp -r *.jar .env illdan-firebase-adminsdk-fbsvc-f2e4b78293.json Dockerfile docker-compose.yaml appspec.yml deploy/ temp_deploy_package/
           cd temp_deploy_package && zip -r ../build-${{ env.TIMESTAMP }}-${{ github.sha }}.zip . && cd ..
           rm -rf temp_deploy_package
 
