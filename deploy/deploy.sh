@@ -3,6 +3,14 @@
 # 작업 디렉토리 설정
 cd /home/ubuntu
 
+# ✅ .env 파일 로드
+if [ -f "/home/ubuntu/.env" ]; then
+  source /home/ubuntu/.env
+else
+  echo "⚠️ .env 파일을 찾을 수 없습니다. 스크립트를 종료합니다."
+  exit 1
+fi
+
 # ✅ 현재 실행중인 App이 green인지 확인합니다.
 IS_GREEN=$(sudo docker ps --format '{{.Names}}' | grep -w green)
 
@@ -15,7 +23,6 @@ DEFAULT_CONF="/etc/nginx/nginx.conf"
 DOCKER_COMPOSE_FILE="/home/ubuntu/docker-compose.yaml"
 
 # discord webhook 관련 변수
-DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/1328878693711351889/YYBglj4eOKwFKZCLx-KF_dxP9eTpBC658PzmakQetiANoEtE_XrQAfyK9zb3ciaaDiPS"
 MESSAGE_SUCCESS="🥳 '일단!(레거시)' 배포가 성공적으로 수행되었습니다!"
 MESSAGE_FAILURE="🚨 '일단!(레거시)' 배포 과정에서 오류가 발생했습니다. 빠른 확인바랍니다."
 
