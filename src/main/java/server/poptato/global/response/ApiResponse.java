@@ -45,14 +45,4 @@ public class ApiResponse<T> {
         ApiResponse<T> response = new ApiResponse<>(false, code.getReasonHttpStatus().getCode(), message, null);
         return ResponseEntity.status(code.getReasonHttpStatus().getHttpStatus()).body(response);
     }
-
-    @Override
-    public String toString() {
-        return "ApiResponse{" +
-                "isSuccess=" + isSuccess +
-                ", code='" + code + '\'' +
-                ", message='" + message + '\'' +
-                ", result=" + result +
-                '}';
-    }
 }
