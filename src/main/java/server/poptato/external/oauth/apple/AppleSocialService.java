@@ -135,7 +135,7 @@ public class AppleSocialService extends SocialService {
         val matchingPublicKey = findMatchingPublicKey(publicKeyList, kid, alg);
 
         if (Objects.isNull(matchingPublicKey)) {
-            throw new CustomException(AuthErrorStatus._INVALID_TOKEN);
+            throw new CustomException(AuthErrorStatus._NOT_FOUND_VALID_PUBLIC_KEY);
         }
 
         return getPublicKey(matchingPublicKey);
@@ -196,7 +196,7 @@ public class AppleSocialService extends SocialService {
 
             return keyFactory.generatePublic(publicKeySpec);
         } catch (InvalidKeySpecException | NoSuchAlgorithmException exception) {
-            throw new CustomException(AuthErrorStatus._INVALID_TOKEN);
+            throw new CustomException(AuthErrorStatus._PUBLIC_KEY_GENERATION_FAILED);
         }
     }
 }

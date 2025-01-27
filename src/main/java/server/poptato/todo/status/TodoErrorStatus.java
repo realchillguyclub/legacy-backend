@@ -9,7 +9,7 @@ import server.poptato.global.response.dto.ErrorReasonDto;
 @Getter
 @RequiredArgsConstructor
 public enum TodoErrorStatus implements BaseErrorCode {
-    _INVALID_PAGE(HttpStatus.BAD_REQUEST, "TODO-001", "유효햐지 않은 페이지 수입니다."),
+    _INVALID_PAGE(HttpStatus.BAD_REQUEST, "TODO-001", "유효하지 않은 페이지 수입니다."),
     _TODO_NOT_EXIST(HttpStatus.BAD_REQUEST, "TODO-002", "투두가 존재하지 않습니다"),
     _TODO_USER_NOT_MATCH(HttpStatus.BAD_REQUEST, "TODO-003", "사용자의 할 일이 아닙니다."),
     _ALREADY_COMPLETED_TODO(HttpStatus.BAD_REQUEST, "TODO-004", "달성된 할 일은 스와이프할 수 없습니다."),

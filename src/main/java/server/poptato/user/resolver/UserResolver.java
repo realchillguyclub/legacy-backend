@@ -64,7 +64,7 @@ public class UserResolver implements HandlerMethodArgumentResolver {
             return Long.parseLong(decodedUserId);
         } catch (NumberFormatException e) {
             // 유저 ID가 숫자로 변환할 수 없는 경우 예외 발생
-            throw new CustomException(AuthErrorStatus._INVALID_TOKEN);
+            throw new CustomException(AuthErrorStatus._INVALID_USER_ID_IN_TOKEN);
         }
     }
 }
