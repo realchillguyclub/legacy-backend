@@ -3,10 +3,7 @@ package server.poptato.category.domain.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import server.poptato.category.domain.entity.Category;
-import server.poptato.todo.domain.entity.Todo;
 
-import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 
 public interface CategoryRepository {

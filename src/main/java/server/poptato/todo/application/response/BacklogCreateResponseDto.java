@@ -1,7 +1,12 @@
 package server.poptato.todo.application.response;
 
-import lombok.Builder;
+import server.poptato.todo.domain.entity.Todo;
 
-@Builder
-public record BacklogCreateResponseDto(Long todoId){
+public record BacklogCreateResponseDto(
+        Long todoId
+){
+
+    public static BacklogCreateResponseDto from(Todo todo) {
+        return new BacklogCreateResponseDto(todo.getId());
+    }
 }

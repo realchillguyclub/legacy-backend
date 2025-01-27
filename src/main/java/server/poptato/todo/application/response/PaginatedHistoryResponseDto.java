@@ -1,28 +1,19 @@
 package server.poptato.todo.application.response;
 
-import lombok.Builder;
-import lombok.Getter;
 import org.springframework.data.domain.Page;
 import server.poptato.todo.domain.entity.Todo;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-@Getter
-public class PaginatedHistoryResponseDto {
-    List<HistoryResponseDto> histories;
-    int totalPageCount;
+public record PaginatedHistoryResponseDto(
+        List<HistoryResponseDto> histories,
+        int totalPageCount
+) {
+    public static PaginatedHistoryResponseDto of(Page<Todo> todosPage) {
+        List<HistoryResponseDto> histories = todosPage.getContent().stream()
+                .map(HistoryResponseDto::of)
+                .toList();
 
-    @Builder
-    public PaginatedHistoryResponseDto(Page<Todo> todosPage) {
-        this.histories = todosPage.getContent().stream()
-                .map(todo -> new HistoryResponseDto(
-                        todo.getId(),
-                        todo.getContent()
-                ))
-                .collect(Collectors.toList());
-
-        this.totalPageCount = todosPage.getTotalPages();
+        return new PaginatedHistoryResponseDto(histories, todosPage.getTotalPages());
     }
-
 }
