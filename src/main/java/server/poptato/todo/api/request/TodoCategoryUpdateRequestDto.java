@@ -1,7 +1,6 @@
 package server.poptato.todo.api.request;
 
-import lombok.Builder;
-
-@Builder
-public record TodoCategoryUpdateRequestDto(Long categoryId) {
+public record TodoCategoryUpdateRequestDto(
+        Long categoryId
+) {
 }

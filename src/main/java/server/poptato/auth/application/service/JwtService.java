@@ -1,6 +1,5 @@
 package server.poptato.auth.application.service;
 
-
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
@@ -9,8 +8,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import server.poptato.auth.exception.AuthException;
+import server.poptato.auth.status.AuthErrorStatus;
 import server.poptato.global.dto.TokenPair;
+import server.poptato.global.exception.CustomException;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
@@ -18,15 +18,14 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-import static server.poptato.auth.exception.errorcode.AuthExceptionErrorCode.INVALID_TOKEN;
-import static server.poptato.auth.exception.errorcode.AuthExceptionErrorCode.TOKEN_TIME_EXPIRED;
-
 
 @Service
 @RequiredArgsConstructor
 public class JwtService {
+
     @Value("${jwt.secret}")
     private String jwtSecret;
+
     private static final String USER_ID = "USER_ID";
     private static final String ACCESS_TOKEN = "ACCESS_TOKEN";
     private static final String REFRESH_TOKEN = "REFRESH_TOKEN";
@@ -34,45 +33,80 @@ public class JwtService {
     public static final long DAYS_IN_MILLISECONDS = 24 * 60 * 60 * 1000L;
     public static final int ACCESS_TOKEN_EXPIRATION_MINUTE = 20;
     public static final int REFRESH_TOKEN_EXPIRATION_DAYS = 14;
+
     private final RedisTemplate<String, String> redisTemplate;
 
+    /**
+     * JWT 비밀키를 Base64로 인코딩합니다.
+     * 이 메서드는 클래스 초기화 시 실행됩니다.
+     */
     @PostConstruct
     protected void init() {
         jwtSecret = Base64.getEncoder()
                 .encodeToString(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
+    /**
+     * 액세스 토큰을 생성합니다.
+     *
+     * @param userId 토큰에 포함할 유저 ID
+     * @return 생성된 액세스 토큰
+     */
     public String createAccessToken(final String userId) {
         final Claims claims = getAccessTokenClaims();
-
         claims.put(USER_ID, userId);
         return createToken(claims);
     }
 
+    /**
+     * 리프레시 토큰을 생성합니다.
+     *
+     * @param userId 토큰에 포함할 유저 ID
+     * @return 생성된 리프레시 토큰
+     */
     public String createRefreshToken(final String userId) {
         final Claims claims = getRefreshTokenClaims();
-
         claims.put(USER_ID, userId);
         return createToken(claims);
     }
 
+    /**
+     * 토큰의 유효성을 검증합니다.
+     * 유효하지 않거나 만료된 토큰인 경우 예외를 발생시킵니다.
+     *
+     * @param token 검증할 JWT 토큰
+     * @throws CustomException 토큰이 유효하지 않거나 만료된 경우
+     */
     public void verifyToken(final String token) {
         try {
             final Claims claims = getBody(token);
         } catch (ExpiredJwtException e) {
-            throw new AuthException(TOKEN_TIME_EXPIRED);
-        } catch (UnsupportedJwtException | SignatureException | MalformedJwtException  e){
-            throw new AuthException(INVALID_TOKEN);
+            throw new CustomException(AuthErrorStatus._TOKEN_TIME_EXPIRED);
+        } catch (UnsupportedJwtException | SignatureException | MalformedJwtException e) {
+            throw new CustomException(AuthErrorStatus._INVALID_TOKEN);
         } catch (RuntimeException e) {
             throw e;
         }
     }
 
+    /**
+     * 토큰에서 유저 ID를 추출합니다.
+     *
+     * @param token JWT 토큰
+     * @return 토큰에 포함된 유저 ID
+     */
     public String getUserIdInToken(final String token) {
         final Claims claims = getBody(token);
         return (String) claims.get(USER_ID);
     }
 
+    /**
+     * 액세스 토큰과 리프레시 토큰으로 구성된 토큰 페어를 생성합니다.
+     * 생성된 리프레시 토큰은 Redis에 저장됩니다.
+     *
+     * @param userId 유저 ID
+     * @return 생성된 토큰 페어 (액세스 토큰, 리프레시 토큰)
+     */
     public TokenPair generateTokenPair(final String userId) {
         final String accessToken = createAccessToken(userId);
         final String refreshToken = createRefreshToken(userId);
@@ -80,16 +114,45 @@ public class JwtService {
         return new TokenPair(accessToken, refreshToken);
     }
 
+    /**
+     * Redis에 저장된 리프레시 토큰과 입력받은 리프레시 토큰을 비교합니다.
+     *
+     * @param userId 유저 ID
+     * @param refreshToken 입력받은 리프레시 토큰
+     * @throws CustomException 저장된 리프레시 토큰과 일치하지 않을 경우
+     */
     public void compareRefreshToken(final String userId, final String refreshToken) {
         final String storedRefreshToken = redisTemplate.opsForValue().get(userId);
-        if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken))
-            throw new AuthException(INVALID_TOKEN);
+        if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
+            throw new CustomException(AuthErrorStatus._INVALID_TOKEN);
+        }
     }
 
+    /**
+     * 리프레시 토큰을 Redis에 저장합니다.
+     *
+     * @param userId 유저 ID
+     * @param refreshToken 저장할 리프레시 토큰
+     */
     public void saveRefreshToken(final String userId, final String refreshToken) {
         redisTemplate.opsForValue().set(userId, refreshToken, REFRESH_TOKEN_EXPIRATION_DAYS, TimeUnit.DAYS);
     }
 
+    /**
+     * Redis에 저장된 리프레시 토큰을 삭제합니다.
+     *
+     * @param userId 유저 ID
+     */
+    public void deleteRefreshToken(final String userId) {
+        redisTemplate.delete(userId);
+    }
+
+    /**
+     * JWT 토큰을 생성합니다.
+     *
+     * @param claims 토큰에 포함할 클레임
+     * @return 생성된 JWT 토큰
+     */
     private String createToken(final Claims claims) {
         return Jwts.builder()
                 .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
@@ -98,6 +161,11 @@ public class JwtService {
                 .compact();
     }
 
+    /**
+     * 리프레시 토큰 생성 시 사용할 클레임을 반환합니다.
+     *
+     * @return 리프레시 토큰에 포함할 클레임
+     */
     private Claims getRefreshTokenClaims() {
         final Date now = new Date();
         return Jwts.claims()
@@ -106,6 +174,11 @@ public class JwtService {
                 .setExpiration(new Date(now.getTime() + REFRESH_TOKEN_EXPIRATION_DAYS * DAYS_IN_MILLISECONDS));
     }
 
+    /**
+     * 액세스 토큰 생성 시 사용할 클레임을 반환합니다.
+     *
+     * @return 액세스 토큰에 포함할 클레임
+     */
     private Claims getAccessTokenClaims() {
         final Date now = new Date();
         return Jwts.claims()
@@ -114,6 +187,12 @@ public class JwtService {
                 .setExpiration(new Date(now.getTime() + ACCESS_TOKEN_EXPIRATION_MINUTE * MINUTE_IN_MILLISECONDS));
     }
 
+    /**
+     * JWT 토큰의 클레임 정보를 파싱하여 반환합니다.
+     *
+     * @param token 파싱할 JWT 토큰
+     * @return 토큰의 클레임 정보
+     */
     private Claims getBody(final String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
@@ -122,12 +201,13 @@ public class JwtService {
                 .getBody();
     }
 
+    /**
+     * JWT 서명에 사용할 키를 반환합니다.
+     *
+     * @return 서명 키
+     */
     private Key getSigningKey() {
         final byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
-    }
-
-    public void deleteRefreshToken(final String userId) {
-        redisTemplate.delete(userId);
     }
 }

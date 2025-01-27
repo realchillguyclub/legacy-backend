@@ -4,5 +4,8 @@ import server.poptato.user.domain.value.Reason;
 
 import java.util.List;
 
-public record UserDeleteRequestDTO(List<Reason> reasons, String userInputReason) {
+public record UserDeleteRequestDTO(
+        List<Reason> reasons,
+        String userInputReason
+) {
 }

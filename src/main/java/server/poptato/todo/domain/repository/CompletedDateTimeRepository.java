@@ -2,11 +2,9 @@ package server.poptato.todo.domain.repository;
 
 import server.poptato.todo.domain.entity.CompletedDateTime;
 
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.YearMonth;
 import java.util.List;
 import java.util.Optional;
 

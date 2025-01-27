@@ -9,8 +9,838 @@
     "url" : "https://prev-illdan.store"
   } ],
   "tags" : [ ],
-  "paths" : { },
+  "paths" : {
+    "/auth/login" : {
+      "post" : {
+        "tags" : [ "Auth API" ],
+        "summary" : "사용자가 로그인한다.",
+        "description" : "사용자가 로그인한다.",
+        "operationId" : "auth/login",
+        "requestBody" : {
+          "content" : {
+            "application/json;charset=UTF-8" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LoginRequestSchema"
+              },
+              "examples" : {
+                "auth/login" : {
+                  "value" : "{\n  \"socialType\" : \"KAKAO\",\n  \"accessToken\" : \"access-token\",\n  \"mobileType\" : \"IOS\",\n  \"clientId\" : \"client-id\"\n}"
+                }
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "200",
+            "content" : {
+              "application/json;charset=UTF-8" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LoginResponseSchema"
+                },
+                "examples" : {
+                  "auth/login" : {
+                    "value" : "{\n  \"isSuccess\" : true,\n  \"code\" : \"GLOBAL-200\",\n  \"message\" : \"요청 응답에 성공했습니다.\",\n  \"result\" : {\n    \"accessToken\" : \"access-token\",\n    \"refreshToken\" : \"refresh-token\",\n    \"isNewUser\" : true,\n    \"userId\" : 1\n  }\n}"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout" : {
+      "post" : {
+        "tags" : [ "Auth API" ],
+        "summary" : "사용자가 로그아웃한다.",
+        "description" : "사용자가 로그아웃한다.",
+        "operationId" : "auth/logout",
+        "responses" : {
+          "200" : {
+            "description" : "200",
+            "content" : {
+              "application/json;charset=UTF-8" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LogoutResponseSchema"
+                },
+                "examples" : {
+                  "auth/logout" : {
+                    "value" : "{\n  \"isSuccess\" : true,\n  \"code\" : \"GLOBAL-200\",\n  \"message\" : \"요청 응답에 성공했습니다.\"\n}"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refresh" : {
+      "post" : {
+        "tags" : [ "Auth API" ],
+        "summary" : "토큰을 갱신한다.",
+        "description" : "토큰을 갱신한다.",
+        "operationId" : "auth/refresh",
+        "requestBody" : {
+          "content" : {
+            "application/json;charset=UTF-8" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReissueTokenRequestSchema"
+              },
+              "examples" : {
+                "auth/refresh" : {
+                  "value" : "{\n  \"accessToken\" : \"access-token\",\n  \"refreshToken\" : \"refresh-token\"\n}"
+                }
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "200",
+            "content" : {
+              "application/json;charset=UTF-8" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TokenPairResponseSchema"
+                },
+                "examples" : {
+                  "auth/refresh" : {
+                    "value" : "{\n  \"isSuccess\" : true,\n  \"code\" : \"GLOBAL-200\",\n  \"message\" : \"요청 응답에 성공했습니다.\",\n  \"result\" : {\n    \"accessToken\" : \"new-access-token\",\n    \"refreshToken\" : \"new-refresh-token\"\n  }\n}"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/category" : {
+      "post" : {
+        "tags" : [ "Category API" ],
+        "summary" : "카테고리를 생성한다.",
+        "description" : "카테고리를 생성한다.",
+        "operationId" : "category/create",
+        "requestBody" : {
+          "content" : {
+            "application/json;charset=UTF-8" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CategoryCreateRequest"
+              },
+              "examples" : {
+                "category/create" : {
+                  "value" : "{\n  \"name\" : \"Work\",\n  \"emojiId\" : 101\n}"
+                }
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "200",
+            "content" : {
+              "application/json;charset=UTF-8" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CategoryCreateResponse"
+                },
+                "examples" : {
+                  "category/create" : {
+                    "value" : "{\n  \"isSuccess\" : true,\n  \"code\" : \"GLOBAL-200\",\n  \"message\" : \"요청 응답에 성공했습니다.\"\n}"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/category/dragAndDrop" : {
+      "patch" : {
+        "tags" : [ "Category API" ],
+        "summary" : "카테고리를 드래그 앤 드롭한다.",
+        "description" : "카테고리를 드래그 앤 드롭한다.",
+        "operationId" : "category/dragAndDrop",
+        "requestBody" : {
+          "content" : {
+            "application/json;charset=UTF-8" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CategoryDragAndDropRequest"
+              },
+              "examples" : {
+                "category/dragAndDrop" : {
+                  "value" : "{\n  \"categoryIds\" : [ 1, 2 ]\n}"
+                }
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "200",
+            "content" : {
+              "application/json;charset=UTF-8" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BaseResponse"
+                },
+                "examples" : {
+                  "category/dragAndDrop" : {
+                    "value" : "{\n  \"isSuccess\" : true,\n  \"code\" : \"GLOBAL-200\",\n  \"message\" : \"요청 응답에 성공했습니다.\"\n}"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/category/list" : {
+      "get" : {
+        "tags" : [ "Category API" ],
+        "summary" : "카테고리 목록을 조회한다.",
+        "description" : "카테고리 목록을 조회한다.",
+        "operationId" : "category/list",
+        "parameters" : [ {
+          "name" : "page",
+          "in" : "query",
+          "description" : "페이지 번호",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "description" : "페이지 크기",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "200",
+            "content" : {
+              "application/json;charset=UTF-8" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CategoryListResponse"
+                },
+                "examples" : {
+                  "category/list" : {
+                    "value" : "{\n  \"isSuccess\" : true,\n  \"code\" : \"GLOBAL-200\",\n  \"message\" : \"요청 응답에 성공했습니다.\"\n}"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/category/{categoryId}" : {
+      "put" : {
+        "tags" : [ "Category API" ],
+        "summary" : "카테고리를 수정한다.",
+        "description" : "카테고리를 수정한다.",
+        "operationId" : "category/update",
+        "parameters" : [ {
+          "name" : "categoryId",
+          "in" : "path",
+          "description" : "수정할 카테고리 ID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json;charset=UTF-8" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CategoryUpdateRequest"
+              },
+              "examples" : {
+                "category/update" : {
+                  "value" : "{\n  \"name\" : \"Updated Work\",\n  \"emojiId\" : 105\n}"
+                }
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "200",
+            "content" : {
+              "application/json;charset=UTF-8" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BaseResponse"
+                },
+                "examples" : {
+                  "category/update" : {
+                    "value" : "{\n  \"isSuccess\" : true,\n  \"code\" : \"GLOBAL-200\",\n  \"message\" : \"요청 응답에 성공했습니다.\"\n}"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "Category API" ],
+        "summary" : "카테고리를 삭제한다.",
+        "description" : "카테고리를 삭제한다.",
+        "operationId" : "category/delete",
+        "parameters" : [ {
+          "name" : "categoryId",
+          "in" : "path",
+          "description" : "삭제할 카테고리 ID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "200",
+            "content" : {
+              "application/json;charset=UTF-8" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BaseResponse"
+                },
+                "examples" : {
+                  "category/delete" : {
+                    "value" : "{\n  \"isSuccess\" : true,\n  \"code\" : \"GLOBAL-200\",\n  \"message\" : \"요청 응답에 성공했습니다.\"\n}"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/emojis" : {
+      "get" : {
+        "tags" : [ "Emoji API" ],
+        "summary" : "이모지 목록을 조회한다.",
+        "description" : "이모지 목록을 조회한다.",
+        "operationId" : "emojis/get-emojis",
+        "parameters" : [ {
+          "name" : "page",
+          "in" : "query",
+          "description" : "요청 페이지 번호",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "description" : "페이지당 항목 수",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "200",
+            "content" : {
+              "application/json;charset=UTF-8" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EmojiResponseSchema"
+                },
+                "examples" : {
+                  "emojis/get-emojis" : {
+                    "value" : "{\n  \"isSuccess\" : true,\n  \"code\" : \"GLOBAL-200\",\n  \"message\" : \"요청 응답에 성공했습니다.\",\n  \"result\" : {\n    \"groupEmojis\" : {\n      \"Group2\" : [ {\n        \"emojiId\" : 3,\n        \"imageUrl\" : \"url3\"\n      } ],\n      \"Group1\" : [ {\n        \"emojiId\" : 1,\n        \"imageUrl\" : \"url1\"\n      }, {\n        \"emojiId\" : 2,\n        \"imageUrl\" : \"url2\"\n      } ]\n    },\n    \"totalPageCount\" : 2\n  }\n}"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/policy" : {
+      "get" : {
+        "tags" : [ "Policy API" ],
+        "summary" : "개인정보 처리방침을 조회한다.",
+        "description" : "개인정보 처리방침을 조회한다.",
+        "operationId" : "policy/get-policy",
+        "responses" : {
+          "200" : {
+            "description" : "200",
+            "content" : {
+              "application/json;charset=UTF-8" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PolicyResponseSchema"
+                },
+                "examples" : {
+                  "policy/get-policy" : {
+                    "value" : "{\n  \"isSuccess\" : true,\n  \"code\" : \"GLOBAL-200\",\n  \"message\" : \"요청 응답에 성공했습니다.\",\n  \"result\" : {\n    \"id\" : 1,\n    \"content\" : \"This is the privacy policy content.\",\n    \"createdAt\" : \"2025-01-27T16:33:35.502405\"\n  }\n}"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/delete" : {
+      "post" : {
+        "tags" : [ "User API" ],
+        "summary" : "사용자가 탈퇴 요청을 보낸다.",
+        "description" : "사용자가 탈퇴 요청을 보낸다.",
+        "operationId" : "user/delete-user",
+        "requestBody" : {
+          "content" : {
+            "application/json;charset=UTF-8" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UserDeleteRequestSchema"
+              },
+              "examples" : {
+                "user/delete-user" : {
+                  "value" : "{\n  \"reasons\" : [ \"NOT_USED_OFTEN\" ],\n  \"userInputReason\" : \"Other reason\"\n}"
+                }
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "200",
+            "content" : {
+              "application/json;charset=UTF-8" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SuccessResponseSchema"
+                },
+                "examples" : {
+                  "user/delete-user" : {
+                    "value" : "{\n  \"isSuccess\" : true,\n  \"code\" : \"GLOBAL-200\",\n  \"message\" : \"요청 응답에 성공했습니다.\"\n}"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/mypage" : {
+      "get" : {
+        "tags" : [ "User API" ],
+        "summary" : "사용자가 마이페이지 정보를 조회한다.",
+        "description" : "사용자가 마이페이지 정보를 조회한다.",
+        "operationId" : "user/get-user-info",
+        "responses" : {
+          "200" : {
+            "description" : "200",
+            "content" : {
+              "application/json;charset=UTF-8" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserInfoResponseSchema"
+                },
+                "examples" : {
+                  "user/get-user-info" : {
+                    "value" : "{\n  \"isSuccess\" : true,\n  \"code\" : \"GLOBAL-200\",\n  \"message\" : \"요청 응답에 성공했습니다.\"\n}"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
   "components" : {
-    "schemas" : { }
+    "schemas" : {
+      "LoginResponseSchema" : {
+        "title" : "LoginResponseSchema",
+        "required" : [ "code", "isSuccess", "message" ],
+        "type" : "object",
+        "properties" : {
+          "result" : {
+            "required" : [ "accessToken", "isNewUser", "refreshToken", "userId" ],
+            "type" : "object",
+            "properties" : {
+              "isNewUser" : {
+                "type" : "boolean",
+                "description" : "신규 유저 여부"
+              },
+              "accessToken" : {
+                "type" : "string",
+                "description" : "발급된 액세스 토큰"
+              },
+              "userId" : {
+                "type" : "number",
+                "description" : "유저 ID"
+              },
+              "refreshToken" : {
+                "type" : "string",
+                "description" : "발급된 리프레시 토큰"
+              }
+            }
+          },
+          "code" : {
+            "type" : "string",
+            "description" : "응답 코드"
+          },
+          "message" : {
+            "type" : "string",
+            "description" : "응답 메시지"
+          },
+          "isSuccess" : {
+            "type" : "boolean",
+            "description" : "성공 여부"
+          }
+        }
+      },
+      "LogoutResponseSchema" : {
+        "title" : "LogoutResponseSchema",
+        "required" : [ "code", "isSuccess", "message" ],
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "description" : "응답 코드"
+          },
+          "message" : {
+            "type" : "string",
+            "description" : "응답 메시지"
+          },
+          "isSuccess" : {
+            "type" : "boolean",
+            "description" : "성공 여부"
+          }
+        }
+      },
+      "CategoryListResponse" : {
+        "title" : "CategoryListResponse",
+        "required" : [ "code", "isSuccess", "message" ],
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "description" : "응답 코드"
+          },
+          "message" : {
+            "type" : "string",
+            "description" : "응답 메시지"
+          },
+          "isSuccess" : {
+            "type" : "boolean",
+            "description" : "성공 여부"
+          }
+        }
+      },
+      "UserDeleteRequestSchema" : {
+        "title" : "UserDeleteRequestSchema",
+        "required" : [ "reasons" ],
+        "type" : "object",
+        "properties" : {
+          "userInputReason" : {
+            "type" : "string",
+            "description" : "직접 입력한 탈퇴 이유",
+            "nullable" : true
+          },
+          "reasons" : {
+            "type" : "array",
+            "description" : "탈퇴 이유 목록",
+            "items" : {
+              "oneOf" : [ {
+                "type" : "object"
+              }, {
+                "type" : "boolean"
+              }, {
+                "type" : "string"
+              }, {
+                "type" : "number"
+              } ]
+            }
+          }
+        }
+      },
+      "CategoryCreateResponse" : {
+        "title" : "CategoryCreateResponse",
+        "required" : [ "code", "isSuccess", "message" ],
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "description" : "응답 코드"
+          },
+          "message" : {
+            "type" : "string",
+            "description" : "응답 메시지"
+          },
+          "isSuccess" : {
+            "type" : "boolean",
+            "description" : "성공 여부"
+          }
+        }
+      },
+      "LoginRequestSchema" : {
+        "title" : "LoginRequestSchema",
+        "required" : [ "accessToken", "clientId", "mobileType", "socialType" ],
+        "type" : "object",
+        "properties" : {
+          "clientId" : {
+            "type" : "string",
+            "description" : "클라이언트 ID"
+          },
+          "mobileType" : {
+            "type" : "string",
+            "description" : "모바일 타입 (예: IOS, ANDROID)"
+          },
+          "socialType" : {
+            "type" : "string",
+            "description" : "소셜 타입 (예: KAKAO, APPLE)"
+          },
+          "accessToken" : {
+            "type" : "string",
+            "description" : "소셜 인증 액세스 토큰"
+          }
+        }
+      },
+      "SuccessResponseSchema" : {
+        "title" : "SuccessResponseSchema",
+        "required" : [ "code", "isSuccess", "message" ],
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "description" : "응답 코드"
+          },
+          "message" : {
+            "type" : "string",
+            "description" : "응답 메시지"
+          },
+          "isSuccess" : {
+            "type" : "boolean",
+            "description" : "성공 여부"
+          }
+        }
+      },
+      "PolicyResponseSchema" : {
+        "title" : "PolicyResponseSchema",
+        "required" : [ "code", "isSuccess", "message" ],
+        "type" : "object",
+        "properties" : {
+          "result" : {
+            "required" : [ "content", "createdAt", "id" ],
+            "type" : "object",
+            "properties" : {
+              "createdAt" : {
+                "type" : "string",
+                "description" : "정책 생성 날짜"
+              },
+              "id" : {
+                "type" : "number",
+                "description" : "정책 ID"
+              },
+              "content" : {
+                "type" : "string",
+                "description" : "정책 내용"
+              }
+            }
+          },
+          "code" : {
+            "type" : "string",
+            "description" : "응답 코드"
+          },
+          "message" : {
+            "type" : "string",
+            "description" : "응답 메시지"
+          },
+          "isSuccess" : {
+            "type" : "boolean",
+            "description" : "성공 여부"
+          }
+        }
+      },
+      "ReissueTokenRequestSchema" : {
+        "title" : "ReissueTokenRequestSchema",
+        "required" : [ "accessToken", "refreshToken" ],
+        "type" : "object",
+        "properties" : {
+          "accessToken" : {
+            "type" : "string",
+            "description" : "기존 액세스 토큰"
+          },
+          "refreshToken" : {
+            "type" : "string",
+            "description" : "리프레시 토큰"
+          }
+        }
+      },
+      "TokenPairResponseSchema" : {
+        "title" : "TokenPairResponseSchema",
+        "required" : [ "code", "isSuccess", "message" ],
+        "type" : "object",
+        "properties" : {
+          "result" : {
+            "required" : [ "accessToken", "refreshToken" ],
+            "type" : "object",
+            "properties" : {
+              "accessToken" : {
+                "type" : "string",
+                "description" : "새로 발급된 액세스 토큰"
+              },
+              "refreshToken" : {
+                "type" : "string",
+                "description" : "새로 발급된 리프레시 토큰"
+              }
+            }
+          },
+          "code" : {
+            "type" : "string",
+            "description" : "응답 코드"
+          },
+          "message" : {
+            "type" : "string",
+            "description" : "응답 메시지"
+          },
+          "isSuccess" : {
+            "type" : "boolean",
+            "description" : "성공 여부"
+          }
+        }
+      },
+      "CategoryCreateRequest" : {
+        "title" : "CategoryCreateRequest",
+        "required" : [ "emojiId", "name" ],
+        "type" : "object",
+        "properties" : {
+          "emojiId" : {
+            "type" : "number",
+            "description" : "이모지 ID"
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "카테고리 이름"
+          }
+        }
+      },
+      "CategoryUpdateRequest" : {
+        "title" : "CategoryUpdateRequest",
+        "required" : [ "emojiId", "name" ],
+        "type" : "object",
+        "properties" : {
+          "emojiId" : {
+            "type" : "number",
+            "description" : "이모지 ID"
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "카테고리 이름"
+          }
+        }
+      },
+      "UserInfoResponseSchema" : {
+        "title" : "UserInfoResponseSchema",
+        "required" : [ "code", "isSuccess", "message" ],
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "description" : "응답 코드"
+          },
+          "message" : {
+            "type" : "string",
+            "description" : "응답 메시지"
+          },
+          "isSuccess" : {
+            "type" : "boolean",
+            "description" : "성공 여부"
+          }
+        }
+      },
+      "EmojiResponseSchema" : {
+        "title" : "EmojiResponseSchema",
+        "required" : [ "code", "isSuccess", "message" ],
+        "type" : "object",
+        "properties" : {
+          "result" : {
+            "required" : [ "groupEmojis", "totalPageCount" ],
+            "type" : "object",
+            "properties" : {
+              "groupEmojis" : {
+                "type" : "object",
+                "properties" : {
+                  "*" : {
+                    "type" : "array",
+                    "items" : {
+                      "required" : [ "emojiId", "imageUrl" ],
+                      "type" : "object",
+                      "properties" : {
+                        "emojiId" : {
+                          "type" : "number",
+                          "description" : "이모지 ID"
+                        },
+                        "imageUrl" : {
+                          "type" : "string",
+                          "description" : "이모지 이미지 URL"
+                        }
+                      }
+                    }
+                  }
+                },
+                "description" : "그룹화된 이모지 목록"
+              },
+              "totalPageCount" : {
+                "type" : "number",
+                "description" : "전체 페이지 수"
+              }
+            }
+          },
+          "code" : {
+            "type" : "string",
+            "description" : "응답 코드"
+          },
+          "message" : {
+            "type" : "string",
+            "description" : "응답 메시지"
+          },
+          "isSuccess" : {
+            "type" : "boolean",
+            "description" : "성공 여부"
+          }
+        }
+      },
+      "BaseResponse" : {
+        "title" : "BaseResponse",
+        "required" : [ "code", "isSuccess", "message" ],
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "description" : "응답 코드"
+          },
+          "message" : {
+            "type" : "string",
+            "description" : "응답 메시지"
+          },
+          "isSuccess" : {
+            "type" : "boolean",
+            "description" : "성공 여부"
+          }
+        }
+      },
+      "CategoryDragAndDropRequest" : {
+        "title" : "CategoryDragAndDropRequest",
+        "required" : [ "categoryIds" ],
+        "type" : "object",
+        "properties" : {
+          "categoryIds" : {
+            "type" : "array",
+            "description" : "순서를 변경할 카테고리 ID 리스트",
+            "items" : {
+              "oneOf" : [ {
+                "type" : "object"
+              }, {
+                "type" : "boolean"
+              }, {
+                "type" : "string"
+              }, {
+                "type" : "number"
+              } ]
+            }
+          }
+        }
+      }
+    }
   }
 }

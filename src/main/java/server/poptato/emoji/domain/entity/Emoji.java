@@ -32,4 +32,3 @@ public class Emoji {
     @LastModifiedDate
     private LocalDateTime modifyDate;
 }
-

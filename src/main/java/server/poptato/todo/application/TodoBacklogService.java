@@ -1,7 +1,6 @@
 package server.poptato.todo.application;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -10,19 +9,15 @@ import org.springframework.transaction.annotation.Transactional;
 import server.poptato.category.domain.repository.CategoryRepository;
 import server.poptato.category.validator.CategoryValidator;
 import server.poptato.todo.api.request.BacklogCreateRequestDto;
-import server.poptato.todo.application.response.*;
-import server.poptato.todo.converter.TodoDtoConverter;
+import server.poptato.todo.application.response.BacklogCreateResponseDto;
+import server.poptato.todo.application.response.BacklogListResponseDto;
+import server.poptato.todo.application.response.PaginatedYesterdayResponseDto;
 import server.poptato.todo.domain.entity.Todo;
-import server.poptato.todo.domain.repository.CompletedDateTimeRepository;
 import server.poptato.todo.domain.repository.TodoRepository;
 import server.poptato.todo.domain.value.TodayStatus;
 import server.poptato.todo.domain.value.Type;
 import server.poptato.user.validator.UserValidator;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.Year;
-import java.time.YearMonth;
 import java.util.List;
 
 @Transactional
@@ -36,31 +31,72 @@ public class TodoBacklogService {
     private static final Long ALL_CATEGORY = -1L;
     private static final Long BOOKMARK_CATEGORY = 0L;
 
+    /**
+     * 백로그 목록 조회 API.
+     *
+     * 사용자 ID와 카테고리 ID를 기반으로 페이지네이션된 백로그 목록을 반환합니다.
+     *
+     * @param userId 사용자 ID
+     * @param categoryId 카테고리 ID
+     * @param page 페이지 번호
+     * @param size 페이지 크기
+     * @return 백로그 목록과 페이징 정보
+     */
     public BacklogListResponseDto getBacklogList(Long userId, Long categoryId, int page, int size) {
         userValidator.checkIsExistUser(userId);
         categoryValidator.validateCategory(userId, categoryId);
         Page<Todo> backlogs = getBacklogsPagination(userId, categoryId, page, size);
         String categoryName = categoryRepository.findById(categoryId).get().getName();
-        return TodoDtoConverter.toBacklogListDto(categoryName, backlogs);
+        return BacklogListResponseDto.of(categoryName, backlogs);
     }
 
+    /**
+     * 백로그 생성 API.
+     *
+     * 사용자 ID와 요청 데이터를 기반으로 새로운 백로그를 생성합니다.
+     *
+     * @param userId 사용자 ID
+     * @param backlogCreateRequestDto 백로그 생성 요청 데이터
+     * @return 생성된 백로그의 정보
+     */
     public BacklogCreateResponseDto generateBacklog(Long userId, BacklogCreateRequestDto backlogCreateRequestDto) {
         userValidator.checkIsExistUser(userId);
-        categoryValidator.validateCategory(userId, backlogCreateRequestDto.getCategoryId());
+        categoryValidator.validateCategory(userId, backlogCreateRequestDto.categoryId());
         Integer maxBacklogOrder = todoRepository.findMaxBacklogOrderByUserIdOrZero(userId);
         Todo newBacklog = createNewBacklog(userId, backlogCreateRequestDto, maxBacklogOrder);
-        return TodoDtoConverter.toBacklogCreateDto(newBacklog);
+        return BacklogCreateResponseDto.from(newBacklog);
     }
 
+    /**
+     * 어제 할 일 목록 조회 API.
+     *
+     * 사용자 ID를 기반으로 어제 완료되지 않은 할 일 목록을 페이지네이션된 형식으로 반환합니다.
+     *
+     * @param userId 사용자 ID
+     * @param page 페이지 번호
+     * @param size 페이지 크기
+     * @return 어제 할 일 목록과 페이징 정보
+     */
     public PaginatedYesterdayResponseDto getYesterdays(Long userId, int page, int size) {
         userValidator.checkIsExistUser(userId);
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Todo> yesterdaysPage = todoRepository.findByUserIdAndTypeAndTodayStatus(userId, Type.YESTERDAY, TodayStatus.INCOMPLETE, pageable);
 
-        return TodoDtoConverter.toYesterdayListDto(yesterdaysPage);
+        return PaginatedYesterdayResponseDto.of(yesterdaysPage);
     }
 
+    /**
+     * 백로그 목록 페이지네이션.
+     *
+     * 사용자 ID와 카테고리 ID를 기반으로 백로그 목록을 페이지네이션합니다.
+     *
+     * @param userId 사용자 ID
+     * @param categoryId 카테고리 ID
+     * @param page 페이지 번호
+     * @param size 페이지 크기
+     * @return 페이지네이션된 백로그 목록
+     */
     private Page<Todo> getBacklogsPagination(Long userId, Long categoryId, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size);
         List<Type> types = List.of(Type.BACKLOG, Type.YESTERDAY);
@@ -71,16 +107,25 @@ public class TodoBacklogService {
         return todoRepository.findBacklogsByCategoryId(userId, categoryId, types, status, pageRequest);
     }
 
+    /**
+     * 새로운 백로그 생성.
+     *
+     * 요청 데이터를 기반으로 백로그를 생성하고 저장합니다.
+     *
+     * @param userId 사용자 ID
+     * @param backlogCreateRequestDto 백로그 생성 요청 데이터
+     * @param maxBacklogOrder 현재 백로그 최대 순서 값
+     * @return 생성된 백로그 엔티티
+     */
     private Todo createNewBacklog(Long userId, BacklogCreateRequestDto backlogCreateRequestDto, Integer maxBacklogOrder) {
         Todo backlog = null;
-        Long categoryId = backlogCreateRequestDto.getCategoryId();
-        if(categoryId==ALL_CATEGORY)
-            backlog = Todo.createBacklog(userId, backlogCreateRequestDto.getContent(), maxBacklogOrder + 1);
-        if(categoryId==BOOKMARK_CATEGORY)
-            backlog = Todo.createBookmarkBacklog(userId, backlogCreateRequestDto.getContent(), maxBacklogOrder + 1);
-        if (categoryId>BOOKMARK_CATEGORY)
-            backlog = Todo.createCategoryBacklog(userId, categoryId, backlogCreateRequestDto.getContent(), maxBacklogOrder + 1);
-        Todo newBacklog = todoRepository.save(backlog);
-        return newBacklog;
+        Long categoryId = backlogCreateRequestDto.categoryId();
+        if (categoryId == ALL_CATEGORY)
+            backlog = Todo.createBacklog(userId, backlogCreateRequestDto.content(), maxBacklogOrder + 1);
+        if (categoryId == BOOKMARK_CATEGORY)
+            backlog = Todo.createBookmarkBacklog(userId, backlogCreateRequestDto.content(), maxBacklogOrder + 1);
+        if (categoryId > BOOKMARK_CATEGORY)
+            backlog = Todo.createCategoryBacklog(userId, categoryId, backlogCreateRequestDto.content(), maxBacklogOrder + 1);
+        return todoRepository.save(backlog);
     }
 }

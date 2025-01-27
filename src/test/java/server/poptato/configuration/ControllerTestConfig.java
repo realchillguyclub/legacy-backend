@@ -20,10 +20,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 @AutoConfigureRestDocs
 @ExtendWith({RestDocumentationExtension.class})
 public abstract class ControllerTestConfig {
+
     @Autowired
     protected WebApplicationContext context;
+
     @Autowired
     protected ObjectMapper objectMapper;
+
     protected MockMvc mockMvc;
 
     @BeforeEach

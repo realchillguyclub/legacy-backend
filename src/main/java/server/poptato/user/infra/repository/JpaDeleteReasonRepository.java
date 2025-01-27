@@ -5,5 +5,4 @@ import server.poptato.user.domain.entity.DeleteReason;
 import server.poptato.user.domain.repository.DeleteReasonRepository;
 
 public interface JpaDeleteReasonRepository extends DeleteReasonRepository, JpaRepository<DeleteReason, Long> {
-
 }

@@ -8,7 +8,6 @@ import server.poptato.todo.domain.repository.CompletedDateTimeRepository;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 

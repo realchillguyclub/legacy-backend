@@ -11,7 +11,6 @@ import server.poptato.user.domain.value.Reason;
 import server.poptato.todo.domain.repository.TodoRepository;
 import server.poptato.user.api.request.UserDeleteRequestDTO;
 import server.poptato.user.application.response.UserInfoResponseDto;
-import server.poptato.user.converter.UserDtoConverter;
 import server.poptato.user.domain.entity.User;
 import server.poptato.user.domain.repository.UserRepository;
 import server.poptato.user.validator.UserValidator;
@@ -29,6 +28,15 @@ public class UserService {
     private final DeleteReasonRepository deleteReasonRepository;
     private final MobileRepository mobileRepository;
 
+    /**
+     * 사용자 탈퇴 처리
+     *
+     * 주어진 사용자 ID를 기반으로 탈퇴 요청을 처리합니다.
+     * 탈퇴 이유를 저장하고, 관련 데이터(할 일, 모바일 정보)를 삭제한 뒤 사용자를 삭제합니다.
+     *
+     * @param userId 사용자 ID
+     * @param userDeleteRequestDTO 탈퇴 요청 데이터
+     */
     public void deleteUser(Long userId, UserDeleteRequestDTO userDeleteRequestDTO) {
         User user = userValidator.checkIsExistAndReturnUser(userId);
         saveDeleteReasons(userId, userDeleteRequestDTO.reasons(), userDeleteRequestDTO.userInputReason());
@@ -38,11 +46,29 @@ public class UserService {
         userRepository.delete(user);
     }
 
+    /**
+     * 사용자 정보 조회
+     *
+     * 주어진 사용자 ID를 기반으로 사용자의 이름, 이메일, 이미지 URL 정보를 반환합니다.
+     *
+     * @param userId 사용자 ID
+     * @return 사용자 정보 DTO
+     */
     @Transactional(readOnly = true)
     public UserInfoResponseDto getUserInfo(Long userId) {
         User user = userValidator.checkIsExistAndReturnUser(userId);
-        return UserDtoConverter.toUserInfoDto(user);
+        return UserInfoResponseDto.of(user);
     }
+
+    /**
+     * 탈퇴 이유 저장
+     *
+     * 사용자가 선택한 탈퇴 이유와 직접 입력한 탈퇴 이유를 저장합니다.
+     *
+     * @param userId 사용자 ID
+     * @param reasons 선택된 탈퇴 이유 목록
+     * @param userInputReason 직접 입력한 탈퇴 이유
+     */
     private void saveDeleteReasons(Long userId, List<Reason> reasons, String userInputReason) {
         if (reasons != null && !reasons.isEmpty()) {
             reasons.forEach(reason -> {
