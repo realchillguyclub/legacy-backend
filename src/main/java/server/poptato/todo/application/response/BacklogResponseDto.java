@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
 public record BacklogResponseDto(
-        Long id,
+        Long todoId,
         String content,
         Boolean isBookmark,
         Boolean isRepeat,

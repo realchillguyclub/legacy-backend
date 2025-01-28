@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import server.poptato.emoji.application.response.EmojiResponseDTO;
+import server.poptato.emoji.application.response.EmojiResponseDto;
 import server.poptato.emoji.application.service.EmojiService;
 import server.poptato.global.response.ApiResponse;
 import server.poptato.global.response.status.SuccessStatus;
@@ -30,11 +30,11 @@ public class EmojiController {
      * @return 그룹화된 이모지 목록과 페이징 정보를 포함한 응답
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<EmojiResponseDTO>> getCategories(
+    public ResponseEntity<ApiResponse<EmojiResponseDto>> getCategories(
             @UserId Long userId,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "70") int size) {
-        EmojiResponseDTO response = emojiService.getGroupedEmojis(page, size);
+        EmojiResponseDto response = emojiService.getGroupedEmojis(page, size);
         return ApiResponse.onSuccess(SuccessStatus._OK, response);
     }
 }
