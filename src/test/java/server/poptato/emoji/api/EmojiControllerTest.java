@@ -14,8 +14,8 @@ import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.web.servlet.ResultActions;
 import server.poptato.configuration.ControllerTestConfig;
 import server.poptato.emoji.api.controller.EmojiController;
-import server.poptato.emoji.application.response.EmojiDTO;
-import server.poptato.emoji.application.response.EmojiResponseDTO;
+import server.poptato.emoji.application.response.EmojiDto;
+import server.poptato.emoji.application.response.EmojiResponseDto;
 import server.poptato.emoji.application.service.EmojiService;
 import server.poptato.user.resolver.UserResolver;
 
@@ -43,11 +43,11 @@ public class EmojiControllerTest extends ControllerTestConfig {
     @DisplayName("이모지 목록을 조회한다.")
     public void getEmojis() throws Exception {
         // given
-        Map<String, List<EmojiDTO>> groupedEmojis = Map.of(
-                "Group1", List.of(new EmojiDTO(1L, "url1"), new EmojiDTO(2L, "url2")),
-                "Group2", List.of(new EmojiDTO(3L, "url3"))
+        Map<String, List<EmojiDto>> groupedEmojis = Map.of(
+                "Group1", List.of(new EmojiDto(1L, "url1"), new EmojiDto(2L, "url2")),
+                "Group2", List.of(new EmojiDto(3L, "url3"))
         );
-        EmojiResponseDTO response = new EmojiResponseDTO(groupedEmojis, 2);
+        EmojiResponseDto response = new EmojiResponseDto(groupedEmojis, 2);
 
         Mockito.when(emojiService.getGroupedEmojis(anyInt(), anyInt())).thenReturn(response);
 

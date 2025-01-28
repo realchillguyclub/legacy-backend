@@ -124,7 +124,7 @@ public class JwtService {
     public void compareRefreshToken(final String userId, final String refreshToken) {
         final String storedRefreshToken = redisTemplate.opsForValue().get(userId);
         if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
-            throw new CustomException(AuthErrorStatus._INVALID_TOKEN);
+            throw new CustomException(AuthErrorStatus._DIFFERENT_REFRESH_TOKEN);
         }
     }
 
