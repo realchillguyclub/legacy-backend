@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.restdocs.payload.JsonFieldType;
@@ -20,7 +21,6 @@ import server.poptato.category.application.response.CategoryCreateResponseDto;
 import server.poptato.category.application.response.CategoryListResponseDto;
 import server.poptato.category.application.response.CategoryResponseDto;
 import server.poptato.configuration.ControllerTestConfig;
-import server.poptato.user.resolver.UserResolver;
 
 import java.util.List;
 
@@ -42,17 +42,13 @@ public class CategoryControllerTest extends ControllerTestConfig {
     @MockBean
     private JwtService jwtService;
 
-    @MockBean
-    private UserResolver userResolver;
-
-    /*
-    25.01.27 result 부분 미응답으로 수정 필요함
-     */
     @Test
     @DisplayName("카테고리를 생성한다.")
     public void createCategory() throws Exception {
         // given
         CategoryCreateResponseDto response = CategoryCreateResponseDto.of(1L);
+        Mockito.when(jwtService.extractUserIdFromToken("Bearer sampleToken"))
+                .thenReturn(1L);
         Mockito.when(categoryService.createCategory(any(Long.class), any(CategoryCreateUpdateRequestDto.class)))
                 .thenReturn(response);
 
@@ -62,6 +58,7 @@ public class CategoryControllerTest extends ControllerTestConfig {
         // when
         ResultActions resultActions = this.mockMvc.perform(
                 RestDocumentationRequestBuilders.post("/category")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer sampleToken")
                         .content(requestContent)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
@@ -73,7 +70,7 @@ public class CategoryControllerTest extends ControllerTestConfig {
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.code").value("GLOBAL-200"))
                 .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
-                //.andExpect(jsonPath("$.result.categoryId").value(1L))
+                .andExpect(jsonPath("$.result.categoryId").value(1L))
 
                 // docs
                 .andDo(MockMvcRestDocumentationWrapper.document("category/create",
@@ -90,8 +87,8 @@ public class CategoryControllerTest extends ControllerTestConfig {
                                         .responseFields(
                                                 fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
                                                 fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
-                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
-                                                //fieldWithPath("result.categoryId").type(JsonFieldType.NUMBER).description("생성된 카테고리 ID")
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
+                                                fieldWithPath("result.categoryId").type(JsonFieldType.NUMBER).description("생성된 카테고리 ID")
                                         )
                                         .requestSchema(Schema.schema("CategoryCreateRequest"))
                                         .responseSchema(Schema.schema("CategoryCreateResponse"))
@@ -100,9 +97,6 @@ public class CategoryControllerTest extends ControllerTestConfig {
                 ));
     }
 
-    /*
-   25.01.27 result 부분 미응답으로 수정 필요함
-    */
     @Test
     @DisplayName("카테고리 목록을 조회한다.")
     public void getCategories() throws Exception {
@@ -111,11 +105,14 @@ public class CategoryControllerTest extends ControllerTestConfig {
         CategoryResponseDto category2 = new CategoryResponseDto(2L, "Personal", 102L, "http://emoji.url/2");
         CategoryListResponseDto response = new CategoryListResponseDto(List.of(category1, category2), 1);
 
+        Mockito.when(jwtService.extractUserIdFromToken("Bearer sampleToken"))
+                .thenReturn(1L);
         Mockito.when(categoryService.getCategories(any(Long.class), anyInt(), anyInt())).thenReturn(response);
 
         // when
         ResultActions resultActions = this.mockMvc.perform(
                 RestDocumentationRequestBuilders.get("/category/list")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer sampleToken")
                         .param("page", "0")
                         .param("size", "6")
                         .accept(MediaType.APPLICATION_JSON)
@@ -127,10 +124,10 @@ public class CategoryControllerTest extends ControllerTestConfig {
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.code").value("GLOBAL-200"))
                 .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
-//                .andExpect(jsonPath("$.result.categories[0].id").value(1L))
-//                .andExpect(jsonPath("$.result.categories[0].name").value("Work"))
-//                .andExpect(jsonPath("$.result.categories[1].id").value(2L))
-//                .andExpect(jsonPath("$.result.totalPageCount").value(1))
+                .andExpect(jsonPath("$.result.categories[0].id").value(1L))
+                .andExpect(jsonPath("$.result.categories[0].name").value("Work"))
+                .andExpect(jsonPath("$.result.categories[1].id").value(2L))
+                .andExpect(jsonPath("$.result.totalPageCount").value(1))
 
                 // docs
                 .andDo(MockMvcRestDocumentationWrapper.document("category/list",
@@ -147,12 +144,12 @@ public class CategoryControllerTest extends ControllerTestConfig {
                                         .responseFields(
                                                 fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
                                                 fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
-                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
-//                                                fieldWithPath("result.categories[].id").type(JsonFieldType.NUMBER).description("카테고리 ID"),
-//                                                fieldWithPath("result.categories[].name").type(JsonFieldType.STRING).description("카테고리 이름"),
-//                                                fieldWithPath("result.categories[].emojiId").type(JsonFieldType.NUMBER).description("이모지 ID"),
-//                                                fieldWithPath("result.categories[].imageUrl").type(JsonFieldType.STRING).description("이모지 이미지 URL"),
-//                                                fieldWithPath("result.totalPageCount").type(JsonFieldType.NUMBER).description("총 페이지 수")
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
+                                                fieldWithPath("result.categories[].id").type(JsonFieldType.NUMBER).description("카테고리 ID"),
+                                                fieldWithPath("result.categories[].name").type(JsonFieldType.STRING).description("카테고리 이름"),
+                                                fieldWithPath("result.categories[].emojiId").type(JsonFieldType.NUMBER).description("이모지 ID"),
+                                                fieldWithPath("result.categories[].imageUrl").type(JsonFieldType.STRING).description("이모지 이미지 URL"),
+                                                fieldWithPath("result.totalPageCount").type(JsonFieldType.NUMBER).description("총 페이지 수")
                                         )
                                         .responseSchema(Schema.schema("CategoryListResponse"))
                                         .build()
@@ -172,6 +169,7 @@ public class CategoryControllerTest extends ControllerTestConfig {
         // when
         ResultActions resultActions = this.mockMvc.perform(
                 RestDocumentationRequestBuilders.put("/category/{categoryId}", 1L)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer sampleToken")
                         .content(requestContent)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
@@ -220,6 +218,7 @@ public class CategoryControllerTest extends ControllerTestConfig {
         // when
         ResultActions resultActions = this.mockMvc.perform(
                 RestDocumentationRequestBuilders.delete("/category/{categoryId}", 1L)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer sampleToken")
                         .accept(MediaType.APPLICATION_JSON)
         );
 
@@ -264,6 +263,7 @@ public class CategoryControllerTest extends ControllerTestConfig {
         // when
         ResultActions resultActions = this.mockMvc.perform(
                 RestDocumentationRequestBuilders.patch("/category/dragAndDrop")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer sampleToken")
                         .content(requestContent)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)

@@ -22,7 +22,6 @@ import server.poptato.configuration.ControllerTestConfig;
 import server.poptato.global.dto.TokenPair;
 import server.poptato.user.domain.value.MobileType;
 import server.poptato.user.domain.value.SocialType;
-import server.poptato.user.resolver.UserResolver;
 
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
@@ -39,9 +38,6 @@ public class AuthControllerTest extends ControllerTestConfig {
 
     @MockBean
     private JwtService jwtService;
-
-    @MockBean
-    private UserResolver userResolver;
 
     @Test
     @DisplayName("사용자가 로그인한다.")
@@ -112,7 +108,7 @@ public class AuthControllerTest extends ControllerTestConfig {
     @DisplayName("사용자가 로그아웃한다.")
     public void logout() throws Exception {
         // given
-        Mockito.when(userResolver.resolveArgument(any(), any(), any(), any()))
+        Mockito.when(jwtService.extractUserIdFromToken("Bearer sampleToken"))
                 .thenReturn(1L);
 
         // when

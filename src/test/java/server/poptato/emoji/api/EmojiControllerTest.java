@@ -17,7 +17,6 @@ import server.poptato.emoji.api.controller.EmojiController;
 import server.poptato.emoji.application.response.EmojiDto;
 import server.poptato.emoji.application.response.EmojiResponseDto;
 import server.poptato.emoji.application.service.EmojiService;
-import server.poptato.user.resolver.UserResolver;
 
 import java.util.List;
 import java.util.Map;
@@ -35,9 +34,6 @@ public class EmojiControllerTest extends ControllerTestConfig {
 
     @MockBean
     private EmojiService emojiService;
-
-    @MockBean
-    private UserResolver userResolver;
 
     @Test
     @DisplayName("이모지 목록을 조회한다.")
