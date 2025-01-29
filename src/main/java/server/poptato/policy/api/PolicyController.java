@@ -24,7 +24,8 @@ public class PolicyController {
      * @return 개인정보 처리방침 데이터 (제목, 내용)
      */
     @GetMapping("/policy")
-    public ResponseEntity<ApiResponse<PolicyResponseDto>> getPolicy() {
+    public ResponseEntity<ApiResponse<PolicyResponseDto>> getPolicy(
+    ) {
         PolicyResponseDto response = policyService.getPrivacyPolicy();
         return ApiResponse.onSuccess(SuccessStatus._OK, response);
     }
