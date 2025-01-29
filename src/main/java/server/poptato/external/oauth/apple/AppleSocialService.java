@@ -23,11 +23,12 @@ import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
-import java.util.Objects;
 
 @Service
 @Transactional(readOnly = true)
 public class AppleSocialService extends SocialService {
+
+    private static final String APPLE_PUBLIC_KEY_URL = "https://appleid.apple.com/auth/keys";
 
     /**
      * Apple OAuth를 통해 사용자 정보를 가져옵니다.
@@ -46,11 +47,13 @@ public class AppleSocialService extends SocialService {
                 .parseClaimsJws(getTokenFromBearerString(accessToken))
                 .getBody();
 
-        val userInfoObject = (JsonObject) JsonParser.parseString(new Gson().toJson(userInfo));
+        val userInfoObject = JsonParser.parseString(new Gson().toJson(userInfo)).getAsJsonObject();
 
         return new SocialUserInfo(
-                userInfoObject.get("sub").getAsString(),      // 소셜 ID
-                userInfoObject.has("nickname") ? userInfoObject.get("nickname").getAsString() : null,
+                userInfoObject.get("sub").getAsString(),  // 소셜 ID
+                userInfoObject.has("name") ?
+                        userInfoObject.getAsJsonObject("name").get("firstName").getAsString() + " " +
+                                userInfoObject.getAsJsonObject("name").get("lastName").getAsString() : null,
                 userInfoObject.has("email") ? userInfoObject.get("email").getAsString() : null,
                 null
         );
@@ -64,8 +67,8 @@ public class AppleSocialService extends SocialService {
     private JsonArray getApplePublicKeys() {
         val connection = sendHttpRequest();
         val result = getHttpResponse(connection);
-        val keys = (JsonObject) JsonParser.parseString(result.toString());
-        return (JsonArray) keys.get("keys");
+        val keys = JsonParser.parseString(result.toString()).getAsJsonObject();
+        return keys.getAsJsonArray("keys");
     }
 
     /**
@@ -75,12 +78,13 @@ public class AppleSocialService extends SocialService {
      */
     private HttpURLConnection sendHttpRequest() {
         try {
-            val url = new URL("https://appleid.apple.com/auth");
+            val url = new URL(APPLE_PUBLIC_KEY_URL);
             val connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod(HttpMethod.GET.name());
+            connection.setRequestProperty("Accept", "application/json");
             return connection;
         } catch (IOException exception) {
-            throw new RuntimeException(exception);
+            throw new CustomException(AuthErrorStatus._PUBLIC_KEY_REQUEST_FAILED);
         }
     }
 
@@ -91,11 +95,10 @@ public class AppleSocialService extends SocialService {
      * @return HTTP 응답 데이터
      */
     private StringBuilder getHttpResponse(HttpURLConnection connection) {
-        try {
-            val bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+        try (val bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
             return splitHttpResponse(bufferedReader);
         } catch (IOException exception) {
-            throw new RuntimeException(exception);
+            throw new CustomException(AuthErrorStatus._PUBLIC_KEY_REQUEST_FAILED);
         }
     }
 
@@ -105,18 +108,13 @@ public class AppleSocialService extends SocialService {
      * @param bufferedReader 버퍼 리더 객체
      * @return 응답 문자열
      */
-    private StringBuilder splitHttpResponse(BufferedReader bufferedReader) {
-        try {
-            val result = new StringBuilder();
-            String line;
-            while (Objects.nonNull(line = bufferedReader.readLine())) {
-                result.append(line);
-            }
-            bufferedReader.close();
-            return result;
-        } catch (IOException exception) {
-            throw new RuntimeException(exception);
+    private StringBuilder splitHttpResponse(BufferedReader bufferedReader) throws IOException {
+        val result = new StringBuilder();
+        String line;
+        while ((line = bufferedReader.readLine()) != null) {
+            result.append(line);
         }
+        return result;
     }
 
     /**
@@ -128,13 +126,14 @@ public class AppleSocialService extends SocialService {
      */
     private PublicKey makePublicKey(String accessToken, JsonArray publicKeyList) {
         val decodeArray = accessToken.split("\\.");
-        val header = new String(Base64.getDecoder().decode(getTokenFromBearerString(decodeArray[0])));
+        val headerJson = new String(Base64.getUrlDecoder().decode(decodeArray[0]));
 
-        val kid = ((JsonObject) JsonParser.parseString(header)).get("kid");
-        val alg = ((JsonObject) JsonParser.parseString(header)).get("alg");
+        val headerObject = JsonParser.parseString(headerJson).getAsJsonObject();
+        val kid = headerObject.get("kid").getAsString();
+        val alg = headerObject.get("alg").getAsString();
         val matchingPublicKey = findMatchingPublicKey(publicKeyList, kid, alg);
 
-        if (Objects.isNull(matchingPublicKey)) {
+        if (matchingPublicKey == null) {
             throw new CustomException(AuthErrorStatus._NOT_FOUND_VALID_PUBLIC_KEY);
         }
 
@@ -148,7 +147,7 @@ public class AppleSocialService extends SocialService {
      * @return Bearer를 제외한 순수 토큰 문자열
      */
     private String getTokenFromBearerString(String token) {
-        return token.replaceFirst("Bearer ", "");
+        return token.replaceFirst("Bearer ", "").trim();
     }
 
     /**
@@ -159,13 +158,11 @@ public class AppleSocialService extends SocialService {
      * @param alg 알고리즘
      * @return 매칭되는 공개 키 객체
      */
-    private JsonObject findMatchingPublicKey(JsonArray publicKeyList, JsonElement kid, JsonElement alg) {
+    private JsonObject findMatchingPublicKey(JsonArray publicKeyList, String kid, String alg) {
         for (JsonElement publicKey : publicKeyList) {
             val publicKeyObject = publicKey.getAsJsonObject();
-            val publicKid = publicKeyObject.get("kid");
-            val publicAlg = publicKeyObject.get("alg");
-
-            if (Objects.equals(kid, publicKid) && Objects.equals(alg, publicAlg)) {
+            if (kid.equals(publicKeyObject.get("kid").getAsString()) &&
+                    alg.equals(publicKeyObject.get("alg").getAsString())) {
                 return publicKeyObject;
             }
         }
@@ -180,16 +177,14 @@ public class AppleSocialService extends SocialService {
      */
     private PublicKey getPublicKey(JsonObject object) {
         try {
-            val modulus = object.get("n").toString();
-            val exponent = object.get("e").toString();
+            val modulus = object.get("n").getAsString();
+            val exponent = object.get("e").getAsString();
 
-            val quotes = 1;
-            val modulusBytes = Base64.getUrlDecoder().decode(modulus.substring(quotes, modulus.length() - quotes));
-            val exponentBytes = Base64.getUrlDecoder().decode(exponent.substring(quotes, exponent.length() - quotes));
+            val modulusBytes = Base64.getUrlDecoder().decode(modulus);
+            val exponentBytes = Base64.getUrlDecoder().decode(exponent);
 
-            val positiveNumber = 1;
-            val modulusValue = new BigInteger(positiveNumber, modulusBytes);
-            val exponentValue = new BigInteger(positiveNumber, exponentBytes);
+            val modulusValue = new BigInteger(1, modulusBytes);
+            val exponentValue = new BigInteger(1, exponentBytes);
 
             val publicKeySpec = new RSAPublicKeySpec(modulusValue, exponentValue);
             val keyFactory = KeyFactory.getInstance("RSA");
