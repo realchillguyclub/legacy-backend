@@ -210,4 +210,21 @@ public class JwtService {
         final byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
     }
+
+    /**
+     * Authorization 헤더에서 사용자 ID를 추출합니다.
+     * JWT 토큰을 검증하고, 유효한 경우 토큰에서 사용자 ID를 가져옵니다.
+     *
+     * @param authorization 요청 헤더의 Authorization (Bearer 토큰)
+     * @return 토큰에서 추출된 사용자 ID
+     * @throws CustomException 토큰이 없거나 유효하지 않은 경우 예외 발생
+     */
+    public Long extractUserIdFromToken(String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            throw new CustomException(AuthErrorStatus._TOKEN_NOT_EXIST);
+        }
+        String token = authorization.substring("Bearer ".length());
+        verifyToken(token);
+        return Long.parseLong(getUserIdInToken(token));
+    }
 }

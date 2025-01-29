@@ -33,7 +33,7 @@ public class SwaggerConfig {
                 )
                 .servers(List.of(
                         new Server().url("http://localhost:8080").description("로컬 서버"),
-                        new Server().url("https://prev-illdan.store").description("레거시 배포 서버")
+                        new Server().url("https://prev-illdan.store").description("테스트 서버")
                 ));
 
         // REST Docs에서 생성한 open-api-3.0.1.json 파일 읽어오기

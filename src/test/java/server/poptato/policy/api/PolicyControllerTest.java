@@ -15,7 +15,6 @@ import server.poptato.configuration.ControllerTestConfig;
 import server.poptato.global.response.status.SuccessStatus;
 import server.poptato.policy.application.PolicyService;
 import server.poptato.policy.application.response.PolicyResponseDto;
-import server.poptato.user.resolver.UserResolver;
 
 import java.time.LocalDateTime;
 
@@ -34,9 +33,6 @@ public class PolicyControllerTest extends ControllerTestConfig {
 
     @MockBean
     private JwtService jwtService;
-
-    @MockBean
-    private UserResolver userResolver;
 
     @Test
     @DisplayName("개인정보 처리방침을 조회한다.")
