@@ -1,147 +1,199 @@
 package server.poptato.auth.api;
 
-import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.api.model.HostConfig;
-import com.github.dockerjava.api.model.PortBinding;
-import com.github.dockerjava.api.model.Ports;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
-import jakarta.validation.ValidatorFactory;
-import org.junit.jupiter.api.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper;
+import com.epages.restdocs.apispec.ResourceSnippetParameters;
+import com.epages.restdocs.apispec.Schema;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
+import org.springframework.restdocs.payload.JsonFieldType;
+import org.springframework.test.web.servlet.ResultActions;
 import server.poptato.auth.api.request.LoginRequestDto;
+import server.poptato.auth.api.request.ReissueTokenRequestDto;
+import server.poptato.auth.application.response.LoginResponseDto;
 import server.poptato.auth.application.service.AuthService;
 import server.poptato.auth.application.service.JwtService;
+import server.poptato.configuration.ControllerTestConfig;
 import server.poptato.global.dto.TokenPair;
-import server.poptato.user.application.service.UserService;
 import server.poptato.user.domain.value.MobileType;
 import server.poptato.user.domain.value.SocialType;
 
-import java.util.Set;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
+import static org.mockito.ArgumentMatchers.any;
+import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
+import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Testcontainers
-@SpringBootTest
-@AutoConfigureMockMvc
-public class AuthControllerTest {
-    @Autowired
-    private MockMvc mockMvc;
+@WebMvcTest(AuthController.class)
+public class AuthControllerTest extends ControllerTestConfig {
+
     @MockBean
     private AuthService authService;
+
     @MockBean
-    private UserService userService;
-    @Autowired
     private JwtService jwtService;
-    @Autowired
-    private RedisTemplate<String, String> redisTemplate;
 
-    private TokenPair tokenPair;
-    private Validator validator;
-    private String accessToken;
-    private String refreshToken;
-    private final String userId = "1";
-
-    @Container
-    private static final GenericContainer<?> redisContainer =
-            new GenericContainer<>("redis:latest")
-                    .withExposedPorts(6379)
-                    .waitingFor(Wait.forListeningPort())
-                    .withCreateContainerCmdModifier(cmd ->
-                            cmd.withHostConfig(new HostConfig().withPortBindings(
-                                    new PortBinding(Ports.Binding.bindPort(63799), new ExposedPort(6379))
-                            ))
-                    );
-
-    @DynamicPropertySource
-    static void configureRedisProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.redis.host", redisContainer::getHost);
-        registry.add("spring.redis.port", () -> redisContainer.getMappedPort(6379));
-    }
-
-    @BeforeEach
-    void createAccessToken_UserIdIsOne() {
-        tokenPair = jwtService.generateTokenPair(userId);
-        accessToken = tokenPair.accessToken();
-        refreshToken = tokenPair.refreshToken();
-        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-        validator = factory.getValidator();
-    }
-
-    @AfterEach
-    void deleteRefreshToken() {
-        jwtService.deleteRefreshToken(userId);
-    }
-
-    @DisplayName("로그인 시, 액세스토큰이 비어있으면 Validator가 예외를 발생한다.")
     @Test
-    public void login_ValidationException() {
-        //given
-        String authAccessToken = " ";
-        SocialType socialType = SocialType.KAKAO;
-        MobileType mobileType = MobileType.ANDROID;
-        String clientId = "clientId";
-        LoginRequestDto loginRequestDto = LoginRequestDto.builder()
-                .socialType(socialType)
-                .accessToken(authAccessToken)
-                .mobileType(mobileType)
-                .clientId(clientId)
-                .build();
+    @DisplayName("사용자가 로그인한다.")
+    public void login() throws Exception {
+        // given
+        LoginResponseDto response = LoginResponseDto.of("access-token", "refresh-token", true, 1L);
+        Mockito.when(authService.login(any(LoginRequestDto.class))).thenReturn(response);
 
-        //when
-        Set<ConstraintViolation<LoginRequestDto>> violations = validator.validate(loginRequestDto);
+        LoginRequestDto request = new LoginRequestDto(
+                SocialType.KAKAO,
+                "access-token",
+                MobileType.IOS,
+                "client-id"
+        );
 
-        //then
-        Assertions.assertEquals(violations.size(), 1);
-    }
+        String requestContent = objectMapper.writeValueAsString(request);
 
-    @DisplayName("로그아웃 시, 성공한다.")
-    @Test
-    public void logout_Success() throws Exception {
-        //when & then
-        mockMvc.perform(post("/auth/logout")
-                        .header("Authorization", "Bearer " + accessToken)
-                        .contentType(MediaType.APPLICATION_JSON))
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.post("/auth/login")
+                        .content(requestContent)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
                 .andExpect(status().isOk())
-                .andDo(print());
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
+                .andExpect(jsonPath("$.result.accessToken").value("access-token"))
+                .andExpect(jsonPath("$.result.refreshToken").value("refresh-token"))
+                .andExpect(jsonPath("$.result.isNewUser").value(true))
+                .andExpect(jsonPath("$.result.userId").value(1L))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("auth/login",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Auth API")
+                                        .description("사용자가 로그인한다.")
+                                        .requestFields(
+                                                fieldWithPath("socialType").type(JsonFieldType.STRING).description("소셜 타입 (예: KAKAO, APPLE)"),
+                                                fieldWithPath("accessToken").type(JsonFieldType.STRING).description("소셜 인증 액세스 토큰"),
+                                                fieldWithPath("mobileType").type(JsonFieldType.STRING).description("모바일 타입 (예: IOS, ANDROID)"),
+                                                fieldWithPath("clientId").type(JsonFieldType.STRING).description("클라이언트 ID")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
+                                                fieldWithPath("result.accessToken").type(JsonFieldType.STRING).description("발급된 액세스 토큰"),
+                                                fieldWithPath("result.refreshToken").type(JsonFieldType.STRING).description("발급된 리프레시 토큰"),
+                                                fieldWithPath("result.isNewUser").type(JsonFieldType.BOOLEAN).description("신규 유저 여부"),
+                                                fieldWithPath("result.userId").type(JsonFieldType.NUMBER).description("유저 ID")
+                                        )
+                                        .requestSchema(Schema.schema("LoginRequestSchema"))
+                                        .responseSchema(Schema.schema("LoginResponseSchema"))
+                                        .build()
+                        )
+                ));
     }
 
-    @DisplayName("로그아웃 시, JWT 토큰이 없으면 예외가 발생한다.")
     @Test
-    public void logout_UnAuthorizedException() throws Exception {
-        //when & then
-        mockMvc.perform(post("/auth/logout")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized())
-                .andDo(print());
-    }
+    @DisplayName("사용자가 로그아웃한다.")
+    public void logout() throws Exception {
+        // given
+        Mockito.when(jwtService.extractUserIdFromToken("Bearer sampleToken"))
+                .thenReturn(1L);
 
-    @DisplayName("토큰 재발급 요청 시, 성공한다.")
-    @Test
-    public void refresh_Success() throws Exception {
-        //when & then
-        mockMvc.perform(post("/auth/refresh")
-                        .content("{\"accessToken\": \"" + accessToken + "\", \"refreshToken\": \"" + refreshToken + "\"}")
-                        .header("Authorization", "Bearer " + accessToken)
-                        .contentType(MediaType.APPLICATION_JSON))
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.post("/auth/logout")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer sampleToken")
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
                 .andExpect(status().isOk())
-                .andDo(print());
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("auth/logout",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Auth API")
+                                        .description("사용자가 로그아웃한다.")
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
+                                        )
+                                        .responseSchema(Schema.schema("LogoutResponseSchema"))
+                                        .build()
+                        )
+                ));
     }
 
+    @Test
+    @DisplayName("토큰을 갱신한다.")
+    public void refresh() throws Exception {
+        // given
+        TokenPair response = new TokenPair("new-access-token", "new-refresh-token");
+        Mockito.when(authService.refresh(any(ReissueTokenRequestDto.class))).thenReturn(response);
 
+        ReissueTokenRequestDto request = new ReissueTokenRequestDto("access-token", "refresh-token");
+        String requestContent = objectMapper.writeValueAsString(request);
+
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.post("/auth/refresh")
+                        .content(requestContent)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
+                .andExpect(jsonPath("$.result.accessToken").value("new-access-token"))
+                .andExpect(jsonPath("$.result.refreshToken").value("new-refresh-token"))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("auth/refresh",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Auth API")
+                                        .description("토큰을 갱신한다.")
+                                        .requestFields(
+                                                fieldWithPath("accessToken").type(JsonFieldType.STRING).description("기존 액세스 토큰"),
+                                                fieldWithPath("refreshToken").type(JsonFieldType.STRING).description("리프레시 토큰")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
+                                                fieldWithPath("result.accessToken").type(JsonFieldType.STRING).description("새로 발급된 액세스 토큰"),
+                                                fieldWithPath("result.refreshToken").type(JsonFieldType.STRING).description("새로 발급된 리프레시 토큰")
+                                        )
+                                        .requestSchema(Schema.schema("ReissueTokenRequestSchema"))
+                                        .responseSchema(Schema.schema("TokenPairResponseSchema"))
+                                        .build()
+                        )
+                ));
+    }
 }

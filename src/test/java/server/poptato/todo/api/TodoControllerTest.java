@@ -1,244 +1,636 @@
 package server.poptato.todo.api;
 
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
-import jakarta.validation.ValidatorFactory;
-import org.junit.jupiter.api.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper;
+import com.epages.restdocs.apispec.ResourceSnippetParameters;
+import com.epages.restdocs.apispec.Schema;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
+import org.springframework.restdocs.payload.JsonFieldType;
+import org.springframework.test.web.servlet.ResultActions;
 import server.poptato.auth.application.service.JwtService;
-import server.poptato.todo.api.request.ContentUpdateRequestDto;
-import server.poptato.todo.api.request.TodoDragAndDropRequestDto;
-import server.poptato.todo.api.request.SwipeRequestDto;
-import server.poptato.todo.application.TodoBacklogService;
+import server.poptato.configuration.ControllerTestConfig;
+import server.poptato.todo.api.request.*;
 import server.poptato.todo.application.TodoService;
-import server.poptato.user.application.service.UserService;
+import server.poptato.todo.application.response.HistoryCalendarListResponseDto;
+import server.poptato.todo.application.response.PaginatedHistoryResponseDto;
+import server.poptato.todo.application.response.TodoDetailResponseDto;
+import server.poptato.todo.domain.value.Type;
 
-import java.util.ArrayList;
-import java.util.Set;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
+import static org.mockito.ArgumentMatchers.*;
+import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
+import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-public class TodoControllerTest {
-    @Autowired
-    private MockMvc mockMvc;
+@WebMvcTest(TodoController.class)
+public class TodoControllerTest extends ControllerTestConfig {
+
     @MockBean
     private TodoService todoService;
+
     @MockBean
-    private TodoBacklogService todoBacklogService;
-    @MockBean
-    private UserService userService;
-    @Autowired
     private JwtService jwtService;
-    @MockBean
-    private RedisTemplate<String, String> redisTemplate;
-    private Validator validator;
-    private String accessToken;
-    private final String userId = "1";
 
-    @BeforeEach
-    void createAccessToken_And_SetValidator() {
-        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-        validator = factory.getValidator();
-        accessToken = jwtService.createAccessToken(userId);
-    }
+    private static final String token = "Bearer sampleToken";
 
-    @AfterEach
-    void deleteRefreshToken() {
-        jwtService.deleteRefreshToken(userId);
-    }
-
-    @DisplayName("할 일 내용 수정 시 성공한다.")
     @Test
-    void updateContent_Success() throws Exception {
-        //given
-        Long todoId = 1L;
+    @DisplayName("할 일을 삭제한다.")
+    public void deleteTodo() throws Exception {
+        // given
+        Mockito.doNothing().when(todoService).deleteTodoById(anyLong(), anyLong());
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
 
-        //when & then
-        mockMvc.perform(patch("/todo/{todoId}/content", todoId)
-                        .header("Authorization", "Bearer " + accessToken)
-                        .content("{\"content\": \"내용 수정\"}")
-                        .contentType(MediaType.APPLICATION_JSON))
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.delete("/todo/{todoId}", 1L)
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
                 .andExpect(status().isOk())
-                .andDo(print());
-    }
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
 
-    @DisplayName("할 일 내용 수정 시 content가 null이거나 비어있으면 검증기가 예외를 발생한다.")
-    @Test
-    void updateContent_Validator_Exception() {
-        //given
-        String emptyContent = " ";
-        String nullContent = null;
-        ContentUpdateRequestDto emptyContentUpdateRequestDto = ContentUpdateRequestDto.builder()
-                .content(emptyContent)
-                .build();
-
-        ContentUpdateRequestDto nullContentUpdateRequestDto = ContentUpdateRequestDto.builder()
-                .content(nullContent)
-                .build();
-        //when
-        Set<ConstraintViolation<ContentUpdateRequestDto>> emptyViolations = validator.validate(emptyContentUpdateRequestDto);
-        Set<ConstraintViolation<ContentUpdateRequestDto>> nullViolations = validator.validate(nullContentUpdateRequestDto);
-
-        //then
-        Assertions.assertEquals(emptyViolations.size(), 1);
-        Assertions.assertEquals(nullViolations.size(), 1);
-    }
-
-    @DisplayName("할 일 삭제 시 성공한다")
-    @Test
-    void delete_Success() throws Exception {
-        //given
-        Long todoId = 1L;
-
-        //when & then
-        mockMvc.perform(delete("/todo/{todoId}", todoId)
-                        .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isOk());
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/delete",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Todo API")
+                                        .description("할 일을 삭제한다.")
+                                        .pathParameters(
+                                                parameterWithName("todoId").description("삭제할 할 일 ID")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
+                                        )
+                                        .responseSchema(Schema.schema("BaseResponse"))
+                                        .build()
+                        )
+                ));
     }
 
     @Test
-    @DisplayName("즐겨찾기 변경 시 응답이 정상적으로 반환되는지 확인")
-    void toggleIsBookmark_Success() throws Exception {
-        //given
-        Long todoId = 1L;
-        Long userId = 1L;
+    @DisplayName("할 일 상태를 스와이프한다.")
+    public void swipeTodo() throws Exception {
+        // given
+        SwipeRequestDto request = new SwipeRequestDto(1L);
+        Mockito.doNothing().when(todoService).swipe(anyLong(), any(SwipeRequestDto.class));
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
 
-        //when & then
-        mockMvc.perform(patch("/todo/{todoId}/bookmark", todoId)
-                        .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isOk());
-    }
+        String requestContent = objectMapper.writeValueAsString(request);
 
-    @DisplayName("스와이프 시 요청 바디에 todoId가 없으면 Validator가 예외를 발생한다.")
-    @Test
-    void swipe_ValidatorException() {
-        //given
-        SwipeRequestDto request = SwipeRequestDto.builder()
-                .todoId(null).build();
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.patch("/swipe")
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .content(requestContent)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
 
-        //when
-        Set<ConstraintViolation<SwipeRequestDto>> violations = validator.validate(request);
-
-        //then
-        Assertions.assertEquals(violations.size(), 1);
-    }
-
-    @DisplayName("스와이프 요청 시 성공한다.")
-    @Test
-    void swipe_Success() throws Exception {
-        //given & when & then
-        mockMvc.perform(patch("/swipe")
-                        .content("{\"todoId\": 1}")
-                        .header("Authorization", "Bearer " + accessToken)
-                        .contentType(MediaType.APPLICATION_JSON))
+        // then
+        resultActions
                 .andExpect(status().isOk())
-                .andDo(print());
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/swipe",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Todo API")
+                                        .description("할 일 상태를 스와이프한다.")
+                                        .requestFields(
+                                                fieldWithPath("todoId").type(JsonFieldType.NUMBER).description("스와이프할 할 일 ID")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
+                                        )
+                                        .responseSchema(Schema.schema("BaseResponse"))
+                                        .build()
+                        )
+                ));
     }
 
-    @DisplayName("드래그앤드롭 요청 시 성공한다.")
     @Test
-    void dragAndDrop_Success() throws Exception {
-        //given & when & then
-        mockMvc.perform(patch("/todo/dragAndDrop")
-                        .content("{\"type\": \"TODAY\", \"todoIds\": [1, 2, 3, 4]}")
-                        .header("Authorization", "Bearer " + accessToken)
-                        .contentType(MediaType.APPLICATION_JSON))
+    @DisplayName("할 일 즐겨찾기 상태를 토글한다.")
+    public void toggleIsBookmark() throws Exception {
+        // given
+        Mockito.doNothing().when(todoService).toggleIsBookmark(anyLong(), anyLong());
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
+
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.patch("/todo/{todoId}/bookmark", 1L)
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
                 .andExpect(status().isOk())
-                .andDo(print());
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/toggle-bookmark",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Todo API")
+                                        .description("할 일 즐겨찾기 상태를 토글한다.")
+                                        .pathParameters(
+                                                parameterWithName("todoId").description("즐겨찾기 상태를 변경할 할 일 ID")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
+                                        )
+                                        .responseSchema(Schema.schema("BaseResponse"))
+                                        .build()
+                        )
+                ));
     }
 
-    @DisplayName("드래그앤드롭 시 요청 바디에 type이나 list가 없으면 Validator가 예외를 발생한다.")
     @Test
-    void dragAndDrop_ValidatorException() {
-        //given
-        TodoDragAndDropRequestDto todoDragAndDropRequestDto = TodoDragAndDropRequestDto.builder()
-                .type(null)
-                .todoIds(new ArrayList<>())
-                .build();
+    @DisplayName("할 일 순서를 드래그 앤 드롭 방식으로 변경한다.")
+    public void dragAndDrop() throws Exception {
+        // given
+        TodoDragAndDropRequestDto request = new TodoDragAndDropRequestDto(Type.TODAY, List.of(1L, 2L, 3L));
+        Mockito.doNothing().when(todoService).dragAndDrop(anyLong(), any(TodoDragAndDropRequestDto.class));
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
 
-        //when
-        Set<ConstraintViolation<TodoDragAndDropRequestDto>> violations = validator.validate(todoDragAndDropRequestDto);
+        String requestContent = objectMapper.writeValueAsString(request);
 
-        //then
-        Assertions.assertEquals(violations.size(), 2);
-    }
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.patch("/todo/dragAndDrop")
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .content(requestContent)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
 
-    @DisplayName("할 일 상세 정보 요청 시 성공한다.")
-    @Test
-    void getTodoInfo_Success() throws Exception {
-        //given
-        Long todoId = 1L;
-
-        //when
-        mockMvc.perform(get("/todo/{todoId}", todoId)
-                        .header("Authorization", "Bearer " + accessToken)
-                        .contentType(MediaType.APPLICATION_JSON))
+        // then
+        resultActions
                 .andExpect(status().isOk())
-                .andDo(print());
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/drag-and-drop",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Todo API")
+                                        .description("할 일 순서를 드래그 앤 드롭 방식으로 변경한다.")
+                                        .requestFields(
+                                                fieldWithPath("type").type(JsonFieldType.STRING).description("변경할 할 일의 타입 (TODAY, BACKLOG 등)"),
+                                                fieldWithPath("todoIds").type(JsonFieldType.ARRAY).description("새로운 순서대로 정렬된 할 일 ID 목록")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
+                                        )
+                                        .responseSchema(Schema.schema("BaseResponse"))
+                                        .build()
+                        )
+                ));
     }
 
-    @DisplayName("마감기한 수정 요청 시 성공한다.")
     @Test
-    void updateDeadline_Success() throws Exception {
-        //given
-        Long todoId = 1L;
+    @DisplayName("할 일의 상세 정보를 조회한다.")
+    public void getTodoInfo() throws Exception {
+        // given
+        TodoDetailResponseDto response = new TodoDetailResponseDto(
+                "할 일 내용",
+                LocalDate.of(2025, 1, 30),
+                "개발",
+                "http://example.com/emoji.png",
+                true,
+                false
+        );
 
-        //when
-        mockMvc.perform(patch("/todo/{todoId}/deadline", todoId)
-                        .header("Authorization", "Bearer " + accessToken)
-                        .content("{\"deadline\": \"2024-12-25\"}")
-                        .contentType(MediaType.APPLICATION_JSON))
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
+        Mockito.when(todoService.getTodoInfo(anyLong(), anyLong())).thenReturn(response);
+
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.get("/todo/{todoId}", 1L)
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
                 .andExpect(status().isOk())
-                .andDo(print());
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
+                .andExpect(jsonPath("$.result.content").value("할 일 내용"))
+                .andExpect(jsonPath("$.result.deadline").value("2025-01-30"))
+                .andExpect(jsonPath("$.result.categoryName").value("개발"))
+                .andExpect(jsonPath("$.result.emojiImageUrl").value("http://example.com/emoji.png"))
+                .andExpect(jsonPath("$.result.isBookmark").value(true))
+                .andExpect(jsonPath("$.result.isRepeat").value(false))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/get-detail",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Todo API")
+                                        .description("할 일의 상세 정보를 조회한다.")
+                                        .pathParameters(
+                                                parameterWithName("todoId").description("조회할 할 일 ID")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
+                                                fieldWithPath("result.content").type(JsonFieldType.STRING).description("할 일 내용"),
+                                                fieldWithPath("result.deadline").type(JsonFieldType.STRING).description("마감 기한"),
+                                                fieldWithPath("result.categoryName").type(JsonFieldType.STRING).description("카테고리 이름"),
+                                                fieldWithPath("result.emojiImageUrl").type(JsonFieldType.STRING).description("카테고리 이모지 이미지 URL"),
+                                                fieldWithPath("result.isBookmark").type(JsonFieldType.BOOLEAN).description("즐겨찾기 여부"),
+                                                fieldWithPath("result.isRepeat").type(JsonFieldType.BOOLEAN).description("반복 설정 여부")
+                                        )
+                                        .responseSchema(Schema.schema("TodoDetailResponse"))
+                                        .build()
+                        )
+                ));
     }
 
-    @DisplayName("할 일 달성여부 변경 요청 시 성공한다.")
     @Test
-    void updateIsCompleted_Success() throws Exception {
-        //given
-        Long todoId = 1L;
+    @DisplayName("할 일의 마감 기한을 업데이트한다.")
+    public void updateDeadline() throws Exception {
+        // given
+        DeadlineUpdateRequestDto request = new DeadlineUpdateRequestDto(LocalDate.of(2099, 2, 1));
+        Mockito.doNothing().when(todoService).updateDeadline(anyLong(), anyLong(), any(DeadlineUpdateRequestDto.class));
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
 
-        //when
-        mockMvc.perform(patch("/todo/{todoId}/achieve", todoId)
-                        .header("Authorization", "Bearer " + accessToken)
-                        .contentType(MediaType.APPLICATION_JSON))
+        String requestContent = objectMapper.writeValueAsString(request);
+
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.patch("/todo/{todoId}/deadline", 1L)
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .content(requestContent)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
                 .andExpect(status().isOk())
-                .andDo(print());
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/update-deadline",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Todo API")
+                                        .description("할 일의 마감 기한을 업데이트한다.")
+                                        .pathParameters(
+                                                parameterWithName("todoId").description("마감 기한을 변경할 할 일 ID")
+                                        )
+                                        .requestFields(
+                                                fieldWithPath("deadline").type(JsonFieldType.STRING).description("새로운 마감 기한 (YYYY-MM-DD)")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
+                                        )
+                                        .responseSchema(Schema.schema("BaseResponse"))
+                                        .build()
+                        )
+                ));
     }
-    @DisplayName("히스토리 목록 조회 시 page와 size를 query string으로 받고 헤더에 accessToken을 담아 요청한다.")
+
     @Test
-    void getHistories_Success() throws Exception {
-        // given & when & then
-        mockMvc.perform(get("/histories")
+    @DisplayName("할 일의 내용을 수정한다.")
+    public void updateContent() throws Exception {
+        // given
+        ContentUpdateRequestDto request = new ContentUpdateRequestDto("새로운 할 일 내용");
+        Mockito.doNothing().when(todoService).updateContent(anyLong(), anyLong(), any(ContentUpdateRequestDto.class));
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
+
+        String requestContent = objectMapper.writeValueAsString(request);
+
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.patch("/todo/{todoId}/content", 1L)
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .content(requestContent)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/update-content",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Todo API")
+                                        .description("할 일의 내용을 수정한다.")
+                                        .pathParameters(
+                                                parameterWithName("todoId").description("내용을 변경할 할 일 ID")
+                                        )
+                                        .requestFields(
+                                                fieldWithPath("content").type(JsonFieldType.STRING).description("새로운 할 일 내용")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
+                                        )
+                                        .responseSchema(Schema.schema("BaseResponse"))
+                                        .build()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("할 일의 완료 상태를 업데이트한다.")
+    public void updateIsCompleted() throws Exception {
+        // given
+        Mockito.doNothing().when(todoService).updateIsCompleted(anyLong(), anyLong(), any(LocalDateTime.class));
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
+
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.patch("/todo/{todoId}/achieve", 1L)
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/update-achieve",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Todo API")
+                                        .description("할 일의 완료 상태를 업데이트한다.")
+                                        .pathParameters(
+                                                parameterWithName("todoId").description("완료 상태로 변경할 할 일 ID")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
+                                        )
+                                        .responseSchema(Schema.schema("BaseResponse"))
+                                        .build()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("할 일의 카테고리를 변경한다.")
+    public void updateCategory() throws Exception {
+        // given
+        TodoCategoryUpdateRequestDto request = new TodoCategoryUpdateRequestDto(2L);
+        Mockito.doNothing().when(todoService).updateCategory(anyLong(), anyLong(), any(TodoCategoryUpdateRequestDto.class));
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
+
+        String requestContent = objectMapper.writeValueAsString(request);
+
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.patch("/todo/{todoId}/category", 1L)
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .content(requestContent)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/update-category",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Todo API")
+                                        .description("할 일의 카테고리를 변경한다.")
+                                        .pathParameters(
+                                                parameterWithName("todoId").description("카테고리를 변경할 할 일 ID")
+                                        )
+                                        .requestFields(
+                                                fieldWithPath("categoryId").type(JsonFieldType.NUMBER).description("새로운 카테고리 ID")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
+                                        )
+                                        .responseSchema(Schema.schema("BaseResponse"))
+                                        .build()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("할 일의 반복 설정을 업데이트한다.")
+    public void updateIsRepeat() throws Exception {
+        // given
+        Mockito.doNothing().when(todoService).updateRepeat(anyLong(), anyLong());
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
+
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.patch("/todo/{todoId}/repeat", 1L)
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/update-repeat",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Todo API")
+                                        .description("할 일의 반복 설정을 업데이트한다.")
+                                        .pathParameters(
+                                                parameterWithName("todoId").description("반복 설정을 변경할 할 일 ID")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
+                                        )
+                                        .responseSchema(Schema.schema("BaseResponse"))
+                                        .build()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("특정 날짜의 할 일 히스토리를 조회한다.")
+    public void getHistories() throws Exception {
+        // given
+        PaginatedHistoryResponseDto response = new PaginatedHistoryResponseDto(List.of(), 2);
+
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
+        Mockito.when(todoService.getHistories(anyLong(), any(LocalDate.class), anyInt(), anyInt()))
+                .thenReturn(response);
+
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.get("/histories")
                         .param("page", "0")
                         .param("size", "15")
-                        .param("date", "2024-10-16")
-                        .header("Authorization", "Bearer " + accessToken)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                        .param("date", "2025-01-29")
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
 
+        // then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/get-histories",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Todo API")
+                                        .description("특정 날짜의 할 일 히스토리를 조회한다.")
+                                        .queryParameters(
+                                                parameterWithName("page").description("요청 페이지 번호"),
+                                                parameterWithName("size").description("한 페이지당 항목 수"),
+                                                parameterWithName("date").description("조회할 날짜 (YYYY-MM-DD)")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
+                                                fieldWithPath("result.histories").type(JsonFieldType.ARRAY).description("히스토리 목록"),
+                                                fieldWithPath("result.totalPageCount").type(JsonFieldType.NUMBER).description("전체 페이지 수")
+                                        )
+                                        .responseSchema(Schema.schema("PaginatedHistoryResponse"))
+                                        .build()
+                        )
+                ));
     }
-    @DisplayName("캘린더 조회시 year랑 month를 query string 으로 받고 헤더에 accessToken을 담아 요청한다.")
-    @Test
-    void getCalendar_Success() throws Exception {
-        // given & when & then
-        mockMvc.perform(get("/calendar")
-                        .param("year", "2024")
-                        .param("month", "10")
-                        .header("Authorization", "Bearer " + accessToken)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
 
+    @Test
+    @DisplayName("특정 연도 및 월의 할 일 히스토리 날짜 목록을 조회한다.")
+    public void getHistoryCalendarDateList() throws Exception {
+        // given
+        HistoryCalendarListResponseDto response = new HistoryCalendarListResponseDto(List.of(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 15)));
+
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
+        Mockito.when(todoService.getHistoriesCalendar(anyLong(), anyString(), anyInt()))
+                .thenReturn(response);
+
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.get("/calendar")
+                        .param("year", "2025")
+                        .param("month", "1")
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/get-history-calendar",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Todo API")
+                                        .description("특정 연도 및 월의 할 일 히스토리 날짜 목록을 조회한다.")
+                                        .queryParameters(
+                                                parameterWithName("year").description("조회할 연도 (YYYY)"),
+                                                parameterWithName("month").description("조회할 월 (1~12)")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
+                                                fieldWithPath("result.dates").type(JsonFieldType.ARRAY).description("히스토리가 있는 날짜 목록 (YYYY-MM-DD)")
+                                        )
+                                        .responseSchema(Schema.schema("HistoryCalendarListResponse"))
+                                        .build()
+                        )
+                ));
     }
 }

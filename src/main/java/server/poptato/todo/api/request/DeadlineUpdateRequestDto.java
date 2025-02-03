@@ -1,17 +1,13 @@
 package server.poptato.todo.api.request;
 
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.Future;
 
 import java.time.LocalDate;
 
-@Getter
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class DeadlineUpdateRequestDto {
-    LocalDate deadline;
+public record DeadlineUpdateRequestDto (
+        @NotNull(message = "마감일은 필수입니다.")
+        @Future(message = "마감일은 미래 날짜여야 합니다.")
+        LocalDate deadline
+){
 }

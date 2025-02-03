@@ -2,12 +2,9 @@ package server.poptato.auth.api.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
 import server.poptato.user.domain.value.MobileType;
 import server.poptato.user.domain.value.SocialType;
 
-
-@Builder
 public record LoginRequestDto(
         @NotNull(message = "로그인/회원가입 시 소셜 타입은 필수입니다.")
         SocialType socialType,

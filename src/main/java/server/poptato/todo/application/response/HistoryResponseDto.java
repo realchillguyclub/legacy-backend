@@ -1,8 +1,13 @@
 package server.poptato.todo.application.response;
 
-import lombok.Builder;
-import java.time.LocalDate;
+import server.poptato.todo.domain.entity.Todo;
 
-@Builder
-public record HistoryResponseDto(Long todoId, String content) {
+public record HistoryResponseDto(
+        Long todoId,
+        String content
+) {
+
+    public static HistoryResponseDto of(Todo todo) {
+        return new HistoryResponseDto(todo.getId(), todo.getContent());
+    }
 }

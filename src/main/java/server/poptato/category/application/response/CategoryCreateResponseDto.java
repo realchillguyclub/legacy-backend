@@ -1,10 +1,12 @@
 package server.poptato.category.application.response;
 
-import lombok.Builder;
-import lombok.Getter;
+public record CategoryCreateResponseDto (
+        Long categoryId
+){
 
-@Builder
-@Getter
-public class CategoryCreateResponseDto {
-    Long categoryId;
+    public static CategoryCreateResponseDto of(Long categoryId) {
+        return new CategoryCreateResponseDto(
+                categoryId
+        );
+    }
 }

@@ -1,33 +1,29 @@
 package server.poptato.todo.application.response;
 
-import lombok.Getter;
 import server.poptato.todo.domain.entity.Todo;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
-@Getter
-public class YesterdayResponseDto{
-    Long todoId;
-    Integer dDay;
-    Boolean isBookmark;
-    Boolean isRepeat;
-    String content;
-
-    public YesterdayResponseDto(Todo todo) {
-        this.todoId = todo.getId();
-        this.content = todo.getContent();
-        this.isBookmark = todo.isBookmark();
-        this.isRepeat = todo.isRepeat();
-
-        if (hasDeadline(todo)) {
-            this.dDay = (int) ChronoUnit.DAYS.between(LocalDate.now(), todo.getDeadline());
-            return;
+public record YesterdayResponseDto(
+        Long todoId,
+        Integer dDay,
+        Boolean isBookmark,
+        Boolean isRepeat,
+        String content
+) {
+    public static YesterdayResponseDto of(Todo todo) {
+        Integer dDay = null;
+        if (todo.getDeadline() != null) {
+            dDay = (int) ChronoUnit.DAYS.between(LocalDate.now(), todo.getDeadline());
         }
-        this.dDay = null;
-    }
 
-    private boolean hasDeadline(Todo todo) {
-        return todo.getDeadline() != null;
+        return new YesterdayResponseDto(
+                todo.getId(),
+                dDay,
+                todo.isBookmark(),
+                todo.isRepeat(),
+                todo.getContent()
+        );
     }
 }

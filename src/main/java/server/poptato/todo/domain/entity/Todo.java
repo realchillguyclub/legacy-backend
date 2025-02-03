@@ -12,8 +12,6 @@ import server.poptato.todo.domain.value.Type;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Entity
