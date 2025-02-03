@@ -154,7 +154,7 @@ public class AuthService {
      * @return 새로운 토큰 페어
      */
     public TokenPair refresh(final ReissueTokenRequestDto reissueTokenRequestDto) {
-        checkIsValidToken(reissueTokenRequestDto.refreshToken());
+        checkIsValidRefreshToken(reissueTokenRequestDto.refreshToken());
 
         final String userId = jwtService.getUserIdInToken(reissueTokenRequestDto.refreshToken());
         userValidator.checkIsExistUser(Long.parseLong(userId));
@@ -172,9 +172,9 @@ public class AuthService {
      * @param refreshToken 검증할 리프레시 토큰
      * @throws RuntimeException 토큰이 유효하지 않을 경우 예외 발생
      */
-    private void checkIsValidToken(String refreshToken) {
+    private void checkIsValidRefreshToken(String refreshToken) {
         try {
-            jwtService.verifyToken(refreshToken);
+            jwtService.verifyRefreshToken(refreshToken);
             jwtService.compareRefreshToken(jwtService.getUserIdInToken(refreshToken), refreshToken);
         } catch (Exception e) {
             throw e;
