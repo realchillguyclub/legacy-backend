@@ -82,7 +82,7 @@ jobs:
 
       # 9. S3 버킷으로 파일 업로드
       - name: 🚛 S3에 파일 업로드
-        run: aws s3 cp build-${{ env.TIMESTAMP }}-${{ github.sha }}.zip s3://${{ secrets.S3_BUCKET_NAME }}/prod/build-${{ env.TIMESTAMP }}-${{ github.sha }}.zip
+        run: aws s3 cp build-${{ env.TIMESTAMP }}-${{ github.sha }}.zip s3://${{ secrets.S3_BUCKET_NAME }}/test/build-${{ env.TIMESTAMP }}-${{ github.sha }}.zip
 
       # 10. CodeDeploy를 통해 배포 수행
       - name: 🚀 CodeDeploy로 EC2 배포
