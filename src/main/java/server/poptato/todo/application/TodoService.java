@@ -26,6 +26,7 @@ import server.poptato.user.validator.UserValidator;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -218,20 +219,74 @@ public class TodoService {
         }
     }
 
+    /**
+     * 특정 할 일의 어제 완료 상태를 업데이트합니다.
+     *
+     * - 할 일이 미완료(INCOMPLETE) 상태라면, 어제 완료(COMPLETED) 상태로 변경하고
+     *   완료 시간을 "어제 날짜의 23:59"로 저장합니다.
+     * - 할 일이 완료(COMPLETED) 상태라면, 다시 미완료(INCOMPLETE) 상태로 변경하고
+     *   백로그 순서를 고려하여 업데이트합니다.
+     * - 완료된 날짜 기록(CompletedDateTime)이 존재하지 않으면 예외를 발생시킵니다.
+     *
+     * @param findTodo 업데이트할 할 일 객체
+     */
     private void updateYesterdayIsCompleted(Todo findTodo) {
         if (TodayStatus.INCOMPLETE.equals(findTodo.getTodayStatus())) {
+            // 어제 날짜를 23:59로 설정하여 완료 상태 업데이트
+            LocalDateTime yesterday = LocalDateTime.of(findTodo.getTodayDate(), LocalTime.of(23, 59));
             findTodo.updateYesterdayToCompleted();
-            completedDateTimeRepository.save(new CompletedDateTime(findTodo.getId(), LocalDateTime.now()));
+            completedDateTimeRepository.save(new CompletedDateTime(findTodo.getId(), yesterday));
+            return;
+        }
+        if (TodayStatus.COMPLETED.equals(findTodo.getTodayStatus())) {
+            // 미완료로 변경하며, 백로그의 최소 순서를 가져와 반영
+            Integer minBacklogOrder = todoRepository.findMinBacklogOrderByUserIdOrZero(findTodo.getUserId());
+            findTodo.updateYesterdayToInComplete(minBacklogOrder);
+
+            // 기존 완료 기록이 존재하면 삭제, 없으면 예외 발생
+            CompletedDateTime completedDateTime = completedDateTimeRepository.findByDateAndTodoId(findTodo.getId(), findTodo.getTodayDate())
+                    .orElseThrow(() -> new CustomException(TodoErrorStatus._COMPLETED_DATETIME_NOT_EXIST));
+            completedDateTimeRepository.delete(completedDateTime);
         }
     }
 
+    /**
+     * 특정 할 일의 오늘 완료 상태를 업데이트합니다.
+     *
+     * - 할 일이 미완료(INCOMPLETE) 상태라면, 오늘 완료(COMPLETED) 상태로 변경하고
+     *   완료 시간을 현재 시간(now)으로 저장합니다.
+     * - 할 일이 완료(COMPLETED) 상태라면, 다시 미완료(INCOMPLETE) 상태로 변경하고
+     *   오늘의 최소 순서를 고려하여 업데이트합니다.
+     * - 완료된 날짜 기록(CompletedDateTime)이 존재하지 않으면 예외를 발생시킵니다.
+     *
+     * @param findTodo 업데이트할 할 일 객체
+     * @param now 현재 시간
+     */
     private void updateTodayIsCompleted(Todo findTodo, LocalDateTime now) {
         if (TodayStatus.INCOMPLETE.equals(findTodo.getTodayStatus())) {
+            // 오늘 완료 상태로 변경하고 현재 시간을 완료 시간으로 저장
             findTodo.updateTodayToCompleted();
             completedDateTimeRepository.save(new CompletedDateTime(findTodo.getId(), now));
+            return;
+        }
+        if (TodayStatus.COMPLETED.equals(findTodo.getTodayStatus())) {
+            // 미완료로 변경하며, 오늘의 최소 순서를 가져와 반영
+            Integer minTodayOrder = todoRepository.findMinTodayOrderByUserIdOrZero(findTodo.getUserId());
+            findTodo.updateTodayToInComplete(minTodayOrder);
+
+            // 기존 완료 기록이 존재하면 삭제, 없으면 예외 발생
+            CompletedDateTime completedDateTime = completedDateTimeRepository.findByDateAndTodoId(findTodo.getId(), findTodo.getTodayDate())
+                    .orElseThrow(() -> new CustomException(TodoErrorStatus._COMPLETED_DATETIME_NOT_EXIST));
+            completedDateTimeRepository.delete(completedDateTime);
         }
     }
 
+    /**
+     * 주어진 타입이 "어제(YESTERDAY)"인지 확인합니다.
+     *
+     * @param type 확인할 타입
+     * @return 주어진 타입이 YESTERDAY이면 true, 그렇지 않으면 false
+     */
     private boolean isTypeYesterday(Type type) {
         return type.equals(Type.YESTERDAY);
     }
