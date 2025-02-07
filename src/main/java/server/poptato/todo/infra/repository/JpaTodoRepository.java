@@ -85,7 +85,7 @@ public interface JpaTodoRepository extends TodoRepository, JpaRepository<Todo, L
     @Query("SELECT t FROM Todo t WHERE t.userId = :userId AND t.deadline = :deadline")
     List<Todo> findTodosDueToday(@Param("userId") Long userId, @Param("deadline") LocalDate deadline);
 
-    @Modifying
+    @Modifying(clearAutomatically=true)
     @Query("""
     UPDATE Todo t
     SET t.type = 'TODAY',
