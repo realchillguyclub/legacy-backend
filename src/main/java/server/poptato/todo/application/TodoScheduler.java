@@ -1,5 +1,7 @@
 package server.poptato.todo.application;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
@@ -26,6 +28,8 @@ public class TodoScheduler {
     private final UserRepository userRepository;
     private final MobileRepository mobileRepository;
     private final FCMService fcmService;
+    @PersistenceContext
+    private EntityManager entityManager;
 
     /**
      * 매일 자정에 할 일의 상태(Type)를 업데이트하고 마감 알림을 전송합니다.
@@ -49,6 +53,7 @@ public class TodoScheduler {
         Map<Long, List<Todo>> userIdAndTodaysMap = updateTodays(updatedTodoIds, userIdToStartingOrder);
         List<Todo> yesterdayTodos = updateYesterdays(updatedTodoIds, userIdToStartingOrder);
         save(userIdAndTodaysMap, yesterdayTodos);
+        updateDeadlineTodo();
     }
 
     /**
@@ -135,6 +140,47 @@ public class TodoScheduler {
         for (Todo todo : yesterdayTodos) {
             todoRepository.save(todo);
         }
+    }
+
+    /**
+     * 마감기한 날짜가 된 할 일을 오늘 할 일로 옮깁니다.
+     *
+     */
+    private void updateDeadlineTodo() {
+        List<Long> userIds = userRepository.findAllUserIds();
+        LocalDate today = LocalDate.now();
+
+        updateBacklogTodosToTodayWithBatch(userIds, today);
+    }
+
+    /**
+     * 백로그를 오늘 할 일로 옮기는 배치작업을 진행합니다.
+     * @param userIds 전체 사용자 ID
+     * @param todayDate 오늘 날짜
+     *
+     */
+    @Transactional
+    private void updateBacklogTodosToTodayWithBatch(List<Long> userIds, LocalDate todayDate) {
+        int batchSize = 50;
+        List<List<Long>> userBatches = partitionList(userIds, batchSize);
+        for (List<Long> batch : userBatches) {
+            todoRepository.updateBacklogTodosToToday(batch, 0, todayDate);
+            entityManager.flush();
+            entityManager.clear();
+        }
+    }
+
+    /**
+     * 유저 아이디 리스트를 배치 사이즈로 나누는 작업을 합니다.
+     * @param userIds 전체 사용자 ID
+     * @param batchSize 배치사이즈
+     */
+    private List<List<Long>> partitionList(List<Long> userIds, int batchSize) {
+        List<List<Long>> partitions = new ArrayList<>();
+        for (int i = 0; i < userIds.size(); i += batchSize) {
+            partitions.add(userIds.subList(i, Math.min(i + batchSize, userIds.size())));
+        }
+        return partitions;
     }
 
     /**
