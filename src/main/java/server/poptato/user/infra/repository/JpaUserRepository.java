@@ -6,9 +6,14 @@ import org.springframework.data.jpa.repository.Query;
 import server.poptato.user.domain.entity.User;
 import server.poptato.user.domain.repository.UserRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface JpaUserRepository extends UserRepository, JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.socialId = :socialId")
     Optional<User> findBySocialId(@Param("socialId") String socialId);
+
+    @Query("SELECT u.id FROM User u")
+    List<Long> findAllUserIds();
+
 }
