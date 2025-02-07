@@ -3,6 +3,7 @@ package server.poptato.todo.infra.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import server.poptato.todo.domain.entity.Todo;
@@ -83,4 +84,20 @@ public interface JpaTodoRepository extends TodoRepository, JpaRepository<Todo, L
 
     @Query("SELECT t FROM Todo t WHERE t.userId = :userId AND t.deadline = :deadline")
     List<Todo> findTodosDueToday(@Param("userId") Long userId, @Param("deadline") LocalDate deadline);
+
+    @Modifying
+    @Query("""
+    UPDATE Todo t
+    SET t.type = 'TODAY',
+        t.todayOrder = :basicTodayOrder,
+        t.todayStatus = 'INCOMPLETE',
+        t.todayDate = :todayDate,
+        t.backlogOrder = NULL
+    WHERE t.type = 'BACKLOG'
+    AND t.deadline = :todayDate
+    AND t.userId IN :userIds
+""")
+    void updateBacklogTodosToToday(@Param("userIds") List<Long> userIds,
+                                  @Param("basicTodayOrder") Integer basicTodayOrder,
+                                  @Param("todayDate") LocalDate todayDate);
 }
