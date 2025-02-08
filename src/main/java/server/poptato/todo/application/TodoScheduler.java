@@ -148,23 +148,20 @@ public class TodoScheduler {
      */
     private void updateDeadlineTodo() {
         List<Long> userIds = userRepository.findAllUserIds();
-        LocalDate today = LocalDate.now();
-
-        updateBacklogTodosToTodayWithBatch(userIds, today);
+        updateBacklogTodosToTodayWithBatch(userIds);
     }
 
     /**
      * 백로그를 오늘 할 일로 옮기는 배치작업을 진행합니다.
      * @param userIds 전체 사용자 ID
-     * @param todayDate 오늘 날짜
      *
      */
     @Transactional
-    private void updateBacklogTodosToTodayWithBatch(List<Long> userIds, LocalDate todayDate) {
+    private void updateBacklogTodosToTodayWithBatch(List<Long> userIds) {
         int batchSize = 50;
         List<List<Long>> userBatches = partitionList(userIds, batchSize);
         for (List<Long> batch : userBatches) {
-            todoRepository.updateBacklogTodosToToday(batch, 0, todayDate);
+            todoRepository.updateBacklogTodosToToday(batch, 0);
             entityManager.flush();
             entityManager.clear();
         }

@@ -63,6 +63,5 @@ public interface TodoRepository {
     List<Todo> findTodosDueToday(@Param("userId") Long userId, LocalDate deadline);
 
     void updateBacklogTodosToToday(@Param("userIds") List<Long> userIds,
-                                   @Param("basicTodayOrder") Integer basicTodayOrder,
-                                   @Param("todayDate") LocalDate todayDate);
+                                   @Param("basicTodayOrder") Integer basicTodayOrder);
 }

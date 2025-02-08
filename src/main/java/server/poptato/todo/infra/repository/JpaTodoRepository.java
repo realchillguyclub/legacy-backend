@@ -94,10 +94,9 @@ public interface JpaTodoRepository extends TodoRepository, JpaRepository<Todo, L
         t.todayDate = :todayDate,
         t.backlogOrder = NULL
     WHERE t.type = 'BACKLOG'
-    AND t.deadline = :todayDate
+    AND t.deadline = CURRENT_DATE
     AND t.userId IN :userIds
 """)
     void updateBacklogTodosToToday(@Param("userIds") List<Long> userIds,
-                                  @Param("basicTodayOrder") Integer basicTodayOrder,
-                                  @Param("todayDate") LocalDate todayDate);
+                                  @Param("basicTodayOrder") Integer basicTodayOrder);
 }
