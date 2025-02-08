@@ -159,7 +159,7 @@ public class TodoScheduler {
     @Transactional
     private void updateBacklogTodosToTodayWithBatch(List<Long> userIds) {
         int batchSize = 50;
-        List<List<Long>> userBatches = partitionList(userIds, batchSize);
+        List<List<Long>> userBatches = splitListIntoBatches(userIds, batchSize);
         for (List<Long> batch : userBatches) {
             todoRepository.updateBacklogTodosToToday(batch, 0);
             entityManager.flush();
@@ -172,7 +172,7 @@ public class TodoScheduler {
      * @param userIds 전체 사용자 ID
      * @param batchSize 배치사이즈
      */
-    private List<List<Long>> partitionList(List<Long> userIds, int batchSize) {
+    private List<List<Long>> splitListIntoBatches(List<Long> userIds, int batchSize) {
         List<List<Long>> partitions = new ArrayList<>();
         for (int i = 0; i < userIds.size(); i += batchSize) {
             partitions.add(userIds.subList(i, Math.min(i + batchSize, userIds.size())));
