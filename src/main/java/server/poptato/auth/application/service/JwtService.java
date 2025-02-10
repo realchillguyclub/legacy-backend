@@ -81,9 +81,9 @@ public class JwtService {
         try {
             final Claims claims = getBody(token);
         } catch (ExpiredJwtException e) {
-            throw new CustomException(AuthErrorStatus._TOKEN_TIME_EXPIRED);
+            throw new CustomException(AuthErrorStatus._EXPIRED_ACCESS_TOKEN);
         } catch (UnsupportedJwtException | SignatureException | MalformedJwtException e) {
-            throw new CustomException(AuthErrorStatus._INVALID_TOKEN);
+            throw new CustomException(AuthErrorStatus._INVALID_ACCESS_TOKEN);
         } catch (RuntimeException e) {
             throw e;
         }
@@ -221,7 +221,7 @@ public class JwtService {
      */
     public Long extractUserIdFromToken(String authorization) {
         if (authorization == null || !authorization.startsWith("Bearer ")) {
-            throw new CustomException(AuthErrorStatus._TOKEN_NOT_EXIST);
+            throw new CustomException(AuthErrorStatus._NOT_EXIST_ACCESS_TOKEN);
         }
         String token = authorization.substring("Bearer ".length());
         verifyToken(token);

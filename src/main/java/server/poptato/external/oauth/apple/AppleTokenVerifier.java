@@ -44,9 +44,9 @@ public class AppleTokenVerifier {
                             .getBody()
             )).getAsJsonObject();
         } catch (ExpiredJwtException e) {
-            throw new CustomException(AuthErrorStatus._TOKEN_TIME_EXPIRED);
+            throw new CustomException(AuthErrorStatus._EXPIRED_APPLE_ID_TOKEN);
         } catch (JwtException e) {
-            throw new CustomException(AuthErrorStatus._INVALID_TOKEN);
+            throw new CustomException(AuthErrorStatus._INVALID_APPLE_ID_TOKEN);
         }
     }
 
