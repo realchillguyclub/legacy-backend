@@ -17,6 +17,7 @@ public enum AuthErrorStatus implements BaseErrorCode {
     _PUBLIC_KEY_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH-006", "공개 키 생성에 실패했습니다."),
     _INVALID_USER_ID_IN_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH-007", "토큰 내 USER_ID가 유효하지 않습니다."),
     _PUBLIC_KEY_REQUEST_FAILED(HttpStatus.UNAUTHORIZED, "AUTH-008", "Apple 서버에서 공개 키를 가져올 수 없습니다."),
+    _HAS_NOT_NEW_APPLE_USER_NAME(HttpStatus.UNAUTHORIZED, "AUTH-009", "[애플] 신규 유저의 name이 존재하지 않습니다."),
     ;
 
     private final HttpStatus httpStatus;
