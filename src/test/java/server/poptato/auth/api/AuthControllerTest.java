@@ -47,10 +47,12 @@ public class AuthControllerTest extends ControllerTestConfig {
         Mockito.when(authService.login(any(LoginRequestDto.class))).thenReturn(response);
 
         LoginRequestDto request = new LoginRequestDto(
-                SocialType.KAKAO,
+                SocialType.APPLE,
                 "access-token",
                 MobileType.IOS,
-                "client-id"
+                "client-id",
+                "sanghoHan",
+                "1234@1234.com"
         );
 
         String requestContent = objectMapper.writeValueAsString(request);
@@ -86,7 +88,9 @@ public class AuthControllerTest extends ControllerTestConfig {
                                                 fieldWithPath("socialType").type(JsonFieldType.STRING).description("소셜 타입 (예: KAKAO, APPLE)"),
                                                 fieldWithPath("accessToken").type(JsonFieldType.STRING).description("소셜 인증 액세스 토큰"),
                                                 fieldWithPath("mobileType").type(JsonFieldType.STRING).description("모바일 타입 (예: IOS, ANDROID)"),
-                                                fieldWithPath("clientId").type(JsonFieldType.STRING).description("클라이언트 ID")
+                                                fieldWithPath("clientId").type(JsonFieldType.STRING).description("클라이언트 ID"),
+                                                fieldWithPath("name").type(JsonFieldType.STRING).description("유저 이름 (APPLE 로그인 시에만 필요)"),
+                                                fieldWithPath("email").type(JsonFieldType.STRING).description("유저 이메일 (APPLE 로그인 시에만 필요)")
                                         )
                                         .responseFields(
                                                 fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),

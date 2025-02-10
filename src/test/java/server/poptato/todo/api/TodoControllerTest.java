@@ -296,7 +296,7 @@ public class TodoControllerTest extends ControllerTestConfig {
     @DisplayName("할 일의 마감 기한을 업데이트한다.")
     public void updateDeadline() throws Exception {
         // given
-        DeadlineUpdateRequestDto request = new DeadlineUpdateRequestDto(LocalDate.of(2025, 2, 1));
+        DeadlineUpdateRequestDto request = new DeadlineUpdateRequestDto(LocalDate.of(2099, 1, 1));
         Mockito.doNothing().when(todoService).updateDeadline(anyLong(), anyLong(), any(DeadlineUpdateRequestDto.class));
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
 
