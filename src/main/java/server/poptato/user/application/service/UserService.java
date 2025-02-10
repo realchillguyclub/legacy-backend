@@ -1,9 +1,11 @@
 package server.poptato.user.application.service;
 
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import server.poptato.auth.application.service.JwtService;
+import server.poptato.category.domain.repository.CategoryRepository;
 import server.poptato.user.domain.entity.DeleteReason;
 import server.poptato.user.domain.repository.DeleteReasonRepository;
 import server.poptato.user.domain.repository.MobileRepository;
@@ -27,6 +29,8 @@ public class UserService {
     private final UserValidator userValidator;
     private final DeleteReasonRepository deleteReasonRepository;
     private final MobileRepository mobileRepository;
+    private final CategoryRepository categoryRepository;
+    private final EntityManager entityManager;
 
     /**
      * 사용자 탈퇴 처리
@@ -38,12 +42,13 @@ public class UserService {
      * @param userDeleteRequestDTO 탈퇴 요청 데이터
      */
     public void deleteUser(Long userId, UserDeleteRequestDTO userDeleteRequestDTO) {
-        User user = userValidator.checkIsExistAndReturnUser(userId);
+        userValidator.checkIsExistAndReturnUser(userId);
         saveDeleteReasons(userId, userDeleteRequestDTO.reasons(), userDeleteRequestDTO.userInputReason());
-        todoRepository.deleteAllByUserId(userId);
-        mobileRepository.deleteAllByUserId(userId);
+        userRepository.deleteById(userId);
+        categoryRepository.deleteByUserId(userId);
         jwtService.deleteRefreshToken(String.valueOf(userId));
-        userRepository.delete(user);
+        entityManager.flush();
+        entityManager.clear();
     }
 
     /**
