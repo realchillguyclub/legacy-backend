@@ -71,19 +71,38 @@ public class JwtService {
     }
 
     /**
-     * 토큰의 유효성을 검증합니다.
+     * 액세스 토큰의 유효성을 검증합니다.
      * 유효하지 않거나 만료된 토큰인 경우 예외를 발생시킵니다.
      *
-     * @param token 검증할 JWT 토큰
-     * @throws CustomException 토큰이 유효하지 않거나 만료된 경우
+     * @param token 검증할 액세스 토큰
+     * @throws CustomException 액세스 토큰이 유효하지 않거나 만료된 경우
      */
-    public void verifyToken(final String token) {
+    public void verifyAccessToken(final String token) {
         try {
             final Claims claims = getBody(token);
         } catch (ExpiredJwtException e) {
             throw new CustomException(AuthErrorStatus._EXPIRED_ACCESS_TOKEN);
         } catch (UnsupportedJwtException | SignatureException | MalformedJwtException e) {
             throw new CustomException(AuthErrorStatus._INVALID_ACCESS_TOKEN);
+        } catch (RuntimeException e) {
+            throw e;
+        }
+    }
+
+    /**
+     * 리프레쉬 토큰의 유효성을 검증합니다.
+     * 유효하지 않거나 만료된 토큰인 경우 예외를 발생시킵니다.
+     *
+     * @param token 검증할 리프레쉬 토큰
+     * @throws CustomException 리프레쉬 토큰이 유효하지 않거나 만료된 경우
+     */
+    public void verifyRefreshToken(final String token) {
+        try {
+            final Claims claims = getBody(token);
+        } catch (ExpiredJwtException e) {
+            throw new CustomException(AuthErrorStatus._EXPIRED_REFRESH_TOKEN);
+        } catch (UnsupportedJwtException | SignatureException | MalformedJwtException e) {
+            throw new CustomException(AuthErrorStatus._INVALID_REFRESH_TOKEN);
         } catch (RuntimeException e) {
             throw e;
         }
@@ -224,7 +243,7 @@ public class JwtService {
             throw new CustomException(AuthErrorStatus._NOT_EXIST_ACCESS_TOKEN);
         }
         String token = authorization.substring("Bearer ".length());
-        verifyToken(token);
+        verifyAccessToken(token);
         return Long.parseLong(getUserIdInToken(token));
     }
 }

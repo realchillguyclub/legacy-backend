@@ -182,7 +182,7 @@ public class AuthService {
      */
     private void checkIsValidToken(String refreshToken) {
         try {
-            jwtService.verifyToken(refreshToken);
+            jwtService.verifyRefreshToken(refreshToken);
             jwtService.compareRefreshToken(jwtService.getUserIdInToken(refreshToken), refreshToken);
         } catch (Exception e) {
             throw e;
