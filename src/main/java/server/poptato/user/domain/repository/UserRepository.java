@@ -9,7 +9,6 @@ public interface UserRepository {
     Optional<User> findBySocialId(String socialId);
     Optional<User> findById(Long userId);
     void delete(User user);
-    void deleteById(Long userId);
     User save(User user);
     List<User> findAll();
 }

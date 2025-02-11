@@ -1,6 +1,5 @@
 package server.poptato.user.application.service;
 
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -8,9 +7,7 @@ import server.poptato.auth.application.service.JwtService;
 import server.poptato.category.domain.repository.CategoryRepository;
 import server.poptato.user.domain.entity.DeleteReason;
 import server.poptato.user.domain.repository.DeleteReasonRepository;
-import server.poptato.user.domain.repository.MobileRepository;
 import server.poptato.user.domain.value.Reason;
-import server.poptato.todo.domain.repository.TodoRepository;
 import server.poptato.user.api.request.UserDeleteRequestDTO;
 import server.poptato.user.application.response.UserInfoResponseDto;
 import server.poptato.user.domain.entity.User;
@@ -24,13 +21,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
-    private final TodoRepository todoRepository;
     private final JwtService jwtService;
     private final UserValidator userValidator;
     private final DeleteReasonRepository deleteReasonRepository;
-    private final MobileRepository mobileRepository;
     private final CategoryRepository categoryRepository;
-    private final EntityManager entityManager;
 
     /**
      * 사용자 탈퇴 처리
@@ -42,13 +36,11 @@ public class UserService {
      * @param userDeleteRequestDTO 탈퇴 요청 데이터
      */
     public void deleteUser(Long userId, UserDeleteRequestDTO userDeleteRequestDTO) {
-        userValidator.checkIsExistAndReturnUser(userId);
+        User user = userValidator.checkIsExistAndReturnUser(userId);
         saveDeleteReasons(userId, userDeleteRequestDTO.reasons(), userDeleteRequestDTO.userInputReason());
-        userRepository.deleteById(userId);
+        userRepository.delete(user);
         categoryRepository.deleteByUserId(userId);
         jwtService.deleteRefreshToken(String.valueOf(userId));
-        entityManager.flush();
-        entityManager.clear();
     }
 
     /**
