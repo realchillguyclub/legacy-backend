@@ -64,7 +64,7 @@ class UserLifecycleTest extends ControllerTestConfig {
         todoService.updateIsCompleted(userId, todoId2, localDateTime);
 
         //when
-        userRepository.deleteById(userId);
+        userRepository.delete(newUser);
         entityManager.flush();
         entityManager.clear();
 
