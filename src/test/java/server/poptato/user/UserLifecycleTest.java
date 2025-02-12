@@ -49,7 +49,7 @@ class UserLifecycleTest extends ControllerTestConfig {
     void deleteUser_shouldDeleteCompletedDateTimeData() throws Exception {
         // given
         LocalDateTime localDateTime = LocalDateTime.now();
-        LoginRequestDto requestDto = new LoginRequestDto(SocialType.KAKAO, "valid-access-token", MobileType.ANDROID, "client-id");
+        LoginRequestDto requestDto = new LoginRequestDto(SocialType.KAKAO, "valid-access-token", MobileType.ANDROID, "client-id", "name", "email");
         SocialUserInfo userInfo = new SocialUserInfo("0000000000", "Tester1", "test@naver.com", null);
         User user = User.create(requestDto, userInfo, null);
         User newUser = userRepository.save(user);
