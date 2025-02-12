@@ -28,6 +28,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -53,6 +55,13 @@ public class TodoService {
         todoRepository.delete(findTodo);
     }
 
+    /**
+     * 특정 할 일을 조회하고 유효성 검사를 수행합니다.
+     *
+     * @param userId 사용자 ID
+     * @param todoId 할 일 ID
+     * @return 조회된 할 일 엔티티
+     */
     private Todo validateAndReturnTodo(Long userId, Long todoId) {
         Todo findTodo = todoRepository.findById(todoId)
                 .orElseThrow(() -> new CustomException(TodoErrorStatus._TODO_NOT_EXIST));
@@ -89,15 +98,31 @@ public class TodoService {
         swipeBacklogToToday(findTodo);
     }
 
+    /**
+     * 특정 할 일이 TODAY 타입인지 확인합니다.
+     *
+     * @param findTodo 할 일 객체
+     * @return TODAY 타입이면 true, 아니면 false
+     */
     private boolean isToday(Todo findTodo) {
         return findTodo.getType().equals(Type.TODAY);
     }
 
+    /**
+     * 백로그 할 일을 TODAY 할 일로 변경합니다.
+     *
+     * @param todo 변경할 할 일 객체
+     */
     private void swipeBacklogToToday(Todo todo) {
         Integer maxTodayOrder = todoRepository.findMaxTodayOrderByUserIdOrZero(todo.getUserId());
         todo.changeToToday(maxTodayOrder);
     }
 
+    /**
+     * TODAY 할 일을 백로그로 변경합니다.
+     *
+     * @param todo 변경할 할 일 객체
+     */
     private void swipeTodayToBacklog(Todo todo) {
         if (isCompletedTodo(todo)) {
             throw new CustomException(TodoErrorStatus._ALREADY_COMPLETED_TODO);
@@ -106,6 +131,12 @@ public class TodoService {
         todo.changeToBacklog(maxBacklogOrder);
     }
 
+    /**
+     * 특정 할 일이 완료 상태인지 확인합니다.
+     *
+     * @param todo 확인할 할 일 객체
+     * @return 완료 상태이면 true, 아니면 false
+     */
     private boolean isCompletedTodo(Todo todo) {
         return todo.getTodayStatus().equals(TodayStatus.COMPLETED);
     }
@@ -130,6 +161,15 @@ public class TodoService {
         reassignBacklogOrder(todos);
     }
 
+    /**
+     * 드래그 앤 드롭을 수행할 수 있는지 유효성 검사합니다.
+     * - 사용자가 해당 할 일의 소유자인지 확인
+     * - TODAY 할 일 중 이미 완료된 항목이 포함되어 있는지 확인
+     *
+     * @param userId 사용자 ID
+     * @param todos 검사할 할 일 목록
+     * @param requestDto 드래그 앤 드롭 요청 데이터
+     */
     private void checkIsValidToDragAndDrop(Long userId, List<Todo> todos, TodoDragAndDropRequestDto requestDto) {
         for (Todo todo : todos) {
             if (!todo.getUserId().equals(userId)) {
@@ -141,18 +181,68 @@ public class TodoService {
         }
     }
 
+    /**
+     * TODAY 할 일의 순서를 재할당합니다.
+     *
+     * @param todos 재할당할 할 일 목록
+     */
     private void reassignTodayOrder(List<Todo> todos) {
+        List<Integer> todayOrders = getTodayOrders(todos);
+        todayOrders.sort(Collections.reverseOrder());
         for (int i = 0; i < todos.size(); i++) {
-            todos.get(i).setTodayOrder(i);
+            todos.get(i).setTodayOrder(todayOrders.get(i));
+            todoRepository.save(todos.get(i));
         }
     }
 
+    /**
+     * BACKLOG 할 일의 순서를 재할당합니다.
+     *
+     * @param todos 재할당할 할 일 목록
+     */
     private void reassignBacklogOrder(List<Todo> todos) {
+        List<Integer> backlogOrders = getBacklogOrders(todos);
+        backlogOrders.sort(Collections.reverseOrder());
         for (int i = 0; i < todos.size(); i++) {
-            todos.get(i).setBacklogOrder(i);
+            todos.get(i).setBacklogOrder(backlogOrders.get(i));
+            todoRepository.save(todos.get(i));
         }
     }
 
+    /**
+     * TODAY 할 일의 정렬 순서를 가져옵니다.
+     *
+     * @param todos 할 일 목록
+     * @return todayOrder 값 목록
+     */
+    private List<Integer> getTodayOrders(List<Todo> todos) {
+        List<Integer> todayOrders = new ArrayList<>();
+        for (Todo todo : todos) {
+            todayOrders.add(todo.getTodayOrder());
+        }
+        return todayOrders;
+    }
+
+    /**
+     * BACKLOG 할 일의 정렬 순서를 가져옵니다.
+     *
+     * @param todos 할 일 목록
+     * @return backlogOrder 값 목록
+     */
+    private List<Integer> getBacklogOrders(List<Todo> todos) {
+        List<Integer> backlogOrders = new ArrayList<>();
+        for (Todo todo : todos) {
+            backlogOrders.add(todo.getBacklogOrder());
+        }
+        return backlogOrders;
+    }
+
+    /**
+     * 주어진 Type이 TODAY인지 확인합니다.
+     *
+     * @param type 확인할 Type 값
+     * @return Type이 TODAY이면 true, 아니면 false
+     */
     private boolean isTypeToday(Type type) {
         return type.equals(Type.TODAY);
     }
