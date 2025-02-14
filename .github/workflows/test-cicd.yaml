@@ -17,18 +17,12 @@ jobs:
       - name: ✅ 브랜치 체크아웃
         uses: actions/checkout@v3
 
-      # 2. 단위 테스트에대한 환경변수 설정
-      - name: SET application-test.yml
-        run:
-          mkdir -p src/test/resources
-          echo "${{ secrets.APPLICATION_TEST_YML }}" | base64 --decode > src/test/resources/application-test.yml
-
-      # 3. Gradle로 프로젝트 빌드
+      # 2. Gradle로 프로젝트 빌드
       - name: 📦 프로젝트 빌드
         run: ./gradlew clean build
 
 
-      # 4. 빌드 결과를 아티팩트로 저장
+      # 3. 빌드 결과를 아티팩트로 저장
       - name: 📦 빌드 결과 저장
         uses: actions/upload-artifact@v4
         with:
