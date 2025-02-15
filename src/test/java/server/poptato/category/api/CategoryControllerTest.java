@@ -21,6 +21,7 @@ import server.poptato.category.application.response.CategoryCreateResponseDto;
 import server.poptato.category.application.response.CategoryListResponseDto;
 import server.poptato.category.application.response.CategoryResponseDto;
 import server.poptato.configuration.ControllerTestConfig;
+import server.poptato.user.domain.value.MobileType;
 
 import java.util.List;
 
@@ -107,7 +108,7 @@ public class CategoryControllerTest extends ControllerTestConfig {
 
         Mockito.when(jwtService.extractUserIdFromToken("Bearer sampleToken"))
                 .thenReturn(1L);
-        Mockito.when(categoryService.getCategories(any(Long.class), anyInt(), anyInt())).thenReturn(response);
+        Mockito.when(categoryService.getCategories(any(Long.class), any(MobileType.class), anyInt(), anyInt())).thenReturn(response);
 
         // when
         ResultActions resultActions = this.mockMvc.perform(
