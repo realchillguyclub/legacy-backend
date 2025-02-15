@@ -12,6 +12,7 @@ import server.poptato.category.application.response.CategoryCreateResponseDto;
 import server.poptato.category.application.response.CategoryListResponseDto;
 import server.poptato.global.response.ApiResponse;
 import server.poptato.global.response.status.SuccessStatus;
+import server.poptato.user.domain.value.MobileType;
 
 @RestController
 @RequestMapping("/category")
@@ -46,6 +47,7 @@ public class CategoryController {
      * 페이지 번호와 페이지 크기를 쿼리 파라미터로 전달하며, 기본값은 첫 페이지(0), 항목 수는 6개입니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
+     * @param mobileType 클라이언트 운영체제
      * @param page 요청 페이지 번호 (기본값: 0)
      * @param size 한 페이지당 항목 수 (기본값: 6)
      * @return 카테고리 목록과 페이징 정보를 포함한 응답
@@ -53,10 +55,11 @@ public class CategoryController {
     @GetMapping("/list")
     public ResponseEntity<ApiResponse<CategoryListResponseDto>> getCategories(
             @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam(required = false, defaultValue = "ANDROID") MobileType mobileType,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "6") int size
     ) {
-        CategoryListResponseDto response = categoryService.getCategories(jwtService.extractUserIdFromToken(authorizationHeader), page, size);
+        CategoryListResponseDto response = categoryService.getCategories(jwtService.extractUserIdFromToken(authorizationHeader), mobileType, page, size);
         return ApiResponse.onSuccess(SuccessStatus._OK, response);
     }
 
