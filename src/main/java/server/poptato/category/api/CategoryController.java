@@ -55,7 +55,7 @@ public class CategoryController {
     @GetMapping("/list")
     public ResponseEntity<ApiResponse<CategoryListResponseDto>> getCategories(
             @RequestHeader("Authorization") String authorizationHeader,
-            @RequestParam(required = false, defaultValue = "ANDROID") MobileType mobileType,
+            @RequestParam(value = "mobileType", defaultValue = "ANDROID") MobileType mobileType,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "6") int size
     ) {

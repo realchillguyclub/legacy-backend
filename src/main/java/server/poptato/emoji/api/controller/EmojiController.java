@@ -28,7 +28,7 @@ public class EmojiController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<EmojiResponseDto>> getCategories(
-            @RequestParam(required = false, defaultValue = "ANDROID") MobileType mobileType,
+            @RequestParam(value = "mobileType", defaultValue = "ANDROID") MobileType mobileType,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "70") int size
     ) {
