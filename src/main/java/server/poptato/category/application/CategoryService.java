@@ -40,6 +40,7 @@ public class CategoryService {
 
     private static final Long ALL_CATEGORY = -1L;
     private static final Long BOOKMARK_CATEGORY = 0L;
+    private static final String DEFAULT_IMAGE_URL_EXTENSION = ".svg";
 
     /**
      * 카테고리를 생성합니다.
@@ -99,7 +100,7 @@ public class CategoryService {
      * @return 확장자가 바뀐 이미지 url
      */
     private String changeFileExtension(String imageUrl, String extension) {
-        return imageUrl.replace(".sgv", extension);
+        return imageUrl.replace(DEFAULT_IMAGE_URL_EXTENSION, extension);
     }
 
     /**

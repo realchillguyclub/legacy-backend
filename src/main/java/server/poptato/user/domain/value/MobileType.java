@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum MobileType {
-    ANDROID(".sgv"),
+    ANDROID(".svg"),
     IOS(".pdf");
 
     private final String imageUrlExtension;

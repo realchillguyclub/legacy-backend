@@ -20,6 +20,8 @@ public class EmojiService {
 
     private final EmojiRepository emojiRepository;
 
+    private static final String DEFAULT_IMAGE_URL_EXTENSION = ".svg";
+
     /**
      * 그룹화된 이모지 목록을 페이지네이션 형식으로 조회합니다.
      *
@@ -60,6 +62,6 @@ public class EmojiService {
     }
 
     private String changeFileExtension(String imageUrl, String extension) {
-        return imageUrl.replace(".svg", extension);
+        return imageUrl.replace(DEFAULT_IMAGE_URL_EXTENSION, extension);
     }
 }
