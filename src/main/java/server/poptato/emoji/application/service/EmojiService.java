@@ -60,6 +60,6 @@ public class EmojiService {
     }
 
     private String changeFileExtension(String imageUrl, String extension) {
-        return imageUrl.replace(".sgv", extension);
+        return imageUrl.replace(".svg", extension);
     }
 }
