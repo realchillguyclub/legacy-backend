@@ -18,6 +18,10 @@ public enum AuthErrorStatus implements BaseErrorCode {
     _INVALID_USER_ID_IN_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH-007", "토큰 내 USER_ID가 유효하지 않습니다."),
     _EXPIRED_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH-008", "리프레쉬 토큰이 만료되었습니다."),
     _INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH-009", "리프레쉬 토큰이 유효하지 않습니다."),
+    _PUBLIC_KEY_REQUEST_FAILED(HttpStatus.UNAUTHORIZED, "AUTH-010", "Apple 서버에서 공개 키를 가져올 수 없습니다."),
+    _HAS_NOT_NEW_APPLE_USER_NAME(HttpStatus.UNAUTHORIZED, "AUTH-011", "[애플] 신규 유저의 name이 존재하지 않습니다."),
+    _EXPIRED_APPLE_ID_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH-012", "[애플] ID 토큰이 만료되었습니다."),
+    _INVALID_APPLE_ID_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH-013", "[애플] ID 토큰이 유효하지 않습니다."),
     ;
 
     private final HttpStatus httpStatus;
