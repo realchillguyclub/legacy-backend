@@ -158,10 +158,11 @@ public class TodoScheduler {
      */
     @Transactional
     private void updateBacklogTodosToTodayWithBatch(List<Long> userIds) {
+        LocalDate today = LocalDate.now();
         int batchSize = 50;
         List<List<Long>> userBatches = splitListIntoBatches(userIds, batchSize);
         for (List<Long> batch : userBatches) {
-            todoRepository.updateBacklogTodosToToday(batch, 0);
+            todoRepository.updateBacklogTodosToToday(today, batch, 0);
             entityManager.flush();
             entityManager.clear();
         }

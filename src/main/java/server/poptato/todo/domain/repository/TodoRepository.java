@@ -62,6 +62,7 @@ public interface TodoRepository {
     void deleteAllByCategoryId(Long categoryId);
     List<Todo> findTodosDueToday(@Param("userId") Long userId, LocalDate deadline);
 
-    void updateBacklogTodosToToday(@Param("userIds") List<Long> userIds,
+    void updateBacklogTodosToToday(@Param("today") LocalDate today,
+                                   @Param("userIds") List<Long> userIds,
                                    @Param("basicTodayOrder") Integer basicTodayOrder);
 }
