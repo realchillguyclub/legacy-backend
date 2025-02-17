@@ -78,7 +78,7 @@ public class TodoController {
     }
 
     /**
-     * 할 일 순서 변경 API.
+     * 할 일 드래그 앤 드롭 API.
      *
      * 사용자가 드래그 앤 드롭 방식으로 할 일 순서를 변경합니다.
      *
