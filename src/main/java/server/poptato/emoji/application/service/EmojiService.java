@@ -8,6 +8,7 @@ import server.poptato.emoji.application.response.EmojiDto;
 import server.poptato.emoji.application.response.EmojiResponseDto;
 import server.poptato.emoji.domain.entity.Emoji;
 import server.poptato.emoji.domain.repository.EmojiRepository;
+import server.poptato.global.util.FileUtil;
 import server.poptato.user.domain.value.MobileType;
 
 import java.util.List;
@@ -19,8 +20,6 @@ import java.util.stream.Collectors;
 public class EmojiService {
 
     private final EmojiRepository emojiRepository;
-
-    private static final String DEFAULT_IMAGE_URL_EXTENSION = ".svg";
 
     /**
      * 그룹화된 이모지 목록을 페이지네이션 형식으로 조회합니다.
@@ -55,13 +54,10 @@ public class EmojiService {
                         emoji -> emoji.getGroupName().name(),
                         // 각 그룹의 이모지를 EmojiDTO로 변환 후 리스트로 저장
                         Collectors.mapping(
-                                emoji -> new EmojiDto(emoji.getId(), changeFileExtension(emoji.getImageUrl(), extension)),
+                                emoji -> new EmojiDto(emoji.getId(), FileUtil.changeFileExtension(emoji.getImageUrl(), extension)),
                                 Collectors.toList()
                         )
                 ));
     }
 
-    private String changeFileExtension(String imageUrl, String extension) {
-        return imageUrl.replace(DEFAULT_IMAGE_URL_EXTENSION, extension);
-    }
 }

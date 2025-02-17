@@ -17,6 +17,7 @@ import server.poptato.category.validator.CategoryValidator;
 import server.poptato.emoji.domain.repository.EmojiRepository;
 import server.poptato.emoji.validator.EmojiValidator;
 import server.poptato.global.exception.CustomException;
+import server.poptato.global.util.FileUtil;
 import server.poptato.todo.domain.repository.TodoRepository;
 import server.poptato.user.domain.value.MobileType;
 import server.poptato.user.domain.value.SocialType;
@@ -40,7 +41,6 @@ public class CategoryService {
 
     private static final Long ALL_CATEGORY = -1L;
     private static final Long BOOKMARK_CATEGORY = 0L;
-    private static final String DEFAULT_IMAGE_URL_EXTENSION = ".svg";
 
     /**
      * 카테고리를 생성합니다.
@@ -85,22 +85,12 @@ public class CategoryService {
         List<CategoryResponseDto> categoryResponseDtoList = categories.stream()
                 .map(category -> {
                     String imageUrl = emojiRepository.findImageUrlById(category.getEmojiId());
-                    String modifiedImageUrl = changeFileExtension(imageUrl, extension);
+                    String modifiedImageUrl = FileUtil.changeFileExtension(imageUrl, extension);
                     return CategoryResponseDto.of(category, modifiedImageUrl);
                 })
                 .collect(Collectors.toList());
 
         return new CategoryListResponseDto(categoryResponseDtoList, categories.getTotalPages());
-    }
-
-    /**
-     * 파일의 확장자명을 mobileType에 맞게 변환합니다.
-     * @param imageUrl 기존 이미지 url
-     * @param extension 유저의 모바일 타입에 대해 이미지에 적용할 확장자
-     * @return 확장자가 바뀐 이미지 url
-     */
-    private String changeFileExtension(String imageUrl, String extension) {
-        return imageUrl.replace(DEFAULT_IMAGE_URL_EXTENSION, extension);
     }
 
     /**
