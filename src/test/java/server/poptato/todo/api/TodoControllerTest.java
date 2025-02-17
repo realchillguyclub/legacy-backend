@@ -424,7 +424,7 @@ public class TodoControllerTest extends ControllerTestConfig {
                                         .tag("Todo API")
                                         .description("할 일의 완료 상태를 업데이트한다.")
                                         .pathParameters(
-                                                parameterWithName("todoId").description("완료 상태로 변경할 할 일 ID")
+                                                parameterWithName("todoId").description("완료 or 미완료 상태로 변경할 할 일 ID")
                                         )
                                         .responseFields(
                                                 fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),

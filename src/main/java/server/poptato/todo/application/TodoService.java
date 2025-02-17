@@ -27,10 +27,10 @@ import server.poptato.user.validator.UserValidator;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 @Transactional
 @RequiredArgsConstructor
@@ -91,21 +91,11 @@ public class TodoService {
     public void swipe(Long userId, SwipeRequestDto swipeRequestDto) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, swipeRequestDto.todoId());
-        if (isToday(findTodo)) {
+        if (Type.TODAY == findTodo.getType()) {
             swipeTodayToBacklog(findTodo);
-            return;
+        } else if (Type.BACKLOG == findTodo.getType()) {
+            swipeBacklogToToday(findTodo);
         }
-        swipeBacklogToToday(findTodo);
-    }
-
-    /**
-     * 특정 할 일이 TODAY 타입인지 확인합니다.
-     *
-     * @param findTodo 할 일 객체
-     * @return TODAY 타입이면 true, 아니면 false
-     */
-    private boolean isToday(Todo findTodo) {
-        return findTodo.getType().equals(Type.TODAY);
     }
 
     /**
@@ -124,21 +114,11 @@ public class TodoService {
      * @param todo 변경할 할 일 객체
      */
     private void swipeTodayToBacklog(Todo todo) {
-        if (isCompletedTodo(todo)) {
+        if (TodayStatus.COMPLETED == todo.getTodayStatus()) {
             throw new CustomException(TodoErrorStatus._ALREADY_COMPLETED_TODO);
         }
         Integer maxBacklogOrder = todoRepository.findMaxBacklogOrderByUserIdOrZero(todo.getUserId());
         todo.changeToBacklog(maxBacklogOrder);
-    }
-
-    /**
-     * 특정 할 일이 완료 상태인지 확인합니다.
-     *
-     * @param todo 확인할 할 일 객체
-     * @return 완료 상태이면 true, 아니면 false
-     */
-    private boolean isCompletedTodo(Todo todo) {
-        return todo.getTodayStatus().equals(TodayStatus.COMPLETED);
     }
 
     /**
@@ -149,102 +129,48 @@ public class TodoService {
      */
     public void dragAndDrop(Long userId, TodoDragAndDropRequestDto requestDto) {
         userValidator.checkIsExistUser(userId);
+
         List<Todo> todos = requestDto.todoIds().stream()
-                .map(todoId -> todoRepository.findById(todoId)
-                        .orElseThrow(() -> new CustomException(TodoErrorStatus._TODO_NOT_EXIST)))
-                .collect(Collectors.toList());
-        checkIsValidToDragAndDrop(userId, todos, requestDto);
-        if (isTypeToday(requestDto.type())) {
-            reassignTodayOrder(todos);
-            return;
-        }
-        reassignBacklogOrder(todos);
-    }
+                .map(todoId -> {
+                    Todo todo = todoRepository.findById(todoId)
+                            .orElseThrow(() -> new CustomException(TodoErrorStatus._TODO_NOT_EXIST));
+                    if (!todo.getUserId().equals(userId)) {
+                        // 사용자의 할 일이 아닌 경우
+                        throw new CustomException(TodoErrorStatus._TODO_USER_NOT_MATCH);
+                    }
+                    return todo;
+                })
+                .toList();
 
-    /**
-     * 드래그 앤 드롭을 수행할 수 있는지 유효성 검사합니다.
-     * - 사용자가 해당 할 일의 소유자인지 확인
-     * - TODAY 할 일 중 이미 완료된 항목이 포함되어 있는지 확인
-     *
-     * @param userId 사용자 ID
-     * @param todos 검사할 할 일 목록
-     * @param requestDto 드래그 앤 드롭 요청 데이터
-     */
-    private void checkIsValidToDragAndDrop(Long userId, List<Todo> todos, TodoDragAndDropRequestDto requestDto) {
-        for (Todo todo : todos) {
-            if (!todo.getUserId().equals(userId)) {
-                throw new CustomException(TodoErrorStatus._TODO_USER_NOT_MATCH);
-            }
-            if (requestDto.type().equals(Type.TODAY) && todo.getTodayStatus() == TodayStatus.COMPLETED) {
-                throw new CustomException(TodoErrorStatus._ALREADY_COMPLETED_TODO);
-            }
+        if (Type.TODAY == requestDto.type()) {
+            reassignOrder(todos, Todo::getTodayOrder, Todo::setTodayOrder);
+        } else if (Type.BACKLOG == requestDto.type()) {
+            reassignOrder(todos, Todo::getBacklogOrder, Todo::setBacklogOrder);
         }
     }
 
     /**
-     * TODAY 할 일의 순서를 재할당합니다.
+     * 할 일 목록의 정렬 순서를 재할당하는 공통 메서드.
      *
      * @param todos 재할당할 할 일 목록
+     * @param getOrder 각 할 일의 기존 순서를 가져오는 함수
+     * @param setOrder 각 할 일에 새로운 순서를 설정하는 함수
      */
-    private void reassignTodayOrder(List<Todo> todos) {
-        List<Integer> todayOrders = getTodayOrders(todos);
-        todayOrders.sort(Collections.reverseOrder());
+    private void reassignOrder(List<Todo> todos,
+                               Function<Todo, Integer> getOrder,
+                               BiConsumer<Todo, Integer> setOrder) {
+        // 기존 순서를 가져와 내림차순으로 정렬
+        List<Integer> orders = todos.stream()
+                .map(getOrder)
+                .sorted(Collections.reverseOrder())
+                .toList();
+
+        // 정렬된 순서를 각 할 일에 재할당하고 저장
         for (int i = 0; i < todos.size(); i++) {
-            todos.get(i).setTodayOrder(todayOrders.get(i));
-            todoRepository.save(todos.get(i));
+            Todo todo = todos.get(i);
+            setOrder.accept(todo, orders.get(i));
+            todoRepository.save(todo);
         }
-    }
-
-    /**
-     * BACKLOG 할 일의 순서를 재할당합니다.
-     *
-     * @param todos 재할당할 할 일 목록
-     */
-    private void reassignBacklogOrder(List<Todo> todos) {
-        List<Integer> backlogOrders = getBacklogOrders(todos);
-        backlogOrders.sort(Collections.reverseOrder());
-        for (int i = 0; i < todos.size(); i++) {
-            todos.get(i).setBacklogOrder(backlogOrders.get(i));
-            todoRepository.save(todos.get(i));
-        }
-    }
-
-    /**
-     * TODAY 할 일의 정렬 순서를 가져옵니다.
-     *
-     * @param todos 할 일 목록
-     * @return todayOrder 값 목록
-     */
-    private List<Integer> getTodayOrders(List<Todo> todos) {
-        List<Integer> todayOrders = new ArrayList<>();
-        for (Todo todo : todos) {
-            todayOrders.add(todo.getTodayOrder());
-        }
-        return todayOrders;
-    }
-
-    /**
-     * BACKLOG 할 일의 정렬 순서를 가져옵니다.
-     *
-     * @param todos 할 일 목록
-     * @return backlogOrder 값 목록
-     */
-    private List<Integer> getBacklogOrders(List<Todo> todos) {
-        List<Integer> backlogOrders = new ArrayList<>();
-        for (Todo todo : todos) {
-            backlogOrders.add(todo.getBacklogOrder());
-        }
-        return backlogOrders;
-    }
-
-    /**
-     * 주어진 Type이 TODAY인지 확인합니다.
-     *
-     * @param type 확인할 Type 값
-     * @return Type이 TODAY이면 true, 아니면 false
-     */
-    private boolean isTypeToday(Type type) {
-        return type.equals(Type.TODAY);
     }
 
     /**
@@ -300,11 +226,9 @@ public class TodoService {
     public void updateIsCompleted(Long userId, Long todoId, LocalDateTime now) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
-        if (isTypeYesterday(findTodo.getType())) {
+        if (Type.YESTERDAY == findTodo.getType()) {
             updateYesterdayIsCompleted(findTodo);
-            return;
-        }
-        if (isTypeToday(findTodo.getType())) {
+        } else if (Type.TODAY == findTodo.getType()) {
             updateTodayIsCompleted(findTodo, now);
         }
     }
@@ -369,16 +293,6 @@ public class TodoService {
                     .orElseThrow(() -> new CustomException(TodoErrorStatus._COMPLETED_DATETIME_NOT_EXIST));
             completedDateTimeRepository.delete(completedDateTime);
         }
-    }
-
-    /**
-     * 주어진 타입이 "어제(YESTERDAY)"인지 확인합니다.
-     *
-     * @param type 확인할 타입
-     * @return 주어진 타입이 YESTERDAY이면 true, 그렇지 않으면 false
-     */
-    private boolean isTypeYesterday(Type type) {
-        return type.equals(Type.YESTERDAY);
     }
 
     /**
