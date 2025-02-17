@@ -17,7 +17,10 @@ import server.poptato.category.validator.CategoryValidator;
 import server.poptato.emoji.domain.repository.EmojiRepository;
 import server.poptato.emoji.validator.EmojiValidator;
 import server.poptato.global.exception.CustomException;
+import server.poptato.global.util.FileUtil;
 import server.poptato.todo.domain.repository.TodoRepository;
+import server.poptato.user.domain.value.MobileType;
+import server.poptato.user.domain.value.SocialType;
 import server.poptato.user.validator.UserValidator;
 
 import java.util.ArrayList;
@@ -64,11 +67,11 @@ public class CategoryService {
      * @param size 한 페이지에 포함할 카테고리 수
      * @return 카테고리 목록 및 페이징 정보
      */
-    public CategoryListResponseDto getCategories(Long userId, int page, int size) {
+    public CategoryListResponseDto getCategories(Long userId, MobileType mobileType, int page, int size) {
         userValidator.checkIsExistUser(userId);
         PageRequest pageRequest = PageRequest.of(page, size);
         Page<Category> categories = categoryRepository.findCategories(userId, pageRequest);
-        return convertToCategoryListDto(categories);
+        return convertToCategoryListDto(categories, mobileType);
     }
 
     /**
@@ -77,11 +80,13 @@ public class CategoryService {
      * @param categories 카테고리 페이지 객체
      * @return 변환된 카테고리 목록 DTO
      */
-    private CategoryListResponseDto convertToCategoryListDto(Page<Category> categories) {
+    private CategoryListResponseDto convertToCategoryListDto(Page<Category> categories, MobileType mobileType) {
+        String extension = mobileType.getImageUrlExtension();
         List<CategoryResponseDto> categoryResponseDtoList = categories.stream()
                 .map(category -> {
                     String imageUrl = emojiRepository.findImageUrlById(category.getEmojiId());
-                    return CategoryResponseDto.of(category, imageUrl);
+                    String modifiedImageUrl = FileUtil.changeFileExtension(imageUrl, extension);
+                    return CategoryResponseDto.of(category, modifiedImageUrl);
                 })
                 .collect(Collectors.toList());
 
