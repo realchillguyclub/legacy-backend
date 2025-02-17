@@ -160,15 +160,25 @@ public class TodoService {
                                Function<Todo, Integer> getOrder,
                                BiConsumer<Todo, Integer> setOrder) {
         // 기존 순서를 가져와 내림차순으로 정렬
-        List<Integer> orders = todos.stream()
-                .map(getOrder)
+        List<Integer> newOrders = todos.stream()
+                .map(todo -> {
+                    if (TodayStatus.COMPLETED == todo.getTodayStatus()) {
+                        // 완료된 할 일은 순서를 -1로 설정
+                        return -1;
+                    }
+                    return getOrder.apply(todo);
+                })
                 .sorted(Collections.reverseOrder())
                 .toList();
 
         // 정렬된 순서를 각 할 일에 재할당하고 저장
-        for (int i = 0; i < todos.size(); i++) {
-            Todo todo = todos.get(i);
-            setOrder.accept(todo, orders.get(i));
+        for (int todoIndex = 0; todoIndex < todos.size(); todoIndex++) {
+            Todo todo = todos.get(todoIndex);
+            if (TodayStatus.COMPLETED == todo.getTodayStatus()) {
+                // 완료된 할 일은 순서 수정 x
+                continue;
+            }
+            setOrder.accept(todo, newOrders.get(todoIndex));
             todoRepository.save(todo);
         }
     }
