@@ -51,7 +51,7 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<SuccessStatus>> logout(
             @RequestHeader("Authorization") String authorizationHeader,
-            @RequestParam FCMTokenRequestDto fcmTokenRequestDto
+            @RequestBody FCMTokenRequestDto fcmTokenRequestDto
             ) {
         authService.logout(jwtService.extractUserIdFromToken(authorizationHeader), fcmTokenRequestDto);
         return ApiResponse.onSuccess(SuccessStatus._OK);
