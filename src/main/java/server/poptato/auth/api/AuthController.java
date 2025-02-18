@@ -3,6 +3,7 @@ package server.poptato.auth.api;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import server.poptato.auth.api.request.FCMTokenRequestDto;
 import server.poptato.auth.api.request.LoginRequestDto;
 import server.poptato.auth.api.request.ReissueTokenRequestDto;
 import server.poptato.auth.application.response.LoginResponseDto;
@@ -50,9 +51,9 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<SuccessStatus>> logout(
             @RequestHeader("Authorization") String authorizationHeader,
-            @RequestParam("clientId") String clientId
-    ) {
-        authService.logout(jwtService.extractUserIdFromToken(authorizationHeader), clientId);
+            @RequestParam FCMTokenRequestDto fcmTokenRequestDto
+            ) {
+        authService.logout(jwtService.extractUserIdFromToken(authorizationHeader), fcmTokenRequestDto);
         return ApiResponse.onSuccess(SuccessStatus._OK);
     }
 
@@ -71,5 +72,22 @@ public class AuthController {
     ) {
         TokenPair response = authService.refresh(reissueTokenRequestDto);
         return ApiResponse.onSuccess(SuccessStatus._OK, response);
+    }
+
+    /**
+     * FCM토큰 timestamp갱신 API.
+     *
+     * 앱을 실행시 해당 fcm토큰 의 timestamp를 갱신합니다.
+     * 등록된 토큰이 아닐경우 토큰을 등록합니다.
+     *
+     * @param fcmTokenRequestDto 토큰 갱신 요청 정보 (기존 리프레시 토큰)
+     * @return 새로 발급된 액세스 토큰과 리프레시 토큰
+     */
+    @PostMapping("/refresh/fcm")
+    public ResponseEntity<ApiResponse<SuccessStatus>> refreshFCMToken(
+            @RequestBody FCMTokenRequestDto fcmTokenRequestDto
+    ) {
+        authService.refreshFCMToken(fcmTokenRequestDto);
+        return ApiResponse.onSuccess(SuccessStatus._OK);
     }
 }

@@ -9,4 +9,5 @@ public interface MobileRepository {
     void deleteAllByUserId(Long userId);
     void deleteByClientId(String clientId);
     Optional<Mobile> findByUserId(Long userId);
+    Optional<Mobile> findByClientId(String clientId);
 }

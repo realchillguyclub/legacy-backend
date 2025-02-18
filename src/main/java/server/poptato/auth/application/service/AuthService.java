@@ -2,6 +2,7 @@ package server.poptato.auth.application.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import server.poptato.auth.api.request.FCMTokenRequestDto;
 import server.poptato.auth.api.request.LoginRequestDto;
 import server.poptato.auth.api.request.ReissueTokenRequestDto;
 import server.poptato.auth.application.response.LoginResponseDto;
@@ -139,9 +140,9 @@ public class AuthService {
      *
      * @param userId 로그아웃할 유저 ID
      */
-    public void logout(final Long userId, String clientId) {
+    public void logout(final Long userId, FCMTokenRequestDto fcmTokenRequestDto) {
         userValidator.checkIsExistUser(userId);
-        mobileRepository.deleteByClientId(clientId);
+        mobileRepository.deleteByClientId(fcmTokenRequestDto.clientId());
         jwtService.deleteRefreshToken(String.valueOf(userId));
     }
 
@@ -177,6 +178,20 @@ public class AuthService {
             jwtService.compareRefreshToken(jwtService.getUserIdInToken(refreshToken), refreshToken);
         } catch (Exception e) {
             throw e;
+        }
+    }
+
+    /**
+     * FCM토큰의 timestamp를 갱신합니다
+     *
+     * @param fcmTokenRequestDto 토큰 정보
+     */
+    public void refreshFCMToken(FCMTokenRequestDto fcmTokenRequestDto) {
+        Optional<Mobile> existingMobile = mobileRepository.findByClientId(fcmTokenRequestDto.clientId());
+        if (existingMobile.isPresent()) {
+            Mobile mobile = existingMobile.get();
+            mobile.setModifyDate(LocalDateTime.now());
+            mobileRepository.save(mobile);
         }
     }
 }
