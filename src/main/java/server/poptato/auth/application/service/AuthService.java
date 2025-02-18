@@ -22,6 +22,7 @@ import server.poptato.user.domain.value.SocialType;
 import server.poptato.user.validator.UserValidator;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -48,34 +49,23 @@ public class AuthService {
         Optional<User> findUser = userRepository.findBySocialId(userInfo.socialId());
         if (findUser.isEmpty()) {
             User newUser = saveNewData(request, userInfo);
-            saveOrUpdateFcmToken(newUser.getId(), request);
+            saveFcmToken(newUser.getId(), request);
             return createLoginResponse(newUser.getId(), true);
         }
         updateImage(findUser.get(), userInfo);
-        saveOrUpdateFcmToken(findUser.get().getId(), request);
+        saveFcmToken(findUser.get().getId(), request);
         return createLoginResponse(findUser.get().getId(), false);
     }
 
     /**
-     * FCM 토큰 저장 및 업데이트 메서드.
-     * 기존에 저장된 FCM 토큰이 없을 경우 저장하며, 클라이언트 ID가 변경된 경우 업데이트합니다.
+     * FCM 토큰 저장한다
      *
      * @param userId 유저 ID
      * @param request 로그인 요청 정보
      */
-    private void saveOrUpdateFcmToken(Long userId, LoginRequestDto request) {
-        Optional<Mobile> existingMobile = mobileRepository.findByUserId(userId);
-        if (existingMobile.isEmpty()) {
-            Mobile newMobile = Mobile.create(request, userId);
-            mobileRepository.save(newMobile);
-        } else {
-            Mobile mobile = existingMobile.get();
-            if (!mobile.getClientId().equals(request.clientId())) {
-                mobile.setClientId(request.clientId());
-                mobile.setModifyDate(LocalDateTime.now());
-                mobileRepository.save(mobile);
-            }
-        }
+    private void saveFcmToken(Long userId, LoginRequestDto request) {
+        Mobile newMobile = Mobile.create(request, userId);
+        mobileRepository.save(newMobile);
     }
 
     /**
