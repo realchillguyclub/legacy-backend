@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.web.servlet.ResultActions;
+import server.poptato.auth.api.request.FCMTokenRequestDto;
 import server.poptato.auth.api.request.LoginRequestDto;
 import server.poptato.auth.api.request.ReissueTokenRequestDto;
 import server.poptato.auth.application.response.LoginResponseDto;
@@ -115,10 +116,18 @@ public class AuthControllerTest extends ControllerTestConfig {
         Mockito.when(jwtService.extractUserIdFromToken("Bearer sampleToken"))
                 .thenReturn(1L);
 
+        FCMTokenRequestDto request = new FCMTokenRequestDto(
+                "client-id"
+        );
+
+        String requestContent = objectMapper.writeValueAsString(request);
+
         // when
         ResultActions resultActions = this.mockMvc.perform(
                 RestDocumentationRequestBuilders.post("/auth/logout")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer sampleToken")
+                        .content(requestContent)
+                        .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
         );
 
