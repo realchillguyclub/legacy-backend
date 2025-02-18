@@ -139,8 +139,9 @@ public class AuthService {
      *
      * @param userId 로그아웃할 유저 ID
      */
-    public void logout(final Long userId) {
+    public void logout(final Long userId, String clientId) {
         userValidator.checkIsExistUser(userId);
+        mobileRepository.deleteByClientId(clientId);
         jwtService.deleteRefreshToken(String.valueOf(userId));
     }
 

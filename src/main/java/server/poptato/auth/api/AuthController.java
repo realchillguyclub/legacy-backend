@@ -49,9 +49,10 @@ public class AuthController {
      */
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<SuccessStatus>> logout(
-            @RequestHeader("Authorization") String authorizationHeader
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam("clientId") String clientId
     ) {
-        authService.logout(jwtService.extractUserIdFromToken(authorizationHeader));
+        authService.logout(jwtService.extractUserIdFromToken(authorizationHeader), clientId);
         return ApiResponse.onSuccess(SuccessStatus._OK);
     }
 
