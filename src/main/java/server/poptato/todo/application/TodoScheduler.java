@@ -20,6 +20,7 @@ import server.poptato.user.domain.repository.MobileRepository;
 import server.poptato.user.domain.repository.UserRepository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,6 +43,7 @@ public class TodoScheduler {
         List<Long> updatedTodoIds = new ArrayList<>();
         updateTodo(updatedTodoIds);
         sendDeadlineNotifications();
+        deleteOldFcmTokens();
     }
 
     /**
@@ -235,6 +237,15 @@ public class TodoScheduler {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    /**
+     * 비활성 fcm토큰을 삭제하는 메서드.
+     * timestamp를 갱신한지 한달이 지난 fmc토큰을 삭제한다.
+     */
+        private void deleteOldFcmTokens() {
+        LocalDateTime oneMonthAgo = LocalDateTime.now().minusMonths(1);
+        mobileRepository.deleteOldTokens(oneMonthAgo);
     }
 
     /**
