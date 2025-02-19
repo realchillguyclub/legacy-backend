@@ -2,6 +2,8 @@ package server.poptato.auth.application.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import server.poptato.auth.api.request.FCMTokenRequestDto;
 import server.poptato.auth.api.request.LoginRequestDto;
 import server.poptato.auth.api.request.ReissueTokenRequestDto;
 import server.poptato.auth.application.response.LoginResponseDto;
@@ -19,6 +21,7 @@ import server.poptato.user.domain.entity.User;
 import server.poptato.user.domain.repository.MobileRepository;
 import server.poptato.user.domain.repository.UserRepository;
 import server.poptato.user.domain.value.SocialType;
+import server.poptato.user.status.MobileErrorStatus;
 import server.poptato.user.validator.UserValidator;
 
 import java.time.LocalDateTime;
@@ -48,34 +51,24 @@ public class AuthService {
         Optional<User> findUser = userRepository.findBySocialId(userInfo.socialId());
         if (findUser.isEmpty()) {
             User newUser = saveNewData(request, userInfo);
-            saveOrUpdateFcmToken(newUser.getId(), request);
+            saveFcmToken(newUser.getId(), request);
             return createLoginResponse(newUser.getId(), true);
         }
         updateImage(findUser.get(), userInfo);
-        saveOrUpdateFcmToken(findUser.get().getId(), request);
+        saveFcmToken(findUser.get().getId(), request);
         return createLoginResponse(findUser.get().getId(), false);
     }
 
     /**
-     * FCM 토큰 저장 및 업데이트 메서드.
-     * 기존에 저장된 FCM 토큰이 없을 경우 저장하며, 클라이언트 ID가 변경된 경우 업데이트합니다.
+     * FCM 토큰을 저장하는 메서드.
+     * FCM 토큰 저장한다.
      *
      * @param userId 유저 ID
      * @param request 로그인 요청 정보
      */
-    private void saveOrUpdateFcmToken(Long userId, LoginRequestDto request) {
-        Optional<Mobile> existingMobile = mobileRepository.findByUserId(userId);
-        if (existingMobile.isEmpty()) {
-            Mobile newMobile = Mobile.create(request, userId);
-            mobileRepository.save(newMobile);
-        } else {
-            Mobile mobile = existingMobile.get();
-            if (!mobile.getClientId().equals(request.clientId())) {
-                mobile.setClientId(request.clientId());
-                mobile.setModifyDate(LocalDateTime.now());
-                mobileRepository.save(mobile);
-            }
-        }
+    private void saveFcmToken(Long userId, LoginRequestDto request) {
+        Mobile newMobile = Mobile.create(request, userId);
+        mobileRepository.save(newMobile);
     }
 
     /**
@@ -149,8 +142,9 @@ public class AuthService {
      *
      * @param userId 로그아웃할 유저 ID
      */
-    public void logout(final Long userId) {
+    public void logout(final Long userId, FCMTokenRequestDto fcmTokenRequestDto) {
         userValidator.checkIsExistUser(userId);
+        mobileRepository.deleteByClientId(fcmTokenRequestDto.clientId());
         jwtService.deleteRefreshToken(String.valueOf(userId));
     }
 
@@ -187,5 +181,22 @@ public class AuthService {
         } catch (Exception e) {
             throw e;
         }
+    }
+
+    /**
+     * FCM토큰의 timestamp를 갱신하는 메서드.
+     * FCM토큰의 timestamp를 갱신합니다
+     *
+     * @param fcmTokenRequestDto 토큰 정보
+     */
+    @Transactional
+    public void refreshFCMToken(FCMTokenRequestDto fcmTokenRequestDto) {
+        Optional<Mobile> existingMobile = mobileRepository.findByClientId(fcmTokenRequestDto.clientId());
+        if (existingMobile.isPresent()) {
+            Mobile mobile = existingMobile.get();
+            mobile.setModifyDate(LocalDateTime.now());
+            return;
+        }
+        throw new CustomException(MobileErrorStatus._NOT_EXIST_FCM_TOKEN);
     }
 }

@@ -1,5 +1,7 @@
 package server.poptato.todo.application;
 
+import com.google.firebase.messaging.FirebaseMessagingException;
+import com.google.firebase.messaging.MessagingErrorCode;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
@@ -204,16 +206,33 @@ public class TodoScheduler {
      */
     private void sendFcmMessage(User user, List<Todo> todosDueToday) {
         if (!todosDueToday.isEmpty()) {
-            Optional<Mobile> mobile = mobileRepository.findByUserId(user.getId());
-            if (mobile.isPresent()) {
+            List<Mobile> mobiles = mobileRepository.findAllByUserId(user.getId());
+            for (Mobile mobile : mobiles) {
                 for (Todo todo : todosDueToday) {
                     String todoContent = formatTodoContent(todo);
-                    fcmService.sendPushNotification(
-                            mobile.get().getClientId(),
-                            "오늘 마감 예정인 할 일",
-                            todoContent
-                    );
+                    sendPushNotificationOrDeleteFcmToken(mobile.getClientId(), todoContent);
                 }
+            }
+        }
+    }
+
+    private void sendPushNotificationOrDeleteFcmToken(String clientId, String todoContent) {
+        try {
+            fcmService.sendPushNotification(
+                    clientId,
+                    "오늘 마감 예정인 할 일",
+                    todoContent
+            );
+        } catch (FirebaseMessagingException e) {
+            if (e.getMessagingErrorCode().equals(MessagingErrorCode.INVALID_ARGUMENT)) {
+                // 토큰이 유효하지 않은 경우
+                mobileRepository.deleteByClientId(clientId);
+            } else if (e.getMessagingErrorCode().equals(MessagingErrorCode.UNREGISTERED)) {
+                // 재발급된 이전 토큰인 경우
+                mobileRepository.deleteByClientId(clientId);
+            }
+            else {
+                throw new RuntimeException(e);
             }
         }
     }
