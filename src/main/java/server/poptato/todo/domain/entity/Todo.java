@@ -136,9 +136,9 @@ public class Todo{
         this.backlogOrder = null;
     }
 
-    public void updateYesterdayToInComplete(int minBacklogOrder) {
+    public void updateYesterdayToInComplete(int maxBacklogOrder) {
         this.todayStatus = TodayStatus.COMPLETED;
-        this.backlogOrder = --minBacklogOrder;
+        this.backlogOrder = ++maxBacklogOrder;
     }
 
     public void setType(Type type) {
