@@ -2,6 +2,7 @@ package server.poptato.auth.application.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import server.poptato.auth.api.request.FCMTokenRequestDto;
 import server.poptato.auth.api.request.LoginRequestDto;
 import server.poptato.auth.api.request.ReissueTokenRequestDto;
@@ -20,10 +21,10 @@ import server.poptato.user.domain.entity.User;
 import server.poptato.user.domain.repository.MobileRepository;
 import server.poptato.user.domain.repository.UserRepository;
 import server.poptato.user.domain.value.SocialType;
+import server.poptato.user.status.MobileErrorStatus;
 import server.poptato.user.validator.UserValidator;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -59,7 +60,8 @@ public class AuthService {
     }
 
     /**
-     * FCM 토큰 저장한다
+     * FCM 토큰을 저장하는 메서드.
+     * FCM 토큰 저장한다.
      *
      * @param userId 유저 ID
      * @param request 로그인 요청 정보
@@ -182,16 +184,19 @@ public class AuthService {
     }
 
     /**
+     * FCM토큰의 timestamp를 갱신하는 메서드.
      * FCM토큰의 timestamp를 갱신합니다
      *
      * @param fcmTokenRequestDto 토큰 정보
      */
+    @Transactional
     public void refreshFCMToken(FCMTokenRequestDto fcmTokenRequestDto) {
         Optional<Mobile> existingMobile = mobileRepository.findByClientId(fcmTokenRequestDto.clientId());
         if (existingMobile.isPresent()) {
             Mobile mobile = existingMobile.get();
             mobile.setModifyDate(LocalDateTime.now());
-            mobileRepository.save(mobile);
+            return;
         }
+        throw new CustomException(MobileErrorStatus._NOT_EXIST_FCM_TOKEN);
     }
 }
