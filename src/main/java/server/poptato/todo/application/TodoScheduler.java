@@ -206,7 +206,7 @@ public class TodoScheduler {
      */
     private void sendFcmMessage(User user, List<Todo> todosDueToday) {
         if (!todosDueToday.isEmpty()) {
-            List<Mobile> mobiles = mobileRepository.findByUserId(user.getId());
+            List<Mobile> mobiles = mobileRepository.findAllByUserId(user.getId());
             for (Mobile mobile : mobiles) {
                 for (Todo todo : todosDueToday) {
                     String todoContent = formatTodoContent(todo);

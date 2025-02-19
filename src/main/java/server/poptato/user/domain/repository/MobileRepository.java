@@ -9,6 +9,6 @@ public interface MobileRepository {
     Mobile save(Mobile mobile);
     void deleteAllByUserId(Long userId);
     void deleteByClientId(String clientId);
-    List<Mobile> findByUserId(Long userId);
+    List<Mobile> findAllByUserId(Long userId);
     Optional<Mobile> findByClientId(String clientId);
 }
