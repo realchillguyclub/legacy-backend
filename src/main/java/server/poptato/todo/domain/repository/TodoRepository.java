@@ -12,10 +12,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TodoRepository {
-    void deleteAllByUserId(Long userId);
 
-    List<Todo> findByUserIdAndTypeAndTodayDateAndTodayStatusOrderByTodayOrderDesc(
-            Long userId, Type type, LocalDate todayDate, TodayStatus todayStatus);
+    List<Todo> findByUserIdAndTypeAndTodayDateAndTodayStatusOrderByTodayOrderDesc(Long userId, Type type, LocalDate todayDate, TodayStatus todayStatus);
 
     List<Todo> findCompletedTodayByUserIdOrderByCompletedDateTimeAsc(Long userId, LocalDate todayDate);
 
@@ -24,18 +22,18 @@ public interface TodoRepository {
     void delete(Todo todo);
 
     Todo save(Todo todo);
-    Integer findMaxBacklogOrderByUserIdOrZero(Long userId);
+
+    Page<Todo> findByUserIdAndTypeAndTodayStatus(Long userId, Type type, TodayStatus todayStatus, Pageable pageable);
 
     Integer findMaxTodayOrderByUserIdOrZero(Long userId);
 
     Integer findMinTodayOrderByUserIdOrZero(Long userId);
 
-    Page<Todo> findByUserIdAndTypeAndTodayStatus(Long userId, Type type, TodayStatus todayStatus, Pageable pageable);
+    Integer findMaxBacklogOrderByUserIdOrZero(Long userId);
 
-    List<Todo> findByTypeAndTodayStatus(Type today, TodayStatus incomplete);
-
+    /* 25.02.20 : 미사용으로 인한 주석 처리
     Integer findMinBacklogOrderByUserIdOrZero(Long userId);
-
+     */
     default List<Todo> findIncompleteTodays(Long userId, Type type, LocalDate todayDate, TodayStatus todayStatus) {
         return findByUserIdAndTypeAndTodayDateAndTodayStatusOrderByTodayOrderDesc(
                 userId, type, todayDate, todayStatus);
@@ -50,8 +48,8 @@ public interface TodoRepository {
         return findTodosByUserIdAndCompletedDateTime(userId, localDate, pageable);
     }
     Page<Todo> findTodosByUserIdAndCompletedDateTime(Long userId, LocalDate localDate, Pageable pageable);
+
     List<Todo> findByType(Type type);
-    List<Todo> findByTypeAndUserId(Type type, Long userId);
 
     Page<Todo> findAllBacklogs(Long userId, List<Type> types, TodayStatus status, Pageable pageable);
 
@@ -60,6 +58,7 @@ public interface TodoRepository {
     Page<Todo> findBacklogsByCategoryId(Long userId, Long categoryId, List<Type> types, TodayStatus status, Pageable pageable);
 
     void deleteAllByCategoryId(Long categoryId);
+
     List<Todo> findTodosDueToday(@Param("userId") Long userId, LocalDate deadline);
 
     void updateBacklogTodosToToday(@Param("today") LocalDate today,
