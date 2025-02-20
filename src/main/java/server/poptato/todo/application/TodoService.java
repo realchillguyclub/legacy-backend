@@ -263,9 +263,9 @@ public class TodoService {
             return;
         }
         if (TodayStatus.COMPLETED.equals(findTodo.getTodayStatus())) {
-            // 미완료로 변경하며, 백로그의 최소 순서를 가져와 반영
-            Integer minBacklogOrder = todoRepository.findMinBacklogOrderByUserIdOrZero(findTodo.getUserId());
-            findTodo.updateYesterdayToInComplete(minBacklogOrder);
+            // 미완료로 변경하며, 백로그의 가장 맨 위에 들어가게 함
+            Integer maxBacklogOrder = todoRepository.findMaxBacklogOrderByUserIdOrZero(findTodo.getUserId() + 1);
+            findTodo.updateYesterdayToInComplete(maxBacklogOrder);
 
             // 기존 완료 기록이 존재하면 삭제, 없으면 예외 발생
             CompletedDateTime completedDateTime = completedDateTimeRepository.findByDateAndTodoId(findTodo.getId(), findTodo.getTodayDate())

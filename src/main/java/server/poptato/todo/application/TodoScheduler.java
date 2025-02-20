@@ -73,7 +73,7 @@ public class TodoScheduler {
                 .collect(Collectors.groupingBy(Todo::getUserId));
 
         userIdAndTodaysMap.forEach((userId, todos) -> {
-            userIdToStartingOrder.putIfAbsent(userId, todoRepository.findMinBacklogOrderByUserIdOrZero(userId) - 1);
+            userIdToStartingOrder.putIfAbsent(userId, todoRepository.findMaxBacklogOrderByUserIdOrZero(userId) + 1);
             int startingOrder = userIdToStartingOrder.get(userId);
 
             for (Todo todo : todos) {
@@ -81,7 +81,7 @@ public class TodoScheduler {
                     todo.setType(Type.BACKLOG);
                     todo.setTodayStatus(null);
                     todo.setTodayOrder(null);
-                    todo.setBacklogOrder(startingOrder--);
+                    todo.setBacklogOrder(startingOrder++);
                     updatedTodoIds.add(todo.getId());
                     continue;
                 }
@@ -89,7 +89,7 @@ public class TodoScheduler {
                 if (todo.getTodayStatus() == TodayStatus.INCOMPLETE) {
                     todo.setType(Type.YESTERDAY);
                     todo.setTodayOrder(null);
-                    todo.setBacklogOrder(startingOrder--);
+                    todo.setBacklogOrder(startingOrder++);
                     updatedTodoIds.add(todo.getId());
                 }
             }
@@ -109,21 +109,23 @@ public class TodoScheduler {
     private List<Todo> updateYesterdays(List<Long> updatedTodoIds, Map<Long, Integer> userIdToStartingOrder) {
         return todoRepository.findByType(Type.YESTERDAY)
                 .stream()
+                /* 25.02.20 : 미사용으로 인한 주석 처리
                 .filter(todo -> !updatedTodoIds.contains(todo.getId()))
+                */
                 .peek(todo -> {
                     Long userId = todo.getUserId();
 
-                    userIdToStartingOrder.putIfAbsent(userId, todoRepository.findMinBacklogOrderByUserIdOrZero(userId) - 1);
+                    userIdToStartingOrder.putIfAbsent(userId, todoRepository.findMaxBacklogOrderByUserIdOrZero(userId) + 1);
                     int startingOrder = userIdToStartingOrder.get(userId);
 
                     if (todo.getTodayStatus() == TodayStatus.INCOMPLETE) {
                         todo.setType(Type.BACKLOG);
                         todo.setTodayStatus(null);
-                        todo.setBacklogOrder(startingOrder--);
+                        todo.setBacklogOrder(startingOrder++);
                     } else if (todo.getTodayStatus() == TodayStatus.COMPLETED && todo.isRepeat()) {
                         todo.setType(Type.BACKLOG);
                         todo.setTodayStatus(null);
-                        todo.setBacklogOrder(startingOrder--);
+                        todo.setBacklogOrder(startingOrder++);
                     }
 
                     userIdToStartingOrder.put(userId, startingOrder);
@@ -138,7 +140,7 @@ public class TodoScheduler {
      * @param yesterdayTodos 업데이트된 어제의 할 일 목록
      */
     private void save(Map<Long, List<Todo>> userIdAndTodaysMap, List<Todo> yesterdayTodos) {
-        for (Todo todo : userIdAndTodaysMap.values().stream().flatMap(List::stream).collect(Collectors.toList())) {
+        for (Todo todo : userIdAndTodaysMap.values().stream().flatMap(List::stream).toList()) {
             todoRepository.save(todo);
         }
         for (Todo todo : yesterdayTodos) {
@@ -161,7 +163,7 @@ public class TodoScheduler {
      *
      */
     @Transactional
-    private void updateBacklogTodosToTodayWithBatch(List<Long> userIds) {
+    protected void updateBacklogTodosToTodayWithBatch(List<Long> userIds) {
         LocalDate today = LocalDate.now();
         int batchSize = 50;
         List<List<Long>> userBatches = splitListIntoBatches(userIds, batchSize);
@@ -255,6 +257,6 @@ public class TodoScheduler {
      * @return 포맷된 할 일 내용
      */
     private String formatTodoContent(Todo todo) {
-        return ": " + todo.getContent();
+        return todo.getContent();
     }
 }
