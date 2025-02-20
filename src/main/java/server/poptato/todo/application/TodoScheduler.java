@@ -243,7 +243,7 @@ public class TodoScheduler {
      * 비활성 fcm토큰을 삭제하는 메서드.
      * timestamp를 갱신한지 한달이 지난 fmc토큰을 삭제한다.
      */
-        private void deleteOldFcmTokens() {
+    private void deleteOldFcmTokens() {
         LocalDateTime oneMonthAgo = LocalDateTime.now().minusMonths(1);
         mobileRepository.deleteOldTokens(oneMonthAgo);
     }
