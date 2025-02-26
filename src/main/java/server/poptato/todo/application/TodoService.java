@@ -1,5 +1,7 @@
 package server.poptato.todo.application;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,6 +23,7 @@ import server.poptato.todo.domain.repository.CompletedDateTimeRepository;
 import server.poptato.todo.domain.repository.TodoRepository;
 import server.poptato.todo.domain.value.TodayStatus;
 import server.poptato.todo.domain.value.Type;
+import server.poptato.todo.infra.repository.JpaTodoRepository;
 import server.poptato.todo.status.TodoErrorStatus;
 import server.poptato.user.validator.UserValidator;
 
@@ -36,12 +39,16 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 @Service
 public class TodoService {
-    private final TodoRepository todoRepository;
-    private final CompletedDateTimeRepository completedDateTimeRepository;
     private final UserValidator userValidator;
     private final CategoryValidator categoryValidator;
+    private final TodoRepository todoRepository;
+    private final JpaTodoRepository jpaTodoRepository;
+    private final CompletedDateTimeRepository completedDateTimeRepository;
     private final CategoryRepository categoryRepository;
     private final EmojiRepository emojiRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     /**
      * 특정 할 일을 삭제합니다.
@@ -246,31 +253,36 @@ public class TodoService {
     /**
      * 특정 할 일의 어제 완료 상태를 업데이트합니다.
      *
-     * - 할 일이 미완료(INCOMPLETE) 상태라면, 어제 완료(COMPLETED) 상태로 변경하고
-     *   완료 시간을 "어제 날짜의 23:59"로 저장합니다.
-     * - 할 일이 완료(COMPLETED) 상태라면, 다시 미완료(INCOMPLETE) 상태로 변경하고
-     *   백로그 순서를 고려하여 업데이트합니다.
-     * - 완료된 날짜 기록(CompletedDateTime)이 존재하지 않으면 예외를 발생시킵니다.
+     * - 미완료(INCOMPLETE) 상태 → 완료(COMPLETED) 상태로 변경
+     * - 완료 시간을 "어제 날짜의 23:59"로 설정
+     * - 반복 할 일이면 새로운 백로그 할 일을 생성
      *
      * @param findTodo 업데이트할 할 일 객체
      */
     private void updateYesterdayIsCompleted(Todo findTodo) {
-        if (TodayStatus.INCOMPLETE.equals(findTodo.getTodayStatus())) {
-            // 어제 날짜를 23:59로 설정하여 완료 상태 업데이트
-            LocalDateTime yesterday = LocalDateTime.of(findTodo.getTodayDate(), LocalTime.of(23, 59));
-            findTodo.updateYesterdayToCompleted();
-            completedDateTimeRepository.save(new CompletedDateTime(findTodo.getId(), yesterday));
-            return;
-        }
-        if (TodayStatus.COMPLETED.equals(findTodo.getTodayStatus())) {
-            // 미완료로 변경하며, 백로그의 가장 맨 위에 들어가게 함
-            Integer maxBacklogOrder = todoRepository.findMaxBacklogOrderByUserIdOrZero(findTodo.getUserId() + 1);
-            findTodo.updateYesterdayToInComplete(maxBacklogOrder);
+        // 완료 처리
+        LocalDateTime yesterday = LocalDateTime.of(findTodo.getTodayDate(), LocalTime.of(23, 59));
+        findTodo.updateYesterdayToCompleted();
+        completedDateTimeRepository.save(
+                CompletedDateTime.builder()
+                        .todoId(findTodo.getId())
+                        .dateTime(yesterday)
+                        .build()
+        );
 
-            // 기존 완료 기록이 존재하면 삭제, 없으면 예외 발생
-            CompletedDateTime completedDateTime = completedDateTimeRepository.findByDateAndTodoId(findTodo.getId(), findTodo.getTodayDate())
-                    .orElseThrow(() -> new CustomException(TodoErrorStatus._COMPLETED_DATETIME_NOT_EXIST));
-            completedDateTimeRepository.delete(completedDateTime);
+        // 반복 할 일이라면, 새로운 객체를 백로그에 추가
+        if (findTodo.isRepeat()) {
+            Todo newRepeatedTodo = Todo.builder()
+                    .userId(findTodo.getUserId())
+                    .categoryId(findTodo.getCategoryId())
+                    .content(findTodo.getContent())
+                    .type(Type.BACKLOG)
+                    .todayStatus(TodayStatus.INCOMPLETE)
+                    .todayDate(LocalDate.now())
+                    .isRepeat(true)
+                    .deadline(findTodo.getDeadline())
+                    .build();
+            todoRepository.save(newRepeatedTodo);
         }
     }
 
@@ -303,6 +315,36 @@ public class TodoService {
                     .orElseThrow(() -> new CustomException(TodoErrorStatus._COMPLETED_DATETIME_NOT_EXIST));
             completedDateTimeRepository.delete(completedDateTime);
         }
+    }
+
+    /**
+     * 어제 한 일을 체크하고, 상태를 변경합니다.
+     *
+     * - 체크된 할 일들은 `COMPLETED` 상태로 변경됩니다.
+     * - 체크되지 않은 할 일들은 `BACKLOG`로 이동합니다.
+     *
+     * @param userId 사용자 ID
+     * @param request 체크된 할 일 목록 DTO
+     */
+    public void checkYesterdayTodos(Long userId, CheckYesterdayTodosRequestDto request) {
+        userValidator.checkIsExistUser(userId);
+        List<Todo> allYesterdays = todoRepository.findIncompleteYesterdays(userId);
+        List<Long> checkedTodoIds = request.todoIds();
+
+        // 1. 체크된 할 일들 (미완료 -> 완료)
+        List<Todo> completedTodos = allYesterdays.stream()
+                .filter(todo -> checkedTodoIds.contains(todo.getId()))
+                .peek(this::updateYesterdayIsCompleted)
+                .toList();
+
+        // 2. 체크되지 않은 할 일들 (BACKLOG로 이동)
+        List<Todo> backloggedTodos = allYesterdays.stream()
+                .filter(todo -> !checkedTodoIds.contains(todo.getId()))
+                .peek(todo -> todo.setType(Type.BACKLOG))
+                .toList();
+
+        completedTodos.forEach(todoRepository::save);
+        backloggedTodos.forEach(todoRepository::save);
     }
 
     /**
@@ -362,5 +404,23 @@ public class TodoService {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
         findTodo.updateIsRepeat();
+    }
+
+    /**
+     * 마감기한이 된 백로그 할 일들을 오늘 할 일(TODAY)로 변경합니다.
+     *
+     * - 백로그에서 마감기한(today)과 일치하는 할 일들을 찾아 TODAY 상태로 업데이트합니다.
+     * - 기본적인 todayOrder 값을 설정하여 정렬 순서를 유지합니다.
+     * - 엔티티 매니저를 활용하여 변경 사항을 즉시 반영하고, 영속성 컨텍스트를 비웁니다.
+     *
+     * @param today 오늘 날짜
+     * @param userIds 업데이트할 사용자 ID 목록
+     */
+    @Transactional
+    public void processUpdateDeadlineTodos(LocalDate today, List<Long> userIds) {
+        int basicTodayOrder = 0;
+        todoRepository.updateBacklogTodosToToday(today, userIds, basicTodayOrder);
+        entityManager.flush();
+        entityManager.clear();
     }
 }

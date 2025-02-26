@@ -100,4 +100,15 @@ public interface JpaTodoRepository extends TodoRepository, JpaRepository<Todo, L
     void updateBacklogTodosToToday(@Param("today") LocalDate today,
                                    @Param("userIds") List<Long> userIds,
                                    @Param("basicTodayOrder") Integer basicTodayOrder);
+
+    @Query("SELECT t FROM Todo t WHERE t.userId = :userId AND t.type = :type " +
+            "AND t.todayStatus = :status ORDER BY t.todayOrder DESC")
+    List<Todo> findIncompleteYesterdays(
+            @Param("userId") Long userId,
+            @Param("type") Type type,
+            @Param("status") TodayStatus status);
+
+    @Query("SELECT t FROM Todo t WHERE t.userId = :userId AND t.type = 'YESTERDAY' " +
+            "AND t.todayStatus = 'INCOMPLETE' ORDER BY t.todayOrder DESC")
+    List<Todo> findIncompleteYesterdays(@Param("userId") Long userId);
 }
