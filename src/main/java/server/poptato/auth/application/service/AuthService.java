@@ -67,6 +67,11 @@ public class AuthService {
      * @param request 로그인 요청 정보
      */
     private void saveFcmToken(Long userId, LoginRequestDto request) {
+        Optional<Mobile> existingMobile = mobileRepository.findByClientId(request.clientId());
+        if (existingMobile.isPresent()) {
+            return;
+        }
+
         Mobile newMobile = Mobile.create(request, userId);
         mobileRepository.save(newMobile);
     }
