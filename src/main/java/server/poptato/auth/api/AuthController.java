@@ -62,8 +62,9 @@ public class AuthController {
      *
      * 기존 리프레시 토큰을 사용하여 새로운 액세스 토큰과 리프레시 토큰을 발급받습니다.
      * 리프레시 토큰이 유효하지 않은 경우 예외가 발생합니다.
+     * 앱 실행시 fcm 토큰의 타임스탬프를 갱신합니다
      *
-     * @param reissueTokenRequestDto 토큰 갱신 요청 정보 (기존 리프레시 토큰)
+     * @param reissueTokenRequestDto 토큰 갱신 요청 정보 (기존 리프레시 토큰), fcm 토큰
      * @return 새로 발급된 액세스 토큰과 리프레시 토큰
      */
     @PostMapping("/refresh")
@@ -71,23 +72,8 @@ public class AuthController {
             @RequestBody ReissueTokenRequestDto reissueTokenRequestDto
     ) {
         TokenPair response = authService.refresh(reissueTokenRequestDto);
+        authService.refreshFCMToken(reissueTokenRequestDto);
         return ApiResponse.onSuccess(SuccessStatus._OK, response);
     }
 
-    /**
-     * FCM토큰 timestamp갱신 API.
-     *
-     * 앱을 실행시 해당 fcm토큰 의 timestamp를 갱신합니다.
-     * 등록된 토큰이 아닐경우 토큰을 등록합니다.
-     *
-     * @param fcmTokenRequestDto 토큰 갱신 요청 정보 (기존 리프레시 토큰)
-     * @return 새로 발급된 액세스 토큰과 리프레시 토큰
-     */
-    @PostMapping("/refresh/fcm")
-    public ResponseEntity<ApiResponse<SuccessStatus>> refreshFCMToken(
-            @RequestBody FCMTokenRequestDto fcmTokenRequestDto
-    ) {
-        authService.refreshFCMToken(fcmTokenRequestDto);
-        return ApiResponse.onSuccess(SuccessStatus._OK);
-    }
 }

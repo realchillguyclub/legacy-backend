@@ -187,11 +187,11 @@ public class AuthService {
      * FCM토큰의 timestamp를 갱신하는 메서드.
      * FCM토큰의 timestamp를 갱신합니다
      *
-     * @param fcmTokenRequestDto 토큰 정보
+     * @param reissueTokenRequestDto 토큰 정보
      */
     @Transactional
-    public void refreshFCMToken(FCMTokenRequestDto fcmTokenRequestDto) {
-        Optional<Mobile> existingMobile = mobileRepository.findByClientId(fcmTokenRequestDto.clientId());
+    public void refreshFCMToken(ReissueTokenRequestDto reissueTokenRequestDto) {
+        Optional<Mobile> existingMobile = mobileRepository.findByClientId(reissueTokenRequestDto.clientId());
         if (existingMobile.isPresent()) {
             Mobile mobile = existingMobile.get();
             mobile.setModifyDate(LocalDateTime.now());
