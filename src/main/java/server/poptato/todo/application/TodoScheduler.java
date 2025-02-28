@@ -13,7 +13,6 @@ import server.poptato.user.domain.repository.UserRepository;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -50,15 +49,12 @@ public class TodoScheduler {
      * @return 사용자 ID별 오늘의 할 일 목록
      */
     private Map<Long, List<Todo>> updateTodayTodos() {
-        Map<Long, Integer> userIdToStartingOrder = new HashMap<>();
         Map<Long, List<Todo>> userIdAndTodayTodosMap = todoRepository.findByType(Type.TODAY)
                 .stream()
                 .collect(Collectors.groupingBy(Todo::getUserId));
 
         userIdAndTodayTodosMap.forEach((userId, todos) -> {
-            int startingOrder = userIdToStartingOrder.computeIfAbsent(
-                    userId, id -> todoRepository.findMaxBacklogOrderByUserIdOrZero(id) + 1
-            );
+            int startingOrder = todoRepository.findMaxBacklogOrderByUserIdOrZero(userId) + 1;
 
             for (Todo todo : todos) {
                 if (todo.getTodayStatus() == TodayStatus.COMPLETED && todo.isRepeat()) {
