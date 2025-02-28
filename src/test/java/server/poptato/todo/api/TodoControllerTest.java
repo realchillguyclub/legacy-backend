@@ -633,4 +633,52 @@ public class TodoControllerTest extends ControllerTestConfig {
                         )
                 ));
     }
+
+    @Test
+    @DisplayName("어제 한 일을 체크한다.")
+    public void checkYesterdayTodos() throws Exception {
+        // given
+        CheckYesterdayTodosRequestDto request = new CheckYesterdayTodosRequestDto(List.of(1L, 2L, 3L));
+        Mockito.doNothing().when(todoService).checkYesterdayTodos(anyLong(), any(CheckYesterdayTodosRequestDto.class));
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
+
+        String requestContent = objectMapper.writeValueAsString(request);
+
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.post("/todo/check/yesterdays")
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .content(requestContent)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/check-yesterdays",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Todo-Yesterday API")
+                                        .description("어제 한 일을 체크한다.")
+                                        .requestFields(
+                                                fieldWithPath("todoIds").type(JsonFieldType.ARRAY).description("어제 한 일 중 체크된 할 일 ID 목록")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
+                                        )
+                                        .responseSchema(Schema.schema("BaseResponse"))
+                                        .build()
+                        )
+                ));
+    }
 }

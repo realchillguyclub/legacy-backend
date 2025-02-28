@@ -69,3 +69,8 @@ springdoc:
   api-docs:
     path: /v3/api-docs
   show-actuator: false
+
+scheduling:
+  todoCron: ${TODO_CRON}  # 할 일 상태 업데이트 스케줄
+  deadlineNotificationCron: ${DEADLINE_NOTIFICATION_CRON}  # 마감일 알림 스케줄
+  fcmCleanupCron: ${FCM_CLEANUP_CRON}  # 비활성 FCM 토큰 삭제 스케줄

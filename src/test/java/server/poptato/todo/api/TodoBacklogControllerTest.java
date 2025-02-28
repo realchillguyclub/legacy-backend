@@ -152,7 +152,7 @@ public class TodoBacklogControllerTest extends ControllerTestConfig {
     }
 
     @Test
-    @DisplayName("어제의 백로그를 조회한다.")
+    @DisplayName("어제의 미완료 할 일들을 조회한다.")
     public void getYesterdays() throws Exception {
         // given
         PaginatedYesterdayResponseDto response = new PaginatedYesterdayResponseDto(List.of(), 1);
@@ -182,8 +182,8 @@ public class TodoBacklogControllerTest extends ControllerTestConfig {
                         preprocessResponse(prettyPrint()),
                         resource(
                                 ResourceSnippetParameters.builder()
-                                        .tag("Todo-Backlog API")
-                                        .description("어제의 백로그를 조회한다.")
+                                        .tag("Todo-Yesterday API")
+                                        .description("어제의 미완료 할 일들을 조회한다.")
                                         .queryParameters(
                                                 parameterWithName("page").description("요청 페이지 번호"),
                                                 parameterWithName("size").description("페이지 크기")

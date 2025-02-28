@@ -12,5 +12,5 @@ public interface MobileRepository {
     void deleteByClientId(String clientId);
     List<Mobile> findAllByUserId(Long userId);
     Optional<Mobile> findByClientId(String clientId);
-    int deleteOldTokens(LocalDateTime localDateTime);
+    void deleteOldTokens(LocalDateTime localDateTime);
 }

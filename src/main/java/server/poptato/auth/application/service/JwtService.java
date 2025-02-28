@@ -3,9 +3,11 @@ package server.poptato.auth.application.service;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
+import io.lettuce.core.RedisCommandTimeoutException;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import server.poptato.auth.status.AuthErrorStatus;
@@ -141,9 +143,18 @@ public class JwtService {
      * @throws CustomException 저장된 리프레시 토큰과 일치하지 않을 경우
      */
     public void compareRefreshToken(final String userId, final String refreshToken) {
-        final String storedRefreshToken = redisTemplate.opsForValue().get(userId);
-        if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
-            throw new CustomException(AuthErrorStatus._DIFFERENT_REFRESH_TOKEN);
+        try {
+            final String storedRefreshToken = redisTemplate.opsForValue().get(userId);
+
+            if (storedRefreshToken == null) {
+                throw new CustomException(AuthErrorStatus._EXPIRED_OR_NOT_FOUND_REFRESH_TOKEN_IN_REDIS);
+            }
+
+            if (!storedRefreshToken.equals(refreshToken)) {
+                throw new CustomException(AuthErrorStatus._DIFFERENT_REFRESH_TOKEN);
+            }
+        } catch (RedisConnectionFailureException | RedisCommandTimeoutException e) {
+            throw new CustomException(AuthErrorStatus._REDIS_UNAVAILABLE);
         }
     }
 

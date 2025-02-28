@@ -14,6 +14,6 @@ public interface JpaMobileRepository extends MobileRepository, JpaRepository<Mob
 
     @Modifying
     @Transactional
-    @Query("DELETE FROM Mobile m WHERE m.modify_date < :localDateTime")
-    int deleteOldTokens(@Param("localDateTime") LocalDateTime localDateTime);
+    @Query("DELETE FROM Mobile m WHERE m.modifyDate < :localDateTime")
+    void deleteOldTokens(@Param("localDateTime") LocalDateTime localDateTime);
 }

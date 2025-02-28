@@ -31,9 +31,6 @@ public interface TodoRepository {
 
     Integer findMaxBacklogOrderByUserIdOrZero(Long userId);
 
-    /* 25.02.20 : 미사용으로 인한 주석 처리
-    Integer findMinBacklogOrderByUserIdOrZero(Long userId);
-     */
     default List<Todo> findIncompleteTodays(Long userId, Type type, LocalDate todayDate, TodayStatus todayStatus) {
         return findByUserIdAndTypeAndTodayDateAndTodayStatusOrderByTodayOrderDesc(
                 userId, type, todayDate, todayStatus);
@@ -47,6 +44,7 @@ public interface TodoRepository {
     default Page<Todo> findHistories(Long userId,LocalDate localDate, Pageable pageable) {
         return findTodosByUserIdAndCompletedDateTime(userId, localDate, pageable);
     }
+
     Page<Todo> findTodosByUserIdAndCompletedDateTime(Long userId, LocalDate localDate, Pageable pageable);
 
     List<Todo> findByType(Type type);
@@ -64,4 +62,12 @@ public interface TodoRepository {
     void updateBacklogTodosToToday(@Param("today") LocalDate today,
                                    @Param("userIds") List<Long> userIds,
                                    @Param("basicTodayOrder") Integer basicTodayOrder);
+
+    /**
+     * 어제 한 일 중 미완료된 할 일 목록 조회.
+     *
+     * @param userId 사용자 ID
+     * @return 미완료된 어제의 할 일 목록
+     */
+    List<Todo> findIncompleteYesterdays(Long userId);
 }
