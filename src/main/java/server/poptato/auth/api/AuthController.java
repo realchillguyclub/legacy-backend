@@ -72,7 +72,7 @@ public class AuthController {
             @RequestBody ReissueTokenRequestDto reissueTokenRequestDto
     ) {
         TokenPair response = authService.refresh(reissueTokenRequestDto);
-        authService.refreshFCMToken(reissueTokenRequestDto);
+        authService.refreshFCMToken(reissueTokenRequestDto.clientId());
         return ApiResponse.onSuccess(SuccessStatus._OK, response);
     }
 
