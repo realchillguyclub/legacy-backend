@@ -8,7 +8,7 @@ public record ReissueTokenRequestDto(
     String accessToken,
     @NotEmpty(message = "토큰 재발급 시 refreshToken은 필수입니다.")
     String refreshToken,
-    @NotBlank(message = "모바일 식별값은 필수입니다.")
+    @NotBlank(message = "fcm 토큰은 필수입니다.")
     String clientId
 ) {
 }
