@@ -12,7 +12,7 @@ public record LoginRequestDto(
         String accessToken,
         @NotNull(message = "로그인/회원가입 시 모바일 타입은 필수입니다.")
         MobileType mobileType,
-        @NotBlank(message = "로그인/회원가입 시 모바일 식별값은 필수입니다.")
+        @NotBlank(message = "로그인/회원가입 시 fcm 토큰은 필수입니다.")
         String clientId,
         String name,
         String email

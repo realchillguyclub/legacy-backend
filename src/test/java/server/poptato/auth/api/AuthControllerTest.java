@@ -164,7 +164,7 @@ public class AuthControllerTest extends ControllerTestConfig {
         TokenPair response = new TokenPair("new-access-token", "new-refresh-token");
         Mockito.when(authService.refresh(any(ReissueTokenRequestDto.class))).thenReturn(response);
 
-        ReissueTokenRequestDto request = new ReissueTokenRequestDto("access-token", "refresh-token");
+        ReissueTokenRequestDto request = new ReissueTokenRequestDto("access-token", "refresh-token", "fcm-token");
         String requestContent = objectMapper.writeValueAsString(request);
 
         // when
@@ -194,7 +194,8 @@ public class AuthControllerTest extends ControllerTestConfig {
                                         .description("토큰을 갱신한다.")
                                         .requestFields(
                                                 fieldWithPath("accessToken").type(JsonFieldType.STRING).description("기존 액세스 토큰"),
-                                                fieldWithPath("refreshToken").type(JsonFieldType.STRING).description("리프레시 토큰")
+                                                fieldWithPath("refreshToken").type(JsonFieldType.STRING).description("리프레시 토큰"),
+                                                fieldWithPath("clientId").type(JsonFieldType.STRING).description("fcm 토큰")
                                         )
                                         .responseFields(
                                                 fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
@@ -203,7 +204,7 @@ public class AuthControllerTest extends ControllerTestConfig {
                                                 fieldWithPath("result.accessToken").type(JsonFieldType.STRING).description("새로 발급된 액세스 토큰"),
                                                 fieldWithPath("result.refreshToken").type(JsonFieldType.STRING).description("새로 발급된 리프레시 토큰")
                                         )
-                                        .requestSchema(Schema.schema("ReissueTokenRequestSchema"))
+                                        .requestSchema(Schema.schema("TokenRequestSchema"))
                                         .responseSchema(Schema.schema("TokenPairResponseSchema"))
                                         .build()
                         )
