@@ -17,11 +17,13 @@ import server.poptato.emoji.api.controller.EmojiController;
 import server.poptato.emoji.application.response.EmojiDto;
 import server.poptato.emoji.application.response.EmojiResponseDto;
 import server.poptato.emoji.application.service.EmojiService;
+import server.poptato.user.domain.value.MobileType;
 
 import java.util.List;
 import java.util.Map;
 
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
@@ -45,7 +47,7 @@ public class EmojiControllerTest extends ControllerTestConfig {
         );
         EmojiResponseDto response = new EmojiResponseDto(groupedEmojis, 2);
 
-        Mockito.when(emojiService.getGroupedEmojis(anyInt(), anyInt())).thenReturn(response);
+        Mockito.when(emojiService.getGroupedEmojis(any(MobileType.class), anyInt(), anyInt())).thenReturn(response);
 
         // when
         ResultActions resultActions = this.mockMvc.perform(

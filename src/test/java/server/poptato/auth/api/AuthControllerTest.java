@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.web.servlet.ResultActions;
+import server.poptato.auth.api.request.FCMTokenRequestDto;
 import server.poptato.auth.api.request.LoginRequestDto;
 import server.poptato.auth.api.request.ReissueTokenRequestDto;
 import server.poptato.auth.application.response.LoginResponseDto;
@@ -47,10 +48,12 @@ public class AuthControllerTest extends ControllerTestConfig {
         Mockito.when(authService.login(any(LoginRequestDto.class))).thenReturn(response);
 
         LoginRequestDto request = new LoginRequestDto(
-                SocialType.KAKAO,
+                SocialType.APPLE,
                 "access-token",
                 MobileType.IOS,
-                "client-id"
+                "client-id",
+                "sanghoHan",
+                "1234@1234.com"
         );
 
         String requestContent = objectMapper.writeValueAsString(request);
@@ -86,7 +89,9 @@ public class AuthControllerTest extends ControllerTestConfig {
                                                 fieldWithPath("socialType").type(JsonFieldType.STRING).description("소셜 타입 (예: KAKAO, APPLE)"),
                                                 fieldWithPath("accessToken").type(JsonFieldType.STRING).description("소셜 인증 액세스 토큰"),
                                                 fieldWithPath("mobileType").type(JsonFieldType.STRING).description("모바일 타입 (예: IOS, ANDROID)"),
-                                                fieldWithPath("clientId").type(JsonFieldType.STRING).description("클라이언트 ID")
+                                                fieldWithPath("clientId").type(JsonFieldType.STRING).description("클라이언트 ID"),
+                                                fieldWithPath("name").type(JsonFieldType.STRING).description("유저 이름 (APPLE 로그인 시에만 필요)"),
+                                                fieldWithPath("email").type(JsonFieldType.STRING).description("유저 이메일 (APPLE 로그인 시에만 필요)")
                                         )
                                         .responseFields(
                                                 fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
@@ -111,10 +116,18 @@ public class AuthControllerTest extends ControllerTestConfig {
         Mockito.when(jwtService.extractUserIdFromToken("Bearer sampleToken"))
                 .thenReturn(1L);
 
+        FCMTokenRequestDto request = new FCMTokenRequestDto(
+                "client-id"
+        );
+
+        String requestContent = objectMapper.writeValueAsString(request);
+
         // when
         ResultActions resultActions = this.mockMvc.perform(
                 RestDocumentationRequestBuilders.post("/auth/logout")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer sampleToken")
+                        .content(requestContent)
+                        .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
         );
 
@@ -151,7 +164,7 @@ public class AuthControllerTest extends ControllerTestConfig {
         TokenPair response = new TokenPair("new-access-token", "new-refresh-token");
         Mockito.when(authService.refresh(any(ReissueTokenRequestDto.class))).thenReturn(response);
 
-        ReissueTokenRequestDto request = new ReissueTokenRequestDto("access-token", "refresh-token");
+        ReissueTokenRequestDto request = new ReissueTokenRequestDto("access-token", "refresh-token", "fcm-token");
         String requestContent = objectMapper.writeValueAsString(request);
 
         // when
@@ -181,7 +194,8 @@ public class AuthControllerTest extends ControllerTestConfig {
                                         .description("토큰을 갱신한다.")
                                         .requestFields(
                                                 fieldWithPath("accessToken").type(JsonFieldType.STRING).description("기존 액세스 토큰"),
-                                                fieldWithPath("refreshToken").type(JsonFieldType.STRING).description("리프레시 토큰")
+                                                fieldWithPath("refreshToken").type(JsonFieldType.STRING).description("리프레시 토큰"),
+                                                fieldWithPath("clientId").type(JsonFieldType.STRING).description("fcm 토큰")
                                         )
                                         .responseFields(
                                                 fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
@@ -190,7 +204,7 @@ public class AuthControllerTest extends ControllerTestConfig {
                                                 fieldWithPath("result.accessToken").type(JsonFieldType.STRING).description("새로 발급된 액세스 토큰"),
                                                 fieldWithPath("result.refreshToken").type(JsonFieldType.STRING).description("새로 발급된 리프레시 토큰")
                                         )
-                                        .requestSchema(Schema.schema("ReissueTokenRequestSchema"))
+                                        .requestSchema(Schema.schema("TokenRequestSchema"))
                                         .responseSchema(Schema.schema("TokenPairResponseSchema"))
                                         .build()
                         )

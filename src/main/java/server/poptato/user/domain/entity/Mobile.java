@@ -44,9 +44,11 @@ public class Mobile {
     public void setModifyDate(LocalDateTime modifyDate){
         this.modifyDate = modifyDate;
     }
-    public void setClientId(String client_id){
-        this.clientId = client_id;
+
+    public void setClientId(String clientId){
+        this.clientId = clientId;
     }
+
     public static Mobile create(LoginRequestDto requestDto, Long userId) {
         return Mobile.builder()
                 .userId(userId)

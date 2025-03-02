@@ -1,23 +1,25 @@
 package server.poptato.todo.api;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import server.poptato.auth.application.service.JwtService;
+import server.poptato.global.response.ApiResponse;
+import server.poptato.global.response.status.SuccessStatus;
 import server.poptato.todo.api.request.*;
 import server.poptato.todo.application.TodoService;
 import server.poptato.todo.application.response.HistoryCalendarListResponseDto;
 import server.poptato.todo.application.response.PaginatedHistoryResponseDto;
 import server.poptato.todo.application.response.TodoDetailResponseDto;
-import server.poptato.global.response.ApiResponse;
-import server.poptato.global.response.status.SuccessStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @RestController
 @RequiredArgsConstructor
+@Validated
 public class TodoController {
 
     private final TodoService todoService;
@@ -53,7 +55,7 @@ public class TodoController {
     @PatchMapping("/swipe")
     public ResponseEntity<ApiResponse<SuccessStatus>> swipe(
             @RequestHeader("Authorization") String authorizationHeader,
-            @Validated @RequestBody SwipeRequestDto swipeRequestDto
+            @Valid @RequestBody SwipeRequestDto swipeRequestDto
     ) {
         todoService.swipe(jwtService.extractUserIdFromToken(authorizationHeader), swipeRequestDto);
         return ApiResponse.onSuccess(SuccessStatus._OK);
@@ -78,7 +80,7 @@ public class TodoController {
     }
 
     /**
-     * 할 일 순서 변경 API.
+     * 할 일 드래그 앤 드롭 API.
      *
      * 사용자가 드래그 앤 드롭 방식으로 할 일 순서를 변경합니다.
      *
@@ -89,7 +91,7 @@ public class TodoController {
     @PatchMapping("/todo/dragAndDrop")
     public ResponseEntity<ApiResponse<SuccessStatus>> dragAndDrop(
             @RequestHeader("Authorization") String authorizationHeader,
-            @Validated @RequestBody TodoDragAndDropRequestDto todoDragAndDropRequestDto
+            @Valid @RequestBody TodoDragAndDropRequestDto todoDragAndDropRequestDto
     ) {
         todoService.dragAndDrop(jwtService.extractUserIdFromToken(authorizationHeader), todoDragAndDropRequestDto);
         return ApiResponse.onSuccess(SuccessStatus._OK);
@@ -127,7 +129,7 @@ public class TodoController {
     public ResponseEntity<ApiResponse<SuccessStatus>> updateDeadline(
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Long todoId,
-            @Validated @RequestBody DeadlineUpdateRequestDto deadlineUpdateRequestDto
+            @Valid @RequestBody DeadlineUpdateRequestDto deadlineUpdateRequestDto
     ) {
         todoService.updateDeadline(jwtService.extractUserIdFromToken(authorizationHeader), todoId, deadlineUpdateRequestDto);
         return ApiResponse.onSuccess(SuccessStatus._OK);
@@ -147,7 +149,7 @@ public class TodoController {
     public ResponseEntity<ApiResponse<SuccessStatus>> updateContent(
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Long todoId,
-            @Validated @RequestBody ContentUpdateRequestDto contentUpdateRequestDto
+            @Valid @RequestBody ContentUpdateRequestDto contentUpdateRequestDto
     ) {
         todoService.updateContent(jwtService.extractUserIdFromToken(authorizationHeader), todoId, contentUpdateRequestDto);
         return ApiResponse.onSuccess(SuccessStatus._OK);
@@ -172,6 +174,24 @@ public class TodoController {
     }
 
     /**
+     * 어제 한 일 체크 API.
+     *
+     * 사용자의 어제 한 일 중에서 완료된 항목을 체크하고, 미완료 항목을 백로그로 이동시킵니다.
+     *
+     * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
+     * @param request 미완료 -> 완료로 변경된 todoId 리스트
+     * @return 성공 여부 응답
+     */
+    @PostMapping("/todo/check/yesterdays")
+    public ResponseEntity<ApiResponse<SuccessStatus>> checkYesterdayTodos(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @Valid @RequestBody CheckYesterdayTodosRequestDto request
+    ) {
+        todoService.checkYesterdayTodos(jwtService.extractUserIdFromToken(authorizationHeader), request);
+        return ApiResponse.onSuccess(SuccessStatus._OK);
+    }
+
+    /**
      * 할 일 카테고리 변경 API.
      *
      * 사용자가 특정 할 일의 카테고리를 변경합니다.
@@ -185,7 +205,7 @@ public class TodoController {
     public ResponseEntity<ApiResponse<SuccessStatus>> updateCategory(
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Long todoId,
-            @RequestBody TodoCategoryUpdateRequestDto todoCategoryUpdateRequestDto
+            @Valid @RequestBody TodoCategoryUpdateRequestDto todoCategoryUpdateRequestDto
     ) {
         todoService.updateCategory(jwtService.extractUserIdFromToken(authorizationHeader), todoId, todoCategoryUpdateRequestDto);
         return ApiResponse.onSuccess(SuccessStatus._OK);

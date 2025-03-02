@@ -18,7 +18,7 @@ import server.poptato.todo.domain.value.TodayStatus;
 import server.poptato.todo.domain.value.Type;
 import server.poptato.user.validator.UserValidator;
 
-import java.util.List;
+import java.util.Objects;
 
 @Transactional
 @RequiredArgsConstructor
@@ -99,12 +99,12 @@ public class TodoBacklogService {
      */
     private Page<Todo> getBacklogsPagination(Long userId, Long categoryId, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size);
-        List<Type> types = List.of(Type.BACKLOG, Type.YESTERDAY);
+        Type type = Type.BACKLOG;
         TodayStatus status = TodayStatus.COMPLETED;
-        if (categoryId == ALL_CATEGORY) return todoRepository.findAllBacklogs(userId, types, status, pageRequest);
-        if (categoryId == BOOKMARK_CATEGORY)
-            return todoRepository.findBookmarkBacklogs(userId, types, status, pageRequest);
-        return todoRepository.findBacklogsByCategoryId(userId, categoryId, types, status, pageRequest);
+        if (Objects.equals(categoryId, ALL_CATEGORY)) return todoRepository.findAllBacklogs(userId, type, status, pageRequest);
+        if (Objects.equals(categoryId, BOOKMARK_CATEGORY))
+            return todoRepository.findBookmarkBacklogs(userId, type, status, pageRequest);
+        return todoRepository.findBacklogsByCategoryId(userId, categoryId, type, status, pageRequest);
     }
 
     /**
@@ -120,9 +120,9 @@ public class TodoBacklogService {
     private Todo createNewBacklog(Long userId, BacklogCreateRequestDto backlogCreateRequestDto, Integer maxBacklogOrder) {
         Todo backlog = null;
         Long categoryId = backlogCreateRequestDto.categoryId();
-        if (categoryId == ALL_CATEGORY)
+        if (Objects.equals(categoryId, ALL_CATEGORY))
             backlog = Todo.createBacklog(userId, backlogCreateRequestDto.content(), maxBacklogOrder + 1);
-        if (categoryId == BOOKMARK_CATEGORY)
+        if (Objects.equals(categoryId, BOOKMARK_CATEGORY))
             backlog = Todo.createBookmarkBacklog(userId, backlogCreateRequestDto.content(), maxBacklogOrder + 1);
         if (categoryId > BOOKMARK_CATEGORY)
             backlog = Todo.createCategoryBacklog(userId, categoryId, backlogCreateRequestDto.content(), maxBacklogOrder + 1);

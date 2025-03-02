@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class Todo{
+public class Todo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -136,9 +136,9 @@ public class Todo{
         this.backlogOrder = null;
     }
 
-    public void updateYesterdayToInComplete(int minBacklogOrder) {
+    public void updateYesterdayToInComplete(int maxBacklogOrder) {
         this.todayStatus = TodayStatus.COMPLETED;
-        this.backlogOrder = --minBacklogOrder;
+        this.backlogOrder = ++maxBacklogOrder;
     }
 
     public void setType(Type type) {
