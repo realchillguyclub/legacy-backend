@@ -49,11 +49,11 @@ public interface TodoRepository {
 
     List<Todo> findByType(Type type);
 
-    Page<Todo> findAllBacklogs(Long userId, List<Type> types, TodayStatus status, Pageable pageable);
+    Page<Todo> findAllBacklogs(Long userId, Type type, TodayStatus status, Pageable pageable);
 
-    Page<Todo> findBookmarkBacklogs(Long userId, List<Type> types, TodayStatus status, Pageable pageable);
+    Page<Todo> findBookmarkBacklogs(Long userId, Type type, TodayStatus status, Pageable pageable);
 
-    Page<Todo> findBacklogsByCategoryId(Long userId, Long categoryId, List<Type> types, TodayStatus status, Pageable pageable);
+    Page<Todo> findBacklogsByCategoryId(Long userId, Long categoryId, Type type, TodayStatus status, Pageable pageable);
 
     void deleteAllByCategoryId(Long categoryId);
 
