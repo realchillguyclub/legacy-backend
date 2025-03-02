@@ -23,8 +23,8 @@ DEFAULT_CONF="/etc/nginx/nginx.conf"
 DOCKER_COMPOSE_FILE="/home/ubuntu/docker-compose.yaml"
 
 # discord webhook 관련 변수
-MESSAGE_SUCCESS="🥳 '일단!(레거시)' 배포가 성공적으로 수행되었습니다!"
-MESSAGE_FAILURE="🚨 '일단!(레거시)' 배포 과정에서 오류가 발생했습니다. 빠른 확인바랍니다."
+MESSAGE_SUCCESS="✅ '일단!' 배포가 성공적으로 수행되었습니다!"
+MESSAGE_FAILURE="🚨 '일단!' 배포 과정에서 오류가 발생했습니다. 빠른 확인바랍니다."
 
 # 💬 디스코드 메시지 보내기 함수
 send_discord_message() {
@@ -34,7 +34,6 @@ send_discord_message() {
 
 # 💚 blue가 실행중이라면 green을 up합니다.
 if [ -z "$IS_GREEN" ]; then
-
   echo "### BLUE => GREEN ###"
 
   echo ">>> 1. green container를 up합니다."
@@ -71,6 +70,9 @@ if [ -z "$IS_GREEN" ]; then
     send_discord_message "$MESSAGE_FAILURE"
     exit 1
   }
+
+  echo ">>> 5. 불필요한 Docker 이미지 삭제 중..."
+  sudo docker image prune -f
 
   send_discord_message "$MESSAGE_SUCCESS"
 
@@ -112,6 +114,9 @@ else
     send_discord_message "$MESSAGE_FAILURE"
     exit 1
   }
+
+  echo ">>> 5. 불필요한 Docker 이미지 삭제 중..."
+  sudo docker image prune -f
 
   send_discord_message "$MESSAGE_SUCCESS"
 fi
