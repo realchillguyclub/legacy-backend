@@ -14,12 +14,12 @@ public record TodoDetailResponseDto(
         Boolean isBookmark,
         Boolean isRepeat
 ) {
-    public static TodoDetailResponseDto of(Todo todo, Category category, Emoji emoji) {
+    public static TodoDetailResponseDto of(Todo todo, Category category, String imageUrl) {
         return new TodoDetailResponseDto(
                 todo.getContent(),
                 todo.getDeadline(),
                 category != null ? category.getName() : null,
-                emoji != null ? emoji.getImageUrl() : null,
+                imageUrl,
                 todo.isBookmark(),
                 todo.isRepeat()
         );

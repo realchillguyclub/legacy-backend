@@ -242,7 +242,7 @@ public class TodoControllerTest extends ControllerTestConfig {
         );
 
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
-        Mockito.when(todoService.getTodoInfo(anyLong(), anyLong())).thenReturn(response);
+        Mockito.when(todoService.getTodoInfo(anyLong(), any(), anyLong())).thenReturn(response);
 
         // when
         ResultActions resultActions = this.mockMvc.perform(

@@ -13,6 +13,7 @@ import server.poptato.category.validator.CategoryValidator;
 import server.poptato.emoji.domain.entity.Emoji;
 import server.poptato.emoji.domain.repository.EmojiRepository;
 import server.poptato.global.exception.CustomException;
+import server.poptato.global.util.FileUtil;
 import server.poptato.todo.api.request.*;
 import server.poptato.todo.application.response.HistoryCalendarListResponseDto;
 import server.poptato.todo.application.response.PaginatedHistoryResponseDto;
@@ -25,6 +26,7 @@ import server.poptato.todo.domain.value.TodayStatus;
 import server.poptato.todo.domain.value.Type;
 import server.poptato.todo.infra.repository.JpaTodoRepository;
 import server.poptato.todo.status.TodoErrorStatus;
+import server.poptato.user.domain.value.MobileType;
 import server.poptato.user.validator.UserValidator;
 
 import java.time.LocalDate;
@@ -197,14 +199,17 @@ public class TodoService {
      * @param todoId 조회할 할 일 ID
      * @return 할 일 상세 정보
      */
-    public TodoDetailResponseDto getTodoInfo(Long userId, Long todoId) {
+    public TodoDetailResponseDto getTodoInfo(Long userId, MobileType mobileType, Long todoId) {
         userValidator.checkIsExistUser(userId);
+        String imageUrlExtension = mobileType.getImageUrlExtension();
         Todo findTodo = validateAndReturnTodo(userId, todoId);
         Category findCategory = findTodo.getCategoryId() != null ?
                 categoryRepository.findById(findTodo.getCategoryId()).orElse(null) : null;
         Emoji findEmoji = findCategory != null && findCategory.getEmojiId() != null ?
                 emojiRepository.findById(findCategory.getEmojiId()).orElse(null) : null;
-        return TodoDetailResponseDto.of(findTodo, findCategory, findEmoji);
+        String modifiedImageUrl = findEmoji != null && findEmoji.getImageUrl() != null ?
+                FileUtil.changeFileExtension(findEmoji.getImageUrl(), imageUrlExtension) : null;
+        return TodoDetailResponseDto.of(findTodo, findCategory, modifiedImageUrl);
     }
 
     /**
