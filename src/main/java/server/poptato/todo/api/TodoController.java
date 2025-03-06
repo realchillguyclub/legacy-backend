@@ -13,6 +13,7 @@ import server.poptato.todo.application.TodoService;
 import server.poptato.todo.application.response.HistoryCalendarListResponseDto;
 import server.poptato.todo.application.response.PaginatedHistoryResponseDto;
 import server.poptato.todo.application.response.TodoDetailResponseDto;
+import server.poptato.user.domain.value.MobileType;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -103,15 +104,17 @@ public class TodoController {
      * 특정 할 일의 세부 정보를 조회합니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
+     * @param mobileType 클라이언트 운영체제
      * @param todoId 조회할 할 일 ID
      * @return 할 일 상세 정보
      */
     @GetMapping("/todo/{todoId}")
     public ResponseEntity<ApiResponse<TodoDetailResponseDto>> getTodoInfo(
             @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam(value = "mobileType", defaultValue = "ANDROID") MobileType mobileType,
             @PathVariable Long todoId
     ) {
-        TodoDetailResponseDto response = todoService.getTodoInfo(jwtService.extractUserIdFromToken(authorizationHeader), todoId);
+        TodoDetailResponseDto response = todoService.getTodoInfo(jwtService.extractUserIdFromToken(authorizationHeader), mobileType, todoId);
         return ApiResponse.onSuccess(SuccessStatus._OK, response);
     }
 
