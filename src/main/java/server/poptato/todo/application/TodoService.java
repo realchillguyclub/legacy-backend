@@ -267,6 +267,7 @@ public class TodoService {
     private void updateYesterdayIsCompleted(Todo findTodo) {
         // 완료 처리
         LocalDateTime yesterday = LocalDateTime.of(findTodo.getTodayDate(), LocalTime.of(23, 59));
+        int existBacklogOrder = findTodo.getBacklogOrder();
         findTodo.updateYesterdayToCompleted();
         completedDateTimeRepository.save(
                 CompletedDateTime.builder()
@@ -282,8 +283,9 @@ public class TodoService {
                     .categoryId(findTodo.getCategoryId())
                     .content(findTodo.getContent())
                     .type(Type.BACKLOG)
-                    .todayStatus(TodayStatus.INCOMPLETE)
+                    .backlogOrder(existBacklogOrder)
                     .todayDate(LocalDate.now())
+                    .isBookmark(findTodo.isBookmark())
                     .isRepeat(true)
                     .deadline(findTodo.getDeadline())
                     .build();
