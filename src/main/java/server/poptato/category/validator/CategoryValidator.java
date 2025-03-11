@@ -1,6 +1,7 @@
 package server.poptato.category.validator;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import server.poptato.category.domain.entity.Category;
 import server.poptato.category.domain.repository.CategoryRepository;
@@ -10,6 +11,7 @@ import server.poptato.global.exception.CustomException;
 /**
  * 카테고리 관련 유효성 검증을 처리하는 클래스입니다.
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class CategoryValidator {
@@ -29,7 +31,10 @@ public class CategoryValidator {
     public Category validateAndReturnCategory(Long userId, Long categoryId) {
         Category findCategory = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new CustomException(CategoryErrorStatus._CATEGORY_NOT_EXIST));
+
         if (findCategory.getUserId() != userId && findCategory.getUserId() != -1L) {
+            log.warn("🚨 Category ownership mismatch! categoryId={}, requested by userId={}, but belongs to userId={}",
+                    categoryId, userId, findCategory.getUserId());
             throw new CustomException(CategoryErrorStatus._CATEGORY_USER_NOT_MATCH);
         }
         return findCategory;
@@ -47,7 +52,10 @@ public class CategoryValidator {
     public void validateCategory(Long userId, Long categoryId) {
         Category findCategory = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new CustomException(CategoryErrorStatus._CATEGORY_NOT_EXIST));
+
         if (findCategory.getUserId() != userId && findCategory.getUserId() != -1L) {
+            log.warn("🚨 Validation failed! userId={} tried to access categoryId={} owned by userId={}",
+                    userId, categoryId, findCategory.getUserId());
             throw new CustomException(CategoryErrorStatus._CATEGORY_USER_NOT_MATCH);
         }
     }
