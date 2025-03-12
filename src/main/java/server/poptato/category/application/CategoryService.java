@@ -20,7 +20,6 @@ import server.poptato.global.exception.CustomException;
 import server.poptato.global.util.FileUtil;
 import server.poptato.todo.domain.repository.TodoRepository;
 import server.poptato.user.domain.value.MobileType;
-import server.poptato.user.domain.value.SocialType;
 import server.poptato.user.validator.UserValidator;
 
 import java.util.ArrayList;
