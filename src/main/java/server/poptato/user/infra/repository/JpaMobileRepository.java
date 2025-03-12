@@ -12,6 +12,9 @@ import java.time.LocalDateTime;
 
 public interface JpaMobileRepository extends MobileRepository, JpaRepository<Mobile, Long> {
 
+    @Transactional
+    void deleteByClientId(String clientId);
+
     @Modifying
     @Transactional
     @Query("DELETE FROM Mobile m WHERE m.modifyDate < :localDateTime")
