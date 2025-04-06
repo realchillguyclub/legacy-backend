@@ -262,7 +262,7 @@ public class TodoController {
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
      * @param year 조회할 연도
      * @param month 조회할 월
-     * @return 해당 연도와 월의 할 일 히스토리 날짜 목록
+     * @return 해당 연도와 월의 할 일 히스토리 날짜 목록, 미래 날짜의 경우 날짜와 마감날짜가 설정된 백로그 개수
      */
     @GetMapping("/calendar")
     public ResponseEntity<ApiResponse<HistoryCalendarListResponseDto>> getHistoryCalendarDateList(
