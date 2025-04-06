@@ -34,8 +34,10 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Transactional
 @RequiredArgsConstructor
@@ -378,11 +380,24 @@ public class TodoService {
      * @return 캘린더 데이터
      */
     public HistoryCalendarListResponseDto getHistoriesCalendar(Long userId, String year, int month) {
-        List<LocalDate> dates = completedDateTimeRepository.findHistoryExistingDates(userId, year, month).stream()
-                .map(LocalDateTime::toLocalDate)
-                .distinct()
-                .toList();
-        return HistoryCalendarListResponseDto.of(dates);
+        Map<LocalDate, Integer> historyCountByDate =
+                completedDateTimeRepository.findHistoryExistingDates(userId, year, month).stream()
+                        .map(LocalDateTime::toLocalDate)
+                        .distinct()
+                        .collect(Collectors.toMap(
+                                Function.identity(),
+                                date -> -1
+                        ));
+
+        Map<LocalDate, Integer> backlogCountByDate = todoRepository.findDatesWithBacklogCount(userId, year, month).stream()
+                .collect(Collectors.toMap(
+                        t -> t.get("date", LocalDate.class),
+                        t -> ((Number) t.get("count")).intValue()
+                ));
+
+        historyCountByDate.putAll(backlogCountByDate);
+
+        return HistoryCalendarListResponseDto.of(historyCountByDate);
     }
 
     /**
