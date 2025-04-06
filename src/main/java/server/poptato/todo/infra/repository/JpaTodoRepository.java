@@ -1,5 +1,6 @@
 package server.poptato.todo.infra.repository;
 
+import jakarta.persistence.Tuple;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -125,4 +126,18 @@ public interface JpaTodoRepository extends TodoRepository, JpaRepository<Todo, L
     @Query("SELECT t FROM Todo t WHERE t.userId = :userId AND t.type = 'YESTERDAY' " +
             "AND t.todayStatus = 'INCOMPLETE' ORDER BY t.todayOrder DESC")
     List<Todo> findIncompleteYesterdays(@Param("userId") Long userId);
+
+    @Query(value = """
+    SELECT t.deadline AS date, COUNT(*) AS count
+    FROM todo t
+    WHERE t.user_id = :userId
+      AND t.deadline IS NOT NULL
+      AND t.deadline > CURDATE()
+      AND YEAR(t.deadline) = :year
+      AND MONTH(t.deadline) = :month
+      AND t.type = 'BACKLOG'
+    GROUP BY t.deadline
+    ORDER BY t.deadline
+    """, nativeQuery = true)
+    List<Tuple> findDatesWithBacklogCount(Long userId, String year, int month);
 }

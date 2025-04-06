@@ -1,5 +1,6 @@
 package server.poptato.todo.domain.repository;
 
+import jakarta.persistence.Tuple;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
@@ -70,4 +71,13 @@ public interface TodoRepository {
      * @return 미완료된 어제의 할 일 목록
      */
     List<Todo> findIncompleteYesterdays(Long userId);
+
+    /**
+     *
+     * @param userId 사용자 ID
+     * @param year 해당 연도
+     * @param month 해당 월
+     * @return 해당 연도-월 조회 일 기준 미래 날짜중 마감일이 정해진 백로그가 있는 날짜와 백로그 개수 목록
+     */
+    List<Tuple> findDatesWithBacklogCount(Long userId, String year, int month);
 }
