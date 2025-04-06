@@ -16,4 +16,12 @@ public record PaginatedHistoryResponseDto(
 
         return new PaginatedHistoryResponseDto(histories, todosPage.getTotalPages());
     }
+
+    public static PaginatedHistoryResponseDto of(Page<Todo> todosPage, Boolean isCompleted) {
+        List<HistoryResponseDto> histories = todosPage.getContent().stream()
+                .map((Todo todo) -> HistoryResponseDto.of(todo, isCompleted))
+                .toList();
+
+        return new PaginatedHistoryResponseDto(histories, todosPage.getTotalPages());
+    }
 }
