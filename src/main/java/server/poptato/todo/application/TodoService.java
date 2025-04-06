@@ -29,6 +29,7 @@ import server.poptato.todo.status.TodoErrorStatus;
 import server.poptato.user.domain.value.MobileType;
 import server.poptato.user.validator.UserValidator;
 
+import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -391,7 +392,7 @@ public class TodoService {
 
         Map<LocalDate, Integer> backlogCountByDate = todoRepository.findDatesWithBacklogCount(userId, year, month).stream()
                 .collect(Collectors.toMap(
-                        t -> t.get("date", LocalDate.class),
+                        t -> ((Date)t.get("date")).toLocalDate(),
                         t -> ((Number) t.get("count")).intValue()
                 ));
 
