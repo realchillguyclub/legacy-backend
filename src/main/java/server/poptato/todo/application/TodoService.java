@@ -4,6 +4,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,7 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -368,8 +370,28 @@ public class TodoService {
      */
     public PaginatedHistoryResponseDto getHistories(Long userId, LocalDate localDate, int page, int size) {
         userValidator.checkIsExistUser(userId);
-        Page<Todo> historiesPage = todoRepository.findHistories(userId, localDate, PageRequest.of(page, size));
-        return PaginatedHistoryResponseDto.of(historiesPage);
+        if (localDate.isBefore(LocalDate.now())) {
+            Page<Todo> historiesPage = todoRepository.findHistories(userId, localDate, PageRequest.of(page, size));
+            return PaginatedHistoryResponseDto.of(historiesPage, true);
+        } else if (localDate.isEqual(LocalDate.now())) {
+            Page<Todo> historiesPage = getTodayTodos(userId, page, size);
+            return PaginatedHistoryResponseDto.of(historiesPage);
+        }
+        Page<Todo> historiesPage = todoRepository.findDeadlineBacklogs(userId, localDate, PageRequest.of(page, size));
+        return PaginatedHistoryResponseDto.of(historiesPage, false);
+    }
+
+    private Page<Todo> getTodayTodos(Long userId, int page, int size) {
+        List<Todo> todayTodos = new ArrayList<>();
+        List<Todo> incompleteTodos = todoRepository.findIncompleteTodays(userId, Type.TODAY, LocalDate.now(), TodayStatus.INCOMPLETE);
+        List<Todo> completedTodos = todoRepository.findCompletedTodays(userId, LocalDate.now());
+        todayTodos.addAll(incompleteTodos);
+        todayTodos.addAll(completedTodos);
+
+        PageRequest pageRequest = PageRequest.of(page, size);
+        int start = (int) pageRequest.getOffset();
+        int end = Math.min((start + pageRequest.getPageSize()), todayTodos.size());
+        return new PageImpl<>(todayTodos.subList(start, end), pageRequest, todayTodos.size());
     }
 
     /**

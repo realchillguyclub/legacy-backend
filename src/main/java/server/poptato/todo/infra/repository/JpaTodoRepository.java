@@ -85,15 +85,25 @@ public interface JpaTodoRepository extends TodoRepository, JpaRepository<Todo, L
             @Param("todayDate") LocalDate todayDate
     );
 
-    @Query("SELECT t FROM Todo t " +
-            "WHERE t.id IN (" +
-            "    SELECT c.todoId FROM CompletedDateTime c " +
-            "    WHERE DATE(c.dateTime) = :localDate" +
-            ") AND t.userId = :userId " +
-            "ORDER BY (" +
-            "    SELECT c.dateTime FROM CompletedDateTime c " +
-            "    WHERE c.todoId = t.id AND DATE(c.dateTime) = :localDate" +
-            ") ASC")
+
+    @Query("""
+            SELECT t
+            FROM Todo t
+            WHERE userId = :userId
+              AND deadline = :localDate
+              AND type IN ('BACKLOG', 'YESTERDAY')
+            """)
+    Page<Todo> findDeadlineBacklogsByUserIdAndLocalDate(Long userId, LocalDate localDate, Pageable pageable);
+
+        @Query("SELECT t FROM Todo t " +
+                "WHERE t.id IN (" +
+                "    SELECT c.todoId FROM CompletedDateTime c " +
+                "    WHERE DATE(c.dateTime) = :localDate" +
+                ") AND t.userId = :userId " +
+                "ORDER BY (" +
+                "    SELECT c.dateTime FROM CompletedDateTime c " +
+                "    WHERE c.todoId = t.id AND DATE(c.dateTime) = :localDate" +
+                ") ASC")
     Page<Todo> findTodosByUserIdAndCompletedDateTime(@Param("userId") Long userId,
                                                      @Param("localDate") LocalDate localDate, Pageable pageable);
 

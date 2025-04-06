@@ -32,6 +32,12 @@ public interface TodoRepository {
 
     Integer findMaxBacklogOrderByUserIdOrZero(Long userId);
 
+    default Page<Todo> findDeadlineBacklogs(Long userId, LocalDate localDate, Pageable pageable) {
+        return findDeadlineBacklogsByUserIdAndLocalDate(userId, localDate, pageable);
+    }
+
+    Page<Todo> findDeadlineBacklogsByUserIdAndLocalDate(Long userId, LocalDate localDate, Pageable pageable);
+
     default List<Todo> findIncompleteTodays(Long userId, Type type, LocalDate todayDate, TodayStatus todayStatus) {
         return findByUserIdAndTypeAndTodayDateAndTodayStatusOrderByTodayOrderDesc(
                 userId, type, todayDate, todayStatus);
@@ -47,6 +53,8 @@ public interface TodoRepository {
     }
 
     Page<Todo> findTodosByUserIdAndCompletedDateTime(Long userId, LocalDate localDate, Pageable pageable);
+
+
 
     List<Todo> findByType(Type type);
 
@@ -80,4 +88,6 @@ public interface TodoRepository {
      * @return 해당 연도-월 조회 일 기준 미래 날짜중 마감일이 정해진 백로그가 있는 날짜와 백로그 개수 목록
      */
     List<Tuple> findDatesWithBacklogCount(Long userId, String year, int month);
+
+
 }
