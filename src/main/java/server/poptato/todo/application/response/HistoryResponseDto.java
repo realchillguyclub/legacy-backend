@@ -9,7 +9,7 @@ public record HistoryResponseDto(
         Boolean isCompleted
 ) {
 
-    public static HistoryResponseDto of(Todo todo) {
+    public static HistoryResponseDto from(Todo todo) {
         return new HistoryResponseDto(todo.getId(), todo.getContent(), todo.getTodayStatus().equals(TodayStatus.COMPLETED));
     }
 

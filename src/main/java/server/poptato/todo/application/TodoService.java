@@ -375,7 +375,7 @@ public class TodoService {
             return PaginatedHistoryResponseDto.of(historiesPage, true);
         } else if (localDate.isEqual(LocalDate.now())) {
             Page<Todo> historiesPage = getTodayTodos(userId, page, size);
-            return PaginatedHistoryResponseDto.of(historiesPage);
+            return PaginatedHistoryResponseDto.from(historiesPage);
         }
         Page<Todo> historiesPage = todoRepository.findDeadlineBacklogs(userId, localDate, PageRequest.of(page, size));
         return PaginatedHistoryResponseDto.of(historiesPage, false);
@@ -420,7 +420,7 @@ public class TodoService {
 
         historyCountByDate.putAll(backlogCountByDate);
 
-        return HistoryCalendarListResponseDto.of(historyCountByDate);
+        return HistoryCalendarListResponseDto.from(historyCountByDate);
     }
 
     /**

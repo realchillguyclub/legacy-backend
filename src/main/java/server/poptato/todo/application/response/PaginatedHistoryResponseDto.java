@@ -9,9 +9,9 @@ public record PaginatedHistoryResponseDto(
         List<HistoryResponseDto> histories,
         int totalPageCount
 ) {
-    public static PaginatedHistoryResponseDto of(Page<Todo> todosPage) {
+    public static PaginatedHistoryResponseDto from(Page<Todo> todosPage) {
         List<HistoryResponseDto> histories = todosPage.getContent().stream()
-                .map(HistoryResponseDto::of)
+                .map(HistoryResponseDto::from)
                 .toList();
 
         return new PaginatedHistoryResponseDto(histories, todosPage.getTotalPages());
