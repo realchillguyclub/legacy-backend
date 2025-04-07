@@ -9,9 +9,9 @@ public record HistoryCalendarListResponseDto(
         List<HistoryCalendarResponseDto> historyCalendarList
 ) {
 
-    public static HistoryCalendarListResponseDto of(Map<LocalDate, Integer> dates) {
+    public static HistoryCalendarListResponseDto from(Map<LocalDate, Integer> dates) {
         List<HistoryCalendarResponseDto> historyCalendarList = dates.entrySet().stream()
-                .map(entry -> new HistoryCalendarResponseDto(entry.getKey(), entry.getValue()))
+                .map(entry -> HistoryCalendarResponseDto.of(entry.getKey(), entry.getValue()))
                 .toList();
 
         return new HistoryCalendarListResponseDto(historyCalendarList);
