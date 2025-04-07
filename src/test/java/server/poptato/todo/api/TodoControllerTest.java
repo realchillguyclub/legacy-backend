@@ -18,6 +18,7 @@ import server.poptato.configuration.ControllerTestConfig;
 import server.poptato.todo.api.request.*;
 import server.poptato.todo.application.TodoService;
 import server.poptato.todo.application.response.HistoryCalendarListResponseDto;
+import server.poptato.todo.application.response.HistoryCalendarResponseDto;
 import server.poptato.todo.application.response.PaginatedHistoryResponseDto;
 import server.poptato.todo.application.response.TodoDetailResponseDto;
 import server.poptato.todo.domain.value.Type;
@@ -588,7 +589,8 @@ public class TodoControllerTest extends ControllerTestConfig {
     @DisplayName("특정 연도 및 월의 할 일 히스토리 날짜 목록을 조회한다.")
     public void getHistoryCalendarDateList() throws Exception {
         // given
-        HistoryCalendarListResponseDto response = new HistoryCalendarListResponseDto(List.of(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 15)));
+        HistoryCalendarListResponseDto response = new HistoryCalendarListResponseDto(List.of(
+                new HistoryCalendarResponseDto(LocalDate.of(2025, 1, 1), -1), new HistoryCalendarResponseDto(LocalDate.of(2025, 1, 15), -1)));
 
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
         Mockito.when(todoService.getHistoriesCalendar(anyLong(), anyString(), anyInt()))
@@ -626,7 +628,9 @@ public class TodoControllerTest extends ControllerTestConfig {
                                                 fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
                                                 fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
                                                 fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
-                                                fieldWithPath("result.dates").type(JsonFieldType.ARRAY).description("히스토리가 있는 날짜 목록 (YYYY-MM-DD)")
+                                                fieldWithPath("result.historyCalendarList").type(JsonFieldType.ARRAY).description("히스토리/백로그 날짜 및 개수 목록"),
+                                                fieldWithPath("result.historyCalendarList[].localDate").type(JsonFieldType.STRING).description("날짜 (YYYY-MM-DD)"),
+                                                fieldWithPath("result.historyCalendarList[].count").type(JsonFieldType.NUMBER).description("해당 날짜의 할 일 수, 히스토리가 있는 경우 -1")
                                         )
                                         .responseSchema(Schema.schema("HistoryCalendarListResponse"))
                                         .build()

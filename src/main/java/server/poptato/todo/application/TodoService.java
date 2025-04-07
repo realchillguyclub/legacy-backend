@@ -4,6 +4,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,13 +30,17 @@ import server.poptato.todo.status.TodoErrorStatus;
 import server.poptato.user.domain.value.MobileType;
 import server.poptato.user.validator.UserValidator;
 
+import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Transactional
 @RequiredArgsConstructor
@@ -365,8 +370,28 @@ public class TodoService {
      */
     public PaginatedHistoryResponseDto getHistories(Long userId, LocalDate localDate, int page, int size) {
         userValidator.checkIsExistUser(userId);
-        Page<Todo> historiesPage = todoRepository.findHistories(userId, localDate, PageRequest.of(page, size));
-        return PaginatedHistoryResponseDto.of(historiesPage);
+        if (localDate.isBefore(LocalDate.now())) {
+            Page<Todo> historiesPage = todoRepository.findHistories(userId, localDate, PageRequest.of(page, size));
+            return PaginatedHistoryResponseDto.of(historiesPage, true);
+        } else if (localDate.isEqual(LocalDate.now())) {
+            Page<Todo> historiesPage = getTodayTodos(userId, page, size);
+            return PaginatedHistoryResponseDto.from(historiesPage);
+        }
+        Page<Todo> historiesPage = todoRepository.findDeadlineBacklogs(userId, localDate, PageRequest.of(page, size));
+        return PaginatedHistoryResponseDto.of(historiesPage, false);
+    }
+
+    private Page<Todo> getTodayTodos(Long userId, int page, int size) {
+        List<Todo> todayTodos = new ArrayList<>();
+        List<Todo> incompleteTodos = todoRepository.findIncompleteTodays(userId, Type.TODAY, LocalDate.now(), TodayStatus.INCOMPLETE);
+        List<Todo> completedTodos = todoRepository.findCompletedTodays(userId, LocalDate.now());
+        todayTodos.addAll(incompleteTodos);
+        todayTodos.addAll(completedTodos);
+
+        PageRequest pageRequest = PageRequest.of(page, size);
+        int start = (int) pageRequest.getOffset();
+        int end = Math.min((start + pageRequest.getPageSize()), todayTodos.size());
+        return new PageImpl<>(todayTodos.subList(start, end), pageRequest, todayTodos.size());
     }
 
     /**
@@ -378,11 +403,24 @@ public class TodoService {
      * @return 캘린더 데이터
      */
     public HistoryCalendarListResponseDto getHistoriesCalendar(Long userId, String year, int month) {
-        List<LocalDate> dates = completedDateTimeRepository.findHistoryExistingDates(userId, year, month).stream()
-                .map(LocalDateTime::toLocalDate)
-                .distinct()
-                .toList();
-        return HistoryCalendarListResponseDto.of(dates);
+        Map<LocalDate, Integer> historyCountByDate =
+                completedDateTimeRepository.findHistoryExistingDates(userId, year, month).stream()
+                        .map(LocalDateTime::toLocalDate)
+                        .distinct()
+                        .collect(Collectors.toMap(
+                                Function.identity(),
+                                date -> -1
+                        ));
+
+        Map<LocalDate, Integer> backlogCountByDate = todoRepository.findDatesWithBacklogCount(userId, year, month).stream()
+                .collect(Collectors.toMap(
+                        t -> ((Date)t.get("date")).toLocalDate(),
+                        t -> ((Number) t.get("count")).intValue()
+                ));
+
+        historyCountByDate.putAll(backlogCountByDate);
+
+        return HistoryCalendarListResponseDto.from(historyCountByDate);
     }
 
     /**
