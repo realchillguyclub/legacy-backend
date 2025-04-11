@@ -16,6 +16,7 @@ import server.poptato.todo.domain.entity.Todo;
 import server.poptato.todo.domain.repository.TodoRepository;
 import server.poptato.todo.domain.value.TodayStatus;
 import server.poptato.todo.domain.value.Type;
+import server.poptato.user.domain.value.MobileType;
 import server.poptato.user.validator.UserValidator;
 
 import java.util.Objects;
@@ -42,12 +43,12 @@ public class TodoBacklogService {
      * @param size 페이지 크기
      * @return 백로그 목록과 페이징 정보
      */
-    public BacklogListResponseDto getBacklogList(Long userId, Long categoryId, int page, int size) {
+    public BacklogListResponseDto getBacklogList(Long userId, Long categoryId, MobileType mobileType, int page, int size) {
         userValidator.checkIsExistUser(userId);
         categoryValidator.validateCategory(userId, categoryId);
         Page<Todo> backlogs = getBacklogsPagination(userId, categoryId, page, size);
         String categoryName = categoryRepository.findById(categoryId).get().getName();
-        return BacklogListResponseDto.of(categoryName, backlogs);
+        return BacklogListResponseDto.of(categoryName, mobileType, backlogs);
     }
 
     /**
