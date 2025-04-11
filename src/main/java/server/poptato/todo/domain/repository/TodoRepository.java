@@ -16,7 +16,11 @@ public interface TodoRepository {
 
     List<Todo> findByUserIdAndTypeAndTodayDateAndTodayStatusOrderByTodayOrderDesc(Long userId, Type type, LocalDate todayDate, TodayStatus todayStatus);
 
+    List<Todo> findIncompleteTodosWithCategory(Long userId, Type type, LocalDate todayDate, TodayStatus todayStatus);
+
     List<Todo> findCompletedTodayByUserIdOrderByCompletedDateTimeAsc(Long userId, LocalDate todayDate);
+
+    List<Todo> findCompletedTodayByUserIdOrderByCompletedDateTimeAscWithCategory(Long userId, LocalDate todayDate);
 
     Optional<Todo> findById(Long todoId);
 
@@ -43,8 +47,18 @@ public interface TodoRepository {
                 userId, type, todayDate, todayStatus);
     }
 
+    default List<Todo> findIncompleteTodaysWithCategory(Long userId, Type type, LocalDate todayDate, TodayStatus todayStatus) {
+        return findIncompleteTodosWithCategory(
+                userId, type, todayDate, todayStatus);
+    }
+
     default List<Todo> findCompletedTodays(Long userId, LocalDate todayDate) {
         return findCompletedTodayByUserIdOrderByCompletedDateTimeAsc(
+                userId, todayDate);
+    }
+
+    default List<Todo> findCompletedTodaysWithCategory(Long userId, LocalDate todayDate) {
+        return findCompletedTodayByUserIdOrderByCompletedDateTimeAscWithCategory(
                 userId, todayDate);
     }
 
