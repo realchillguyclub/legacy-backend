@@ -11,6 +11,7 @@ import server.poptato.todo.application.TodoTodayService;
 import server.poptato.todo.application.response.TodayListResponseDto;
 import server.poptato.global.response.ApiResponse;
 import server.poptato.global.response.status.SuccessStatus;
+import server.poptato.user.domain.value.MobileType;
 
 import java.time.LocalDate;
 
@@ -35,6 +36,7 @@ public class TodoTodayController {
     @GetMapping("/todays")
     public ResponseEntity<ApiResponse<TodayListResponseDto>> getTodayList(
             @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam(value = "mobileType", defaultValue = "ANDROID") MobileType mobileType,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "8") int size
     ) {
@@ -42,6 +44,7 @@ public class TodoTodayController {
         // 오늘의 할 일 목록 조회
         TodayListResponseDto response = todoTodayService.getTodayList(
                 jwtService.extractUserIdFromToken(authorizationHeader),
+                mobileType,
                 page,
                 size,
                 todayDate

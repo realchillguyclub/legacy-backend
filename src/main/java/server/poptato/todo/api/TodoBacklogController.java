@@ -10,6 +10,7 @@ import server.poptato.todo.application.TodoBacklogService;
 import server.poptato.todo.application.response.*;
 import server.poptato.global.response.ApiResponse;
 import server.poptato.global.response.status.SuccessStatus;
+import server.poptato.user.domain.value.MobileType;
 
 @RestController
 @RequiredArgsConstructor
@@ -34,10 +35,11 @@ public class TodoBacklogController {
     public ResponseEntity<ApiResponse<BacklogListResponseDto>> getBacklogList(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam(value = "category") Long categoryId,
+            @RequestParam(value = "mobileType", defaultValue = "ANDROID") MobileType mobileType,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "8") int size
     ) {
-        BacklogListResponseDto response = todoBacklogService.getBacklogList(jwtService.extractUserIdFromToken(authorizationHeader), categoryId, page, size);
+        BacklogListResponseDto response = todoBacklogService.getBacklogList(jwtService.extractUserIdFromToken(authorizationHeader), categoryId, mobileType, page, size);
         return ApiResponse.onSuccess(SuccessStatus._OK, response);
     }
 
