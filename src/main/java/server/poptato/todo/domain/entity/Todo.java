@@ -7,6 +7,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.lang.Nullable;
+import server.poptato.category.domain.entity.Category;
 import server.poptato.todo.domain.value.TodayStatus;
 import server.poptato.todo.domain.value.Type;
 
@@ -26,6 +27,7 @@ public class Todo {
     @NotNull
     private Long userId;
     @Nullable
+    @Column(name = "category_id")
     private Long  categoryId;
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -53,6 +55,10 @@ public class Todo {
     private LocalDateTime createDate;
     @LastModifiedDate
     private LocalDateTime modifyDate;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", insertable = false, updatable = false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    private Category category;
 
     public static Todo createBacklog(Long userId, String content, Integer backlogOrder) {
         return Todo.builder()
