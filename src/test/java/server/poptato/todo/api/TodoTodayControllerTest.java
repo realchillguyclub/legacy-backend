@@ -17,6 +17,7 @@ import server.poptato.auth.application.service.JwtService;
 import server.poptato.configuration.ControllerTestConfig;
 import server.poptato.todo.application.TodoTodayService;
 import server.poptato.todo.application.response.TodayListResponseDto;
+import server.poptato.user.domain.value.MobileType;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -51,7 +52,7 @@ public class TodoTodayControllerTest extends ControllerTestConfig {
         );
 
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
-        Mockito.when(todoTodayService.getTodayList(anyLong(), anyInt(), anyInt(), any(LocalDate.class)))
+        Mockito.when(todoTodayService.getTodayList(anyLong(), any(MobileType.class), anyInt(), anyInt(), any(LocalDate.class)))
                 .thenReturn(response);
 
         // when
