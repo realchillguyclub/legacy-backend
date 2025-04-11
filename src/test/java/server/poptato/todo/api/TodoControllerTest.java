@@ -586,11 +586,13 @@ public class TodoControllerTest extends ControllerTestConfig {
     }
 
     @Test
-    @DisplayName("특정 연도 및 월의 할 일 히스토리 날짜 목록을 조회한다.")
-    public void getHistoryCalendarDateList() throws Exception {
+    @DisplayName("특정 연도 및 월의 히스토리 날짜 목록을 조회한다 (v2)")
+    public void getHistoryCalendarDateList_V2() throws Exception {
         // given
         HistoryCalendarListResponseDto response = new HistoryCalendarListResponseDto(List.of(
-                new HistoryCalendarResponseDto(LocalDate.of(2025, 1, 1), -1), new HistoryCalendarResponseDto(LocalDate.of(2025, 1, 15), -1)));
+                new HistoryCalendarResponseDto(LocalDate.of(2025, 1, 1), -1),
+                new HistoryCalendarResponseDto(LocalDate.of(2025, 1, 15), -1)
+        ));
 
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
         Mockito.when(todoService.getHistoriesCalendar(anyLong(), anyString(), anyInt()))
@@ -602,6 +604,7 @@ public class TodoControllerTest extends ControllerTestConfig {
                         .param("year", "2025")
                         .param("month", "1")
                         .header(HttpHeaders.AUTHORIZATION, token)
+                        .header("X-App-Version", "2.0")
                         .accept(MediaType.APPLICATION_JSON)
         );
 
@@ -612,14 +615,13 @@ public class TodoControllerTest extends ControllerTestConfig {
                 .andExpect(jsonPath("$.code").value("GLOBAL-200"))
                 .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
 
-                // docs
-                .andDo(MockMvcRestDocumentationWrapper.document("todo/get-history-calendar",
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/get-history-calendar-new",
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
                         resource(
                                 ResourceSnippetParameters.builder()
                                         .tag("Todo API")
-                                        .description("특정 연도 및 월의 할 일 히스토리 날짜 목록을 조회한다.")
+                                        .description("특정 연도 및 월의 히스토리 날짜 목록을 조회한다 (v2)")
                                         .queryParameters(
                                                 parameterWithName("year").description("조회할 연도 (YYYY)"),
                                                 parameterWithName("month").description("조회할 월 (1~12)")
@@ -630,13 +632,68 @@ public class TodoControllerTest extends ControllerTestConfig {
                                                 fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
                                                 fieldWithPath("result.historyCalendarList").type(JsonFieldType.ARRAY).description("히스토리/백로그 날짜 및 개수 목록"),
                                                 fieldWithPath("result.historyCalendarList[].localDate").type(JsonFieldType.STRING).description("날짜 (YYYY-MM-DD)"),
-                                                fieldWithPath("result.historyCalendarList[].count").type(JsonFieldType.NUMBER).description("해당 날짜의 할 일 수, 히스토리가 있는 경우 -1")
+                                                fieldWithPath("result.historyCalendarList[].count").type(JsonFieldType.NUMBER).description("할 일 개수, 히스토리만 있는 경우 -1")
                                         )
                                         .responseSchema(Schema.schema("HistoryCalendarListResponse"))
                                         .build()
                         )
                 ));
     }
+
+    /*
+    * [25.04.10] 스웨거에 v1만 노출되는 관계로 주석 처리 -> 추후 개선 예정
+    @Test
+    @DisplayName("특정 연도 및 월의 히스토리 날짜 목록을 조회한다 (v1)")
+    public void getHistoryCalendarDateList_V1() throws Exception {
+        // given
+        List<LocalDate> legacyDates = List.of(
+                LocalDate.of(2025, 1, 1),
+                LocalDate.of(2025, 1, 15)
+        );
+
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
+        Mockito.when(todoService.getLegacyHistoriesCalendar(anyLong(), anyString(), anyInt()))
+                .thenReturn(legacyDates);
+
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.get("/calendar")
+                        .param("year", "2025")
+                        .param("month", "1")
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .header("X-App-Version", "1.0")
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
+
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/get-history-calendar-legacy",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Todo API")
+                                        .description("특정 연도 및 월의 히스토리 날짜 목록을 조회한다 (v1)")
+                                        .queryParameters(
+                                                parameterWithName("year").description("조회할 연도 (YYYY)"),
+                                                parameterWithName("month").description("조회할 월 (1~12)")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
+                                                fieldWithPath("result[]").type(JsonFieldType.ARRAY).description("히스토리가 있는 날짜 목록 (YYYY-MM-DD)")
+                                        )
+                                        .responseSchema(Schema.schema("LegacyHistoryCalendarResponse"))
+                                        .build()
+                        )
+                ));
+    }*/
 
     @Test
     @DisplayName("어제 한 일을 체크한다.")

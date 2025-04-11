@@ -42,7 +42,6 @@ if [ -z "$IS_GREEN" ]; then
     exit 1
   }
 
-  # Health check 타임아웃: 60초
   SECONDS=0
   while true; do
     echo ">>> 2. green health check 중..."
@@ -74,6 +73,9 @@ if [ -z "$IS_GREEN" ]; then
   echo ">>> 5. 불필요한 Docker 이미지 삭제 중..."
   sudo docker image prune -f
 
+  echo ">>> 6. Docker 빌드 캐시를 정리합니다."
+  sudo docker builder prune -f --filter "until=24h"
+
   send_discord_message "$MESSAGE_SUCCESS"
 
 # 💙 green이 실행중이면 blue를 up합니다.
@@ -86,7 +88,6 @@ else
     exit 1
   }
 
-  # Health check 타임아웃: 60초
   SECONDS=0
   while true; do
     echo ">>> 2. blue health check 중..."
@@ -117,6 +118,9 @@ else
 
   echo ">>> 5. 불필요한 Docker 이미지 삭제 중..."
   sudo docker image prune -f
+
+  echo ">>> 6. Docker 빌드 캐시를 정리합니다."
+  sudo docker builder prune -f --filter "until=24h"
 
   send_discord_message "$MESSAGE_SUCCESS"
 fi

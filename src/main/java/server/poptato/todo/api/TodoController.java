@@ -17,6 +17,7 @@ import server.poptato.user.domain.value.MobileType;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -255,22 +256,46 @@ public class TodoController {
     }
 
     /**
-     * 히스토리 캘린더 조회 API.
+     * 히스토리 캘린더 조회 API (v2 - New).
      *
      * 사용자가 특정 연도 및 월의 할 일 히스토리를 조회합니다.
+     * - 앱 버전이 2.0 이상일 경우 이 API가 호출됩니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
      * @param year 조회할 연도
      * @param month 조회할 월
-     * @return 해당 연도와 월의 할 일 히스토리 날짜 목록, 미래 날짜의 경우 날짜와 마감날짜가 설정된 백로그 개수
+     * @return 날짜별 히스토리 및 백로그 개수를 포함한 응답
      */
-    @GetMapping("/calendar")
-    public ResponseEntity<ApiResponse<HistoryCalendarListResponseDto>> getHistoryCalendarDateList(
+    @GetMapping(value = "/calendar", headers = "X-App-Version=2.0")
+    public ResponseEntity<ApiResponse<HistoryCalendarListResponseDto>> getHistoryCalendarV2(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam String year,
             @RequestParam int month
     ) {
-        HistoryCalendarListResponseDto response = todoService.getHistoriesCalendar(jwtService.extractUserIdFromToken(authorizationHeader), year, month);
+        Long userId = jwtService.extractUserIdFromToken(authorizationHeader);
+        HistoryCalendarListResponseDto response = todoService.getHistoriesCalendar(userId, year, month);
         return ApiResponse.onSuccess(SuccessStatus._OK, response);
+    }
+
+    /**
+     * 히스토리 캘린더 조회 API (v1 - Legacy).
+     *
+     * 사용자가 특정 연도 및 월의 할 일 히스토리를 조회합니다.
+     * - 앱 버전이 2.0 미만일 경우 이 API가 호출됩니다.
+     *
+     * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
+     * @param year 조회할 연도
+     * @param month 조회할 월
+     * @return 히스토리 날짜 목록
+     */
+    @GetMapping(value = "/calendar", headers = "X-App-Version=1.0")
+    public ResponseEntity<ApiResponse<List<LocalDate>>> getHistoryCalendarLegacyV1_0(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam String year,
+            @RequestParam int month
+    ) {
+        Long userId = jwtService.extractUserIdFromToken(authorizationHeader);
+        List<LocalDate> dates = todoService.getLegacyHistoriesCalendar(userId, year, month);
+        return ApiResponse.onSuccess(SuccessStatus._OK, dates);
     }
 }

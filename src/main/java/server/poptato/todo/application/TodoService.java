@@ -381,6 +381,20 @@ public class TodoService {
         return PaginatedHistoryResponseDto.of(historiesPage, false);
     }
 
+    /**
+     * 오늘(TODAY)의 할 일 목록을 조회합니다.
+     *
+     * 오늘 날짜 기준으로 다음의 할 일들을 조회하여 반환합니다:
+     * - 미완료 상태(INCOMPLETE)의 할 일
+     * - 완료 상태(COMPLETED)의 할 일
+     *
+     * 두 목록을 하나로 합친 후, 요청된 페이지 기준으로 페이징 처리합니다.
+     *
+     * @param userId 사용자 ID
+     * @param page 요청 페이지 번호 (0부터 시작)
+     * @param size 페이지당 항목 수
+     * @return 오늘 할 일 목록의 Page 객체
+     */
     private Page<Todo> getTodayTodos(Long userId, int page, int size) {
         List<Todo> todayTodos = new ArrayList<>();
         List<Todo> incompleteTodos = todoRepository.findIncompleteTodays(userId, Type.TODAY, LocalDate.now(), TodayStatus.INCOMPLETE);
@@ -395,12 +409,37 @@ public class TodoService {
     }
 
     /**
-     * 히스토리 캘린더 데이터를 조회합니다.
+     * 히스토리 캘린더 데이터를 조회합니다 (v1 - Legacy).
+     *
+     * 사용자에게 히스토리가 존재하는 날짜 리스트만 반환합니다.
+     * - 앱 버전이 1.2.0 미만일 때 호출됩니다.
      *
      * @param userId 사용자 ID
      * @param year 조회할 연도
      * @param month 조회할 월
-     * @return 캘린더 데이터
+     * @return 할 일이 존재하는 날짜 리스트
+     */
+    public List<LocalDate> getLegacyHistoriesCalendar(Long userId, String year, int month) {
+        return completedDateTimeRepository.findHistoryExistingDates(userId, year, month).stream()
+                .map(LocalDateTime::toLocalDate)
+                .distinct()
+                .toList();
+    }
+
+    /**
+     * 히스토리 캘린더 데이터를 조회합니다 (v2 - New).
+     *
+     * 다음의 정보를 날짜별로 통합하여 반환합니다:
+     * - 완료된 할 일이 존재하는 날짜 (히스토리)
+     * - 마감기한이 설정된 백로그가 존재하는 날짜
+     *
+     * 날짜별로 해당 날짜의 백로그 개수가 함께 포함되며,
+     * 히스토리 날짜는 기본적으로 count -1로 표시됩니다.
+     *
+     * @param userId 사용자 ID
+     * @param year 조회할 연도 (예: "2025")
+     * @param month 조회할 월 (1~12)
+     * @return 날짜별 히스토리/백로그 정보 DTO
      */
     public HistoryCalendarListResponseDto getHistoriesCalendar(Long userId, String year, int month) {
         Map<LocalDate, Integer> historyCountByDate =
