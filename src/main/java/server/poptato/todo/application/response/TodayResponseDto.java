@@ -13,9 +13,11 @@ public record TodayResponseDto(
         Boolean isBookmark,
         Boolean isRepeat,
         Integer dDay,
-        LocalDate deadline
+        LocalDate deadline,
+        String categoryName,
+        String imageUrl
 ) {
-    public static TodayResponseDto of(Todo todo) {
+    public static TodayResponseDto of(Todo todo, String categoryName, String imageUrl) {
         Integer dDay = null;
         if (todo.getDeadline() != null && todo.getTodayDate() != null) {
             dDay = (int) ChronoUnit.DAYS.between(todo.getTodayDate(), todo.getDeadline());
@@ -28,7 +30,9 @@ public record TodayResponseDto(
                 todo.isBookmark(),
                 todo.isRepeat(),
                 dDay,
-                todo.getDeadline()
+                todo.getDeadline(),
+                categoryName,
+                imageUrl
         );
     }
 }
