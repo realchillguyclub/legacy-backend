@@ -61,6 +61,7 @@ public class TodoTodayControllerTest extends ControllerTestConfig {
                         .param("page", "0")
                         .param("size", "8")
                         .header(HttpHeaders.AUTHORIZATION, token)
+                        .header("X-Mobile-Type", "ANDROID")
                         .accept(MediaType.APPLICATION_JSON)
         );
 
