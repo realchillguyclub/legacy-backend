@@ -3,10 +3,13 @@ package server.poptato.global.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.format.FormatterRegistry;
-import org.springframework.http.HttpMethod;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import server.poptato.global.convertor.StringToMobileTypeConvertor;
+import server.poptato.global.resolver.MobileTypeArgumentResolver;
+
+import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
@@ -25,5 +28,10 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addFormatters(FormatterRegistry registry) {
         registry.addConverter(new StringToMobileTypeConvertor());
+    }
+
+    @Override
+    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
+        resolvers.add(new MobileTypeArgumentResolver());
     }
 }
