@@ -1,5 +1,8 @@
 package server.poptato.todo.api;
 
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -107,13 +110,19 @@ public class TodoController {
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
      * @param mobileType 클라이언트 운영체제
      * @param todoId 조회할 할 일 ID
+     * @param mobileType 클라이언트의 모바일 타입
      * @return 할 일 상세 정보
      */
     @GetMapping("/todo/{todoId}")
     public ResponseEntity<ApiResponse<TodoDetailResponseDto>> getTodoInfo(
             @RequestHeader("Authorization") String authorizationHeader,
-            @RequestParam(value = "mobileType", defaultValue = "ANDROID") MobileType mobileType,
-            @PathVariable Long todoId
+            @PathVariable Long todoId,
+            @Parameter(name = "X-Mobile-Type", in = ParameterIn.HEADER,
+                    schema = @Schema(
+                            type = "string",
+                            allowableValues = {"ANDROID", "IOS"}
+                    )
+            ) MobileType mobileType
     ) {
         TodoDetailResponseDto response = todoService.getTodoInfo(jwtService.extractUserIdFromToken(authorizationHeader), mobileType, todoId);
         return ApiResponse.onSuccess(SuccessStatus._OK, response);

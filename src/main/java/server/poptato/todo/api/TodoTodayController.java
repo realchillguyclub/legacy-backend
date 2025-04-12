@@ -1,5 +1,8 @@
 package server.poptato.todo.api;
 
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,14 +34,20 @@ public class TodoTodayController {
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
      * @param page 요청 페이지 번호 (기본값: 0)
      * @param size 한 페이지당 항목 수 (기본값: 8)
+     * @param mobileType 클라이언트의 모바일 타입
      * @return 오늘의 할 일 목록 및 페이징 정보
      */
     @GetMapping("/todays")
     public ResponseEntity<ApiResponse<TodayListResponseDto>> getTodayList(
             @RequestHeader("Authorization") String authorizationHeader,
-            @RequestParam(value = "mobileType", defaultValue = "ANDROID") MobileType mobileType,
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "8") int size
+            @RequestParam(value = "size", defaultValue = "8") int size,
+            @Parameter(name = "X-Mobile-Type", in = ParameterIn.HEADER,
+                    schema = @Schema(
+                            type = "string",
+                            allowableValues = {"ANDROID", "IOS"}
+                    )
+            ) MobileType mobileType
     ) {
         LocalDate todayDate = LocalDate.now();
         // 오늘의 할 일 목록 조회
