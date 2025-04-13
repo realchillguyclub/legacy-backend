@@ -20,7 +20,7 @@ public class MobileTypeArgumentResolver implements HandlerMethodArgumentResolver
         String header = webRequest.getHeader("X-Mobile-Type");
 
         if (header == null) {
-            throw new CustomException(ErrorStatus._INVALID_HEADER_VALUE);
+            return MobileType.ANDROID;
         }
 
         try {
