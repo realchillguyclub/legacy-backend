@@ -1,5 +1,8 @@
 package server.poptato.todo.api;
 
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -10,6 +13,7 @@ import server.poptato.todo.application.TodoBacklogService;
 import server.poptato.todo.application.response.*;
 import server.poptato.global.response.ApiResponse;
 import server.poptato.global.response.status.SuccessStatus;
+import server.poptato.user.domain.value.MobileType;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,16 +32,24 @@ public class TodoBacklogController {
      * @param categoryId 조회할 카테고리 ID
      * @param page 요청 페이지 번호 (기본값: 0)
      * @param size 한 페이지당 항목 수 (기본값: 8)
+     * @param mobileType 클라이언트의 모바일 타입
      * @return 백로그 목록 및 페이징 정보
      */
-    @GetMapping("/backlogs")
+    @GetMapping(value = "/backlogs")
     public ResponseEntity<ApiResponse<BacklogListResponseDto>> getBacklogList(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam(value = "category") Long categoryId,
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "8") int size
+            @RequestParam(value = "size", defaultValue = "8") int size,
+            @Parameter(name = "X-Mobile-Type", in = ParameterIn.HEADER,
+                    schema = @Schema(
+                            type = "string",
+                            allowableValues = {"ANDROID", "IOS"}
+                    )
+            ) MobileType mobileType
+
     ) {
-        BacklogListResponseDto response = todoBacklogService.getBacklogList(jwtService.extractUserIdFromToken(authorizationHeader), categoryId, page, size);
+        BacklogListResponseDto response = todoBacklogService.getBacklogList(jwtService.extractUserIdFromToken(authorizationHeader), categoryId, mobileType, page, size);
         return ApiResponse.onSuccess(SuccessStatus._OK, response);
     }
 

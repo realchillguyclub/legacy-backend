@@ -3,6 +3,7 @@ package server.poptato.todo.infra.repository;
 import jakarta.persistence.Tuple;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -28,6 +29,7 @@ public interface JpaTodoRepository extends TodoRepository, JpaRepository<Todo, L
     @Query("SELECT COALESCE(MIN(t.todayOrder), 0) FROM Todo t WHERE t.userId = :userId AND t.todayOrder IS NOT NULL")
     Integer findMinTodayOrderByUserIdOrZero(Long userId);
 
+    @EntityGraph(attributePaths = {"category", "category.emoji"})
     @Query("""
     SELECT t FROM Todo t 
     WHERE t.userId = :userId 
@@ -41,6 +43,7 @@ public interface JpaTodoRepository extends TodoRepository, JpaRepository<Todo, L
             @Param("status") TodayStatus status,
             Pageable pageable);
 
+    @EntityGraph(attributePaths = {"category", "category.emoji"})
     @Query("""
     SELECT t FROM Todo t 
     WHERE t.userId = :userId 
@@ -55,6 +58,7 @@ public interface JpaTodoRepository extends TodoRepository, JpaRepository<Todo, L
             @Param("status") TodayStatus status,
             Pageable pageable);
 
+    @EntityGraph(attributePaths = {"category", "category.emoji"})
     @Query("""
     SELECT t FROM Todo t 
     WHERE t.userId = :userId 
@@ -70,6 +74,22 @@ public interface JpaTodoRepository extends TodoRepository, JpaRepository<Todo, L
             @Param("status") TodayStatus status,
             Pageable pageable);
 
+    @EntityGraph(attributePaths = {"category", "category.emoji"})
+    @Query("""
+    SELECT t FROM Todo t
+    WHERE t.userId = :userId
+      AND t.type = :type
+      AND t.todayDate = :todayDate
+      AND t.todayStatus = :todayStatus
+    ORDER BY t.todayOrder DESC
+    """)
+    List<Todo> findIncompleteTodosWithCategory(
+            @Param("userId") Long userId,
+            @Param("type") Type type,
+            @Param("todayDate") LocalDate todayDate,
+            @Param("todayStatus") TodayStatus todayStatus
+    );
+
     @Query("""
             SELECT t 
             FROM Todo t
@@ -81,6 +101,22 @@ public interface JpaTodoRepository extends TodoRepository, JpaRepository<Todo, L
             ORDER BY c.dateTime ASC
             """)
     List<Todo> findCompletedTodayByUserIdOrderByCompletedDateTimeAsc(
+            @Param("userId") Long userId,
+            @Param("todayDate") LocalDate todayDate
+    );
+
+    @EntityGraph(attributePaths = {"category", "category.emoji"})
+    @Query("""
+            SELECT t 
+            FROM Todo t
+            JOIN CompletedDateTime c ON t.id = c.todoId
+            WHERE t.userId = :userId 
+              AND t.type = 'TODAY'
+              AND t.todayStatus = 'COMPLETED'
+              AND FUNCTION('DATE', c.dateTime) = :todayDate
+            ORDER BY c.dateTime ASC
+            """)
+    List<Todo> findCompletedTodayByUserIdOrderByCompletedDateTimeAscWithCategory(
             @Param("userId") Long userId,
             @Param("todayDate") LocalDate todayDate
     );

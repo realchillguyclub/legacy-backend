@@ -20,6 +20,7 @@ import server.poptato.todo.application.TodoBacklogService;
 import server.poptato.todo.application.response.BacklogCreateResponseDto;
 import server.poptato.todo.application.response.BacklogListResponseDto;
 import server.poptato.todo.application.response.PaginatedYesterdayResponseDto;
+import server.poptato.user.domain.value.MobileType;
 
 import java.util.List;
 
@@ -51,7 +52,7 @@ public class TodoBacklogControllerTest extends ControllerTestConfig {
         BacklogListResponseDto response = new BacklogListResponseDto(10L, "Sample Category", List.of(), 1);
 
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
-        Mockito.when(todoBacklogService.getBacklogList(anyLong(), anyLong(), anyInt(), anyInt())).thenReturn(response);
+        Mockito.when(todoBacklogService.getBacklogList(anyLong(), anyLong(), any(MobileType.class), anyInt(), anyInt())).thenReturn(response);
 
         // when
         ResultActions resultActions = this.mockMvc.perform(
@@ -60,6 +61,7 @@ public class TodoBacklogControllerTest extends ControllerTestConfig {
                         .param("page", "0")
                         .param("size", "8")
                         .header(HttpHeaders.AUTHORIZATION, token)
+                        .header("X-Mobile-Type", "ANDROID")
                         .accept(MediaType.APPLICATION_JSON)
         );
 

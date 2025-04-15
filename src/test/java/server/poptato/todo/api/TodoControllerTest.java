@@ -249,6 +249,7 @@ public class TodoControllerTest extends ControllerTestConfig {
         ResultActions resultActions = this.mockMvc.perform(
                 RestDocumentationRequestBuilders.get("/todo/{todoId}", 1L)
                         .header(HttpHeaders.AUTHORIZATION, token)
+                        .header("X-Mobile-Type", "ANDROID")
                         .accept(MediaType.APPLICATION_JSON)
         );
 

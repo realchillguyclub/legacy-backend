@@ -1,5 +1,8 @@
 package server.poptato.category.api;
 
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -50,14 +53,20 @@ public class CategoryController {
      * @param mobileType 클라이언트 운영체제
      * @param page 요청 페이지 번호 (기본값: 0)
      * @param size 한 페이지당 항목 수 (기본값: 6)
+     * @param mobileType 클라이언트의 모바일 타입
      * @return 카테고리 목록과 페이징 정보를 포함한 응답
      */
     @GetMapping("/list")
     public ResponseEntity<ApiResponse<CategoryListResponseDto>> getCategories(
             @RequestHeader("Authorization") String authorizationHeader,
-            @RequestParam(value = "mobileType", defaultValue = "ANDROID") MobileType mobileType,
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "6") int size
+            @RequestParam(value = "size", defaultValue = "6") int size,
+            @Parameter(name = "X-Mobile-Type", in = ParameterIn.HEADER,
+                    schema = @Schema(
+                            type = "string",
+                            allowableValues = {"ANDROID", "IOS"}
+                    )
+            ) MobileType mobileType
     ) {
         CategoryListResponseDto response = categoryService.getCategories(jwtService.extractUserIdFromToken(authorizationHeader), mobileType, page, size);
         return ApiResponse.onSuccess(SuccessStatus._OK, response);

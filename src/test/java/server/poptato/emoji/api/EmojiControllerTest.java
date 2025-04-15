@@ -54,6 +54,7 @@ public class EmojiControllerTest extends ControllerTestConfig {
                 RestDocumentationRequestBuilders.get("/emojis")
                         .param("page", "0")
                         .param("size", "70")
+                        .header("X-Mobile-Type", "ANDROID")
                         .accept(MediaType.APPLICATION_JSON)
         );
 
