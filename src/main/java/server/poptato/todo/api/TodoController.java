@@ -14,8 +14,10 @@ import server.poptato.global.response.status.SuccessStatus;
 import server.poptato.todo.api.request.*;
 import server.poptato.todo.application.TodoService;
 import server.poptato.todo.application.response.HistoryCalendarListResponseDto;
+import server.poptato.todo.application.response.LegacyHistoryCalendarResponseDto;
 import server.poptato.todo.application.response.PaginatedHistoryResponseDto;
 import server.poptato.todo.application.response.TodoDetailResponseDto;
+import server.poptato.todo.domain.value.AppVersion;
 import server.poptato.user.domain.value.MobileType;
 
 import java.time.LocalDate;
@@ -265,46 +267,37 @@ public class TodoController {
     }
 
     /**
-     * 히스토리 캘린더 조회 API (v2 - New).
+     * 히스토리 캘린더 조회 API.
      *
      * 사용자가 특정 연도 및 월의 할 일 히스토리를 조회합니다.
-     * - 앱 버전이 2.0 이상일 경우 이 API가 호출됩니다.
+     * - 앱 버전이 2.0 미만일 경우, 날짜 리스트를 감싼 응답 형식(`LegacyHistoryCalendarResponseDto`)으로 반환됩니다.
+     * - 앱 버전이 2.0 이상일 경우, 날짜별 히스토리 및 백로그 개수를 포함한 응답 형식(`HistoryCalendarListResponseDto`)으로 반환됩니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
+     * @param appVersion 요청 헤더의 앱 버전 (예: 1.0, 2.0)
      * @param year 조회할 연도
      * @param month 조회할 월
-     * @return 날짜별 히스토리 및 백로그 개수를 포함한 응답
+     * @return 히스토리 캘린더 응답 (버전에 따라 서로 다른 DTO 반환)
      */
-    @GetMapping(value = "/calendar", headers = "X-App-Version=2.0")
-    public ResponseEntity<ApiResponse<HistoryCalendarListResponseDto>> getHistoryCalendarV2(
+    @GetMapping("/calendar")
+    public ResponseEntity<ApiResponse<Object>> getHistoryCalendarDateList(
             @RequestHeader("Authorization") String authorizationHeader,
+
+            @Parameter(name = "X-App-Version", in = ParameterIn.HEADER, description = "앱 버전",
+                    schema = @Schema(type = "string", example = "1.0", allowableValues = {"1.0", "2.0"}))
+            AppVersion appVersion,
+
             @RequestParam String year,
             @RequestParam int month
     ) {
         Long userId = jwtService.extractUserIdFromToken(authorizationHeader);
+
+        if (appVersion.isLegacy()) {
+            List<LocalDate> dates = todoService.getLegacyHistoriesCalendar(userId, year, month);
+            return ApiResponse.onSuccess(SuccessStatus._OK, LegacyHistoryCalendarResponseDto.of(dates));
+        }
+
         HistoryCalendarListResponseDto response = todoService.getHistoriesCalendar(userId, year, month);
         return ApiResponse.onSuccess(SuccessStatus._OK, response);
-    }
-
-    /**
-     * 히스토리 캘린더 조회 API (v1 - Legacy).
-     *
-     * 사용자가 특정 연도 및 월의 할 일 히스토리를 조회합니다.
-     * - 앱 버전이 2.0 미만일 경우 이 API가 호출됩니다.
-     *
-     * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
-     * @param year 조회할 연도
-     * @param month 조회할 월
-     * @return 히스토리 날짜 목록
-     */
-    @GetMapping(value = "/calendar", headers = "X-App-Version=1.0")
-    public ResponseEntity<ApiResponse<List<LocalDate>>> getHistoryCalendarLegacyV1_0(
-            @RequestHeader("Authorization") String authorizationHeader,
-            @RequestParam String year,
-            @RequestParam int month
-    ) {
-        Long userId = jwtService.extractUserIdFromToken(authorizationHeader);
-        List<LocalDate> dates = todoService.getLegacyHistoriesCalendar(userId, year, month);
-        return ApiResponse.onSuccess(SuccessStatus._OK, dates);
     }
 }
