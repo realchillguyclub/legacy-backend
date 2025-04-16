@@ -12,7 +12,7 @@ public record HistoryCalendarListResponseDto(
     public static HistoryCalendarListResponseDto from(Map<LocalDate, Integer> dates) {
         List<HistoryCalendarResponseDto> historyCalendarList = dates.entrySet().stream()
                 .map(entry -> HistoryCalendarResponseDto.of(entry.getKey(), entry.getValue()))
-                .sorted(Comparator.comparing(HistoryCalendarResponseDto::localDate))
+                .sorted(Comparator.comparing(HistoryCalendarResponseDto::date))
                 .toList();
 
         return new HistoryCalendarListResponseDto(historyCalendarList);

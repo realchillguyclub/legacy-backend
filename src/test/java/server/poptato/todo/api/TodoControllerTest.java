@@ -648,7 +648,7 @@ public class TodoControllerTest extends ControllerTestConfig {
                                                         fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
                                                         fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
                                                         fieldWithPath("result.historyCalendarList").type(JsonFieldType.ARRAY).description("히스토리/백로그 날짜 및 개수 목록"),
-                                                        fieldWithPath("result.historyCalendarList[].localDate").type(JsonFieldType.STRING).description("날짜 (YYYY-MM-DD)"),
+                                                        fieldWithPath("result.historyCalendarList[].date").type(JsonFieldType.STRING).description("날짜 (YYYY-MM-DD)"),
                                                         fieldWithPath("result.historyCalendarList[].count").type(JsonFieldType.NUMBER).description("할 일 개수, 히스토리만 있는 경우 -1")
                                                 )
                                                         : List.of(
