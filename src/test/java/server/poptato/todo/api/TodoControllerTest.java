@@ -23,7 +23,9 @@ import server.poptato.todo.application.response.HistoryCalendarListResponseDto;
 import server.poptato.todo.application.response.HistoryCalendarResponseDto;
 import server.poptato.todo.application.response.PaginatedHistoryResponseDto;
 import server.poptato.todo.application.response.TodoDetailResponseDto;
+import server.poptato.todo.domain.value.AppVersion;
 import server.poptato.todo.domain.value.Type;
+import server.poptato.user.domain.value.MobileType;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -294,6 +296,39 @@ public class TodoControllerTest extends ControllerTestConfig {
                                         .build()
                         )
                 ));
+    }
+
+    @Test
+    @DisplayName("X-Mobile-Type 헤더가 없는 경우 기본값(ANDROID)으로 처리된다")
+    void getTodoInfo_DefaultMobileType() throws Exception {
+        // given
+        Long todoId = 1L;
+        TodoDetailResponseDto response = new TodoDetailResponseDto(
+                "Sample Todo",
+                LocalDate.of(2025, 4, 20),
+                "Work",
+                "https://example.com/emoji.png",
+                true,
+                false
+        );
+
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
+        Mockito.when(todoService.getTodoInfo(1L, MobileType.ANDROID, todoId))
+                .thenReturn(response);
+
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.get("/todo/{todoId}", todoId)
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."));
     }
 
     @Test
@@ -590,15 +625,15 @@ public class TodoControllerTest extends ControllerTestConfig {
 
     @ParameterizedTest
     @CsvSource({
-            "2.0, v2",
-            "1.0, v1"
+            "V2, V2",
+            "V1, V1"
     })
-    @DisplayName("특정 연도 및 월의 히스토리 날짜 목록을 조회한다. (v1/v2)")
-    void getHistoryCalendarDateList_Versioned(String version, String docId) throws Exception {
+    @DisplayName("특정 연도 및 월의 히스토리 날짜 목록을 조회한다.(V1/V2)")
+    void getHistoryCalendarDateList_Versioned(AppVersion appVersion, String docId) throws Exception {
         // given
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
 
-        if (version.equals("2.0")) {
+        if (!appVersion.isLegacy()) {
             HistoryCalendarListResponseDto response = new HistoryCalendarListResponseDto(List.of(
                     new HistoryCalendarResponseDto(LocalDate.of(2025, 1, 1), -1),
                     new HistoryCalendarResponseDto(LocalDate.of(2025, 1, 15), -1)
@@ -620,7 +655,7 @@ public class TodoControllerTest extends ControllerTestConfig {
                         .param("year", "2025")
                         .param("month", "1")
                         .header(HttpHeaders.AUTHORIZATION, token)
-                        .header("X-App-Version", version)
+                        .header("X-App-Version", appVersion)
                         .accept(MediaType.APPLICATION_JSON)
         );
 
@@ -636,13 +671,13 @@ public class TodoControllerTest extends ControllerTestConfig {
                         resource(
                                 ResourceSnippetParameters.builder()
                                         .tag("Todo API")
-                                        .description("특정 연도 및 월의 히스토리 날짜 목록을 조회한다 (v1/v2)")
+                                        .description("특정 연도 및 월의 히스토리 날짜 목록을 조회한다.(V1/V2)")
                                         .queryParameters(
                                                 parameterWithName("year").description("조회할 연도 (YYYY)"),
                                                 parameterWithName("month").description("조회할 월 (1~12)")
                                         )
                                         .responseFields(
-                                                version.equals("2.0")
+                                                !appVersion.isLegacy()
                                                         ? List.of(
                                                         fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
                                                         fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
@@ -658,9 +693,11 @@ public class TodoControllerTest extends ControllerTestConfig {
                                                         fieldWithPath("result.dates").type(JsonFieldType.ARRAY).description("히스토리가 있는 날짜 목록 (YYYY-MM-DD)")
                                                 )
                                         )
-                                        .responseSchema(Schema.schema(version.equals("2.0")
-                                                ? "HistoryCalendarListResponse"
-                                                : "LegacyHistoryCalendarResponse"))
+                                        .responseSchema(Schema.schema(
+                                                appVersion.isLegacy()
+                                                        ? "LegacyHistoryCalendarResponse"
+                                                        : "HistoryCalendarListResponse"
+                                        ))
                                         .build()
                         )
                 ));
