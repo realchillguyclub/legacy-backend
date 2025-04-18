@@ -1,4 +1,4 @@
-package server.poptato.external.firebase.service;
+package server.poptato.external.firebase.application;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;

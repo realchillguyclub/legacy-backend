@@ -1,4 +1,4 @@
-package server.poptato.external.firebase.service;
+package server.poptato.external.firebase.application;
 
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
