@@ -7,6 +7,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import server.poptato.category.api.request.CategoryCreateUpdateRequestDto;
+import server.poptato.emoji.domain.entity.Emoji;
 
 import java.time.LocalDateTime;
 
@@ -24,6 +25,7 @@ public class Category {
     @NotNull
     private Long userId;
     @NotNull
+    @Column(name = "emoji_id")
     private Long emojiId;
     @NotNull
     private int categoryOrder;
@@ -34,6 +36,9 @@ public class Category {
     private LocalDateTime createDate;
     @LastModifiedDate
     private LocalDateTime modifyDate;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "emoji_id", insertable = false, updatable = false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    private Emoji emoji;
 
     public static Category create(Long userId, int maxCategoryId, CategoryCreateUpdateRequestDto request) {
         return Category.builder()

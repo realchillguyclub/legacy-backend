@@ -1,5 +1,6 @@
 package server.poptato.todo.domain.repository;
 
+import jakarta.persistence.Tuple;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
@@ -15,7 +16,11 @@ public interface TodoRepository {
 
     List<Todo> findByUserIdAndTypeAndTodayDateAndTodayStatusOrderByTodayOrderDesc(Long userId, Type type, LocalDate todayDate, TodayStatus todayStatus);
 
+    List<Todo> findIncompleteTodosWithCategory(Long userId, Type type, LocalDate todayDate, TodayStatus todayStatus);
+
     List<Todo> findCompletedTodayByUserIdOrderByCompletedDateTimeAsc(Long userId, LocalDate todayDate);
+
+    List<Todo> findCompletedTodayByUserIdOrderByCompletedDateTimeAscWithCategory(Long userId, LocalDate todayDate);
 
     Optional<Todo> findById(Long todoId);
 
@@ -31,8 +36,19 @@ public interface TodoRepository {
 
     Integer findMaxBacklogOrderByUserIdOrZero(Long userId);
 
+    default Page<Todo> findDeadlineBacklogs(Long userId, LocalDate localDate, Pageable pageable) {
+        return findDeadlineBacklogsByUserIdAndLocalDate(userId, localDate, pageable);
+    }
+
+    Page<Todo> findDeadlineBacklogsByUserIdAndLocalDate(Long userId, LocalDate localDate, Pageable pageable);
+
     default List<Todo> findIncompleteTodays(Long userId, Type type, LocalDate todayDate, TodayStatus todayStatus) {
         return findByUserIdAndTypeAndTodayDateAndTodayStatusOrderByTodayOrderDesc(
+                userId, type, todayDate, todayStatus);
+    }
+
+    default List<Todo> findIncompleteTodaysWithCategory(Long userId, Type type, LocalDate todayDate, TodayStatus todayStatus) {
+        return findIncompleteTodosWithCategory(
                 userId, type, todayDate, todayStatus);
     }
 
@@ -41,11 +57,18 @@ public interface TodoRepository {
                 userId, todayDate);
     }
 
+    default List<Todo> findCompletedTodaysWithCategory(Long userId, LocalDate todayDate) {
+        return findCompletedTodayByUserIdOrderByCompletedDateTimeAscWithCategory(
+                userId, todayDate);
+    }
+
     default Page<Todo> findHistories(Long userId,LocalDate localDate, Pageable pageable) {
         return findTodosByUserIdAndCompletedDateTime(userId, localDate, pageable);
     }
 
     Page<Todo> findTodosByUserIdAndCompletedDateTime(Long userId, LocalDate localDate, Pageable pageable);
+
+
 
     List<Todo> findByType(Type type);
 
@@ -70,4 +93,15 @@ public interface TodoRepository {
      * @return 미완료된 어제의 할 일 목록
      */
     List<Todo> findIncompleteYesterdays(Long userId);
+
+    /**
+     *
+     * @param userId 사용자 ID
+     * @param year 해당 연도
+     * @param month 해당 월
+     * @return 해당 연도-월 조회 일 기준 미래 날짜중 마감일이 정해진 백로그가 있는 날짜와 백로그 개수 목록
+     */
+    List<Tuple> findDatesWithBacklogCount(Long userId, String year, int month);
+
+
 }

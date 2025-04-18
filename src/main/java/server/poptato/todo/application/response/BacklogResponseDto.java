@@ -11,10 +11,12 @@ public record BacklogResponseDto(
         Boolean isBookmark,
         Boolean isRepeat,
         Integer dDay,
-        LocalDate deadline
+        LocalDate deadline,
+        String categoryName,
+        String imageUrl
 ) {
 
-    public static BacklogResponseDto from(Todo todo) {
+    public static BacklogResponseDto of(Todo todo, String categoryName, String imageUrl) {
         LocalDate today = LocalDate.now();
         Integer dDay = null;
 
@@ -28,7 +30,9 @@ public record BacklogResponseDto(
                 todo.isBookmark(),
                 todo.isRepeat(),
                 dDay,
-                todo.getDeadline()
+                todo.getDeadline(),
+                categoryName,
+                imageUrl
         );
     }
 }

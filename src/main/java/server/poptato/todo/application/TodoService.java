@@ -4,6 +4,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,13 +30,17 @@ import server.poptato.todo.status.TodoErrorStatus;
 import server.poptato.user.domain.value.MobileType;
 import server.poptato.user.validator.UserValidator;
 
+import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Transactional
 @RequiredArgsConstructor
@@ -365,24 +370,96 @@ public class TodoService {
      */
     public PaginatedHistoryResponseDto getHistories(Long userId, LocalDate localDate, int page, int size) {
         userValidator.checkIsExistUser(userId);
-        Page<Todo> historiesPage = todoRepository.findHistories(userId, localDate, PageRequest.of(page, size));
-        return PaginatedHistoryResponseDto.of(historiesPage);
+        if (localDate.isBefore(LocalDate.now())) {
+            Page<Todo> historiesPage = todoRepository.findHistories(userId, localDate, PageRequest.of(page, size));
+            return PaginatedHistoryResponseDto.of(historiesPage, true);
+        } else if (localDate.isEqual(LocalDate.now())) {
+            Page<Todo> historiesPage = getTodayTodos(userId, page, size);
+            return PaginatedHistoryResponseDto.from(historiesPage);
+        }
+        Page<Todo> historiesPage = todoRepository.findDeadlineBacklogs(userId, localDate, PageRequest.of(page, size));
+        return PaginatedHistoryResponseDto.of(historiesPage, false);
     }
 
     /**
-     * 히스토리 캘린더 데이터를 조회합니다.
+     * 오늘(TODAY)의 할 일 목록을 조회합니다.
+     *
+     * 오늘 날짜 기준으로 다음의 할 일들을 조회하여 반환합니다:
+     * - 미완료 상태(INCOMPLETE)의 할 일
+     * - 완료 상태(COMPLETED)의 할 일
+     *
+     * 두 목록을 하나로 합친 후, 요청된 페이지 기준으로 페이징 처리합니다.
+     *
+     * @param userId 사용자 ID
+     * @param page 요청 페이지 번호 (0부터 시작)
+     * @param size 페이지당 항목 수
+     * @return 오늘 할 일 목록의 Page 객체
+     */
+    private Page<Todo> getTodayTodos(Long userId, int page, int size) {
+        List<Todo> todayTodos = new ArrayList<>();
+        List<Todo> incompleteTodos = todoRepository.findIncompleteTodays(userId, Type.TODAY, LocalDate.now(), TodayStatus.INCOMPLETE);
+        List<Todo> completedTodos = todoRepository.findCompletedTodays(userId, LocalDate.now());
+        todayTodos.addAll(incompleteTodos);
+        todayTodos.addAll(completedTodos);
+
+        PageRequest pageRequest = PageRequest.of(page, size);
+        int start = (int) pageRequest.getOffset();
+        int end = Math.min((start + pageRequest.getPageSize()), todayTodos.size());
+        return new PageImpl<>(todayTodos.subList(start, end), pageRequest, todayTodos.size());
+    }
+
+    /**
+     * 히스토리 캘린더 데이터를 조회합니다 (v1 - Legacy).
+     *
+     * 사용자에게 히스토리가 존재하는 날짜 리스트만 반환합니다.
+     * - 앱 버전이 1.2.0 미만일 때 호출됩니다.
      *
      * @param userId 사용자 ID
      * @param year 조회할 연도
      * @param month 조회할 월
-     * @return 캘린더 데이터
+     * @return 할 일이 존재하는 날짜 리스트
      */
-    public HistoryCalendarListResponseDto getHistoriesCalendar(Long userId, String year, int month) {
-        List<LocalDate> dates = completedDateTimeRepository.findHistoryExistingDates(userId, year, month).stream()
+    public List<LocalDate> getLegacyHistoriesCalendar(Long userId, String year, int month) {
+        return completedDateTimeRepository.findHistoryExistingDates(userId, year, month).stream()
                 .map(LocalDateTime::toLocalDate)
                 .distinct()
                 .toList();
-        return HistoryCalendarListResponseDto.of(dates);
+    }
+
+    /**
+     * 히스토리 캘린더 데이터를 조회합니다 (v2 - New).
+     *
+     * 다음의 정보를 날짜별로 통합하여 반환합니다:
+     * - 완료된 할 일이 존재하는 날짜 (히스토리)
+     * - 마감기한이 설정된 백로그가 존재하는 날짜
+     *
+     * 날짜별로 해당 날짜의 백로그 개수가 함께 포함되며,
+     * 히스토리 날짜는 기본적으로 count -1로 표시됩니다.
+     *
+     * @param userId 사용자 ID
+     * @param year 조회할 연도 (예: "2025")
+     * @param month 조회할 월 (1~12)
+     * @return 날짜별 히스토리/백로그 정보 DTO
+     */
+    public HistoryCalendarListResponseDto getHistoriesCalendar(Long userId, String year, int month) {
+        Map<LocalDate, Integer> historyCountByDate =
+                completedDateTimeRepository.findHistoryExistingDates(userId, year, month).stream()
+                        .map(LocalDateTime::toLocalDate)
+                        .distinct()
+                        .collect(Collectors.toMap(
+                                Function.identity(),
+                                date -> -1
+                        ));
+
+        Map<LocalDate, Integer> backlogCountByDate = todoRepository.findDatesWithBacklogCount(userId, year, month).stream()
+                .collect(Collectors.toMap(
+                        t -> ((Date)t.get("date")).toLocalDate(),
+                        t -> ((Number) t.get("count")).intValue()
+                ));
+
+        historyCountByDate.putAll(backlogCountByDate);
+
+        return HistoryCalendarListResponseDto.from(historyCountByDate);
     }
 
     /**

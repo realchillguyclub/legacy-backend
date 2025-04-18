@@ -3,11 +3,13 @@ package server.poptato.todo.application;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import server.poptato.category.application.response.CategoryResponseDto;
 import server.poptato.todo.application.response.TodayListResponseDto;
 import server.poptato.todo.domain.entity.Todo;
 import server.poptato.todo.domain.repository.TodoRepository;
 import server.poptato.todo.domain.value.TodayStatus;
 import server.poptato.todo.domain.value.Type;
+import server.poptato.user.domain.value.MobileType;
 import server.poptato.user.validator.UserValidator;
 
 import java.time.LocalDate;
@@ -30,14 +32,14 @@ public class TodoTodayService {
      * @param todayDate 오늘 날짜
      * @return TodayListResponseDto 오늘의 할 일 목록과 페이지 정보
      */
-    public TodayListResponseDto getTodayList(long userId, int page, int size, LocalDate todayDate) {
+    public TodayListResponseDto getTodayList(long userId, MobileType mobileType, int page, int size, LocalDate todayDate) {
         userValidator.checkIsExistUser(userId);
 
         List<Todo> todays = getAllTodays(userId, todayDate);
         List<Todo> todaySubList = getTodayPagination(todays, page, size);
         int totalPageCount = (int) Math.ceil((double) todays.size() / size);
 
-        return TodayListResponseDto.of(todayDate, todaySubList, totalPageCount);
+        return TodayListResponseDto.of(todayDate, mobileType, todaySubList, totalPageCount);
     }
 
     /**
@@ -69,8 +71,8 @@ public class TodoTodayService {
      */
     private List<Todo> getAllTodays(long userId, LocalDate todayDate) {
         List<Todo> todays = new ArrayList<>();
-        List<Todo> incompleteTodos = todoRepository.findIncompleteTodays(userId, Type.TODAY, todayDate, TodayStatus.INCOMPLETE);
-        List<Todo> completedTodos = todoRepository.findCompletedTodays(userId, todayDate);
+        List<Todo> incompleteTodos = todoRepository.findIncompleteTodaysWithCategory(userId, Type.TODAY, todayDate, TodayStatus.INCOMPLETE);
+        List<Todo> completedTodos = todoRepository.findCompletedTodaysWithCategory(userId, todayDate);
 
         todays.addAll(incompleteTodos);
         todays.addAll(completedTodos);

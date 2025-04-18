@@ -21,14 +21,14 @@ public class EmojiController {
      *
      * 사용 가능한 이모지 목록을 페이지네이션 형식으로 조회합니다.
      *
-     * @param mobileType 클라이언트 운영체제
+     * @param mobileType 클라이언트의 모바일 타입
      * @param page 요청 페이지 번호 (기본값: 0)
      * @param size 한 페이지당 항목 수 (기본값: 70)
      * @return 그룹화된 이모지 목록과 페이징 정보를 포함한 응답
      */
     @GetMapping
     public ResponseEntity<ApiResponse<EmojiResponseDto>> getCategories(
-            @RequestParam(value = "mobileType", defaultValue = "ANDROID") MobileType mobileType,
+            @RequestHeader(value = "X-Mobile-Type", required = false, defaultValue = "ANDROID") MobileType mobileType,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "70") int size
     ) {

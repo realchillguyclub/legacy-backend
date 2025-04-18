@@ -114,6 +114,7 @@ public class CategoryControllerTest extends ControllerTestConfig {
         ResultActions resultActions = this.mockMvc.perform(
                 RestDocumentationRequestBuilders.get("/category/list")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer sampleToken")
+                        .header("X-Mobile-Type", "ANDROID")
                         .param("page", "0")
                         .param("size", "6")
                         .accept(MediaType.APPLICATION_JSON)

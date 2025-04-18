@@ -47,7 +47,7 @@ public class CategoryController {
      * 페이지 번호와 페이지 크기를 쿼리 파라미터로 전달하며, 기본값은 첫 페이지(0), 항목 수는 6개입니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
-     * @param mobileType 클라이언트 운영체제
+     * @param mobileType 클라이언트의 모바일 타입
      * @param page 요청 페이지 번호 (기본값: 0)
      * @param size 한 페이지당 항목 수 (기본값: 6)
      * @return 카테고리 목록과 페이징 정보를 포함한 응답
@@ -55,7 +55,7 @@ public class CategoryController {
     @GetMapping("/list")
     public ResponseEntity<ApiResponse<CategoryListResponseDto>> getCategories(
             @RequestHeader("Authorization") String authorizationHeader,
-            @RequestParam(value = "mobileType", defaultValue = "ANDROID") MobileType mobileType,
+            @RequestHeader(value = "X-Mobile-Type", required = false, defaultValue = "ANDROID") MobileType mobileType,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "6") int size
     ) {
