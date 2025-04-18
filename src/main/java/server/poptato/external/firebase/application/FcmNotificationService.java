@@ -13,27 +13,19 @@ import server.poptato.user.domain.repository.MobileRepository;
 import server.poptato.user.domain.repository.UserRepository;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class FcmNotificationService {
-    private final FCMService fcmService;
+    private final FcmService fcmService;
+    private final FcmTokenService fcmTokenService;
     private final UserRepository userRepository;
     private final MobileRepository mobileRepository;
     private final TodoRepository todoRepository;
 
     /**
-     * 비활성 FCM 토큰을 삭제한다.
-     */
-    public void deleteOldFcmTokens() {
-        LocalDateTime oneMonthAgo = LocalDateTime.now().minusMonths(1);
-        mobileRepository.deleteOldTokens(oneMonthAgo);
-    }
-
-    /**
-     * 마감일 알림을 전송한다.
+     * 마감기한 푸쉬알림을 전체 유저에게 전송합니다.
      */
     @Async
     public void sendDeadlineNotifications() {
@@ -46,7 +38,7 @@ public class FcmNotificationService {
     }
 
     /**
-     * 특정 유저에게 마감일 알림을 전송한다.
+     * 특정 유저에게 마감기한 푸쉬알림을 전송합니다.
      */
     private void sendUserDeadlineNotification(User user) {
         List<Todo> todosDueToday = todoRepository.findTodosDueToday(user.getId(), LocalDate.now());
@@ -54,22 +46,22 @@ public class FcmNotificationService {
             List<Mobile> mobiles = mobileRepository.findAllByUserId(user.getId());
             for (Mobile mobile : mobiles) {
                 for (Todo todo : todosDueToday) {
-                    sendPushNotificationOrDeleteFcmToken(mobile.getClientId(), todo.getContent());
+                    sendPushOrDeleteToken(mobile.getClientId(), todo.getContent());
                 }
             }
         }
     }
 
     /**
-     * 푸시 알림을 전송하거나, 유효하지 않은 FCM 토큰을 삭제한다.
+     * 마감기한 푸쉬알림을 전송하거나 유효하지 않은 FCM 토큰을 삭제합니다.
      */
-    private void sendPushNotificationOrDeleteFcmToken(String clientId, String todoContent) {
+    private void sendPushOrDeleteToken(String clientId, String todoContent) {
         try {
             fcmService.sendPushNotification(clientId, "오늘 마감 예정인 할 일", todoContent);
         } catch (FirebaseMessagingException e) {
-            if (e.getMessagingErrorCode().equals(MessagingErrorCode.INVALID_ARGUMENT) ||
-                    e.getMessagingErrorCode().equals(MessagingErrorCode.UNREGISTERED)) {
-                mobileRepository.deleteByClientId(clientId);
+            if (e.getMessagingErrorCode() == MessagingErrorCode.INVALID_ARGUMENT ||
+                    e.getMessagingErrorCode() == MessagingErrorCode.UNREGISTERED) {
+                fcmTokenService.deleteInvalidToken(clientId);
             } else {
                 throw new RuntimeException(e);
             }

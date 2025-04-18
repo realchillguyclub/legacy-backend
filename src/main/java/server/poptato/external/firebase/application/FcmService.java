@@ -7,7 +7,7 @@ import com.google.firebase.messaging.Notification;
 import org.springframework.stereotype.Service;
 
 @Service
-public class FCMService {
+public class FcmService {
 
     /**
      * 푸시 알림을 보내는 메서드.

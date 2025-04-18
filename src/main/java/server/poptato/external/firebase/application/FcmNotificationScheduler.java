@@ -9,13 +9,14 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class FcmNotificationScheduler {
     private final FcmNotificationService fcmNotificationService;
+    private final FcmTokenService fcmTokenService;
 
     /**
      * 비활성 FCM 토큰을 삭제한다.
      */
     @Scheduled(cron = "${scheduling.fcmCleanupCron}")
     public void deleteOldFcmTokens() {
-        fcmNotificationService.deleteOldFcmTokens();
+        fcmTokenService.deleteOldFcmTokens();
     }
 
     /**
