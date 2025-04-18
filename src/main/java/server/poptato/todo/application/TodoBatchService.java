@@ -24,7 +24,7 @@ public class TodoBatchService {
     private final UserRepository userRepository;
     private final TodoService todoService;
 
-    @Value("${batch.todo.deadline-user-size}")
+    @Value("${batch.size}")
     private int batchSize;
 
     /**
