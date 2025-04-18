@@ -17,6 +17,8 @@ import server.poptato.auth.application.service.JwtService;
 import server.poptato.configuration.ControllerTestConfig;
 import server.poptato.todo.application.TodoTodayService;
 import server.poptato.todo.application.response.TodayListResponseDto;
+import server.poptato.todo.application.response.TodayResponseDto;
+import server.poptato.todo.domain.value.TodayStatus;
 import server.poptato.user.domain.value.MobileType;
 
 import java.time.LocalDate;
@@ -47,9 +49,8 @@ public class TodoTodayControllerTest extends ControllerTestConfig {
         // given
         TodayListResponseDto response = new TodayListResponseDto(
                 LocalDate.of(2025, 1, 29),
-                List.of(),
-                2
-        );
+                List.of(new TodayResponseDto(1L, "content1", TodayStatus.COMPLETED, true, true, 0, LocalDate.now(), "category1", "url1")
+                ), 2);
 
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
         Mockito.when(todoTodayService.getTodayList(anyLong(), any(MobileType.class), anyInt(), anyInt(), any(LocalDate.class)))
@@ -90,6 +91,15 @@ public class TodoTodayControllerTest extends ControllerTestConfig {
                                                 fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
                                                 fieldWithPath("result.date").type(JsonFieldType.STRING).description("조회된 날짜"),
                                                 fieldWithPath("result.todays").type(JsonFieldType.ARRAY).description("오늘의 할 일 목록"),
+                                                fieldWithPath("result.todays[].todoId").type(JsonFieldType.NUMBER).description("할 일 ID"),
+                                                fieldWithPath("result.todays[].content").type(JsonFieldType.STRING).description("할 일 내용"),
+                                                fieldWithPath("result.todays[].todayStatus").type(JsonFieldType.STRING).description("완료 여부"),
+                                                fieldWithPath("result.todays[].isBookmark").type(JsonFieldType.BOOLEAN).description("중요 여부"),
+                                                fieldWithPath("result.todays[].isRepeat").type(JsonFieldType.BOOLEAN).description("반복 여부"),
+                                                fieldWithPath("result.todays[].dDay").type(JsonFieldType.NUMBER).description("마감일까지 남은 일 수"),
+                                                fieldWithPath("result.todays[].deadline").type(JsonFieldType.STRING).description("마감일"),
+                                                fieldWithPath("result.todays[].categoryName").type(JsonFieldType.STRING).description("카테고리명"),
+                                                fieldWithPath("result.todays[].imageUrl").type(JsonFieldType.STRING).description("카테고리 이모지 이미지 URL"),
                                                 fieldWithPath("result.totalPageCount").type(JsonFieldType.NUMBER).description("전체 페이지 수")
                                         )
                                         .responseSchema(Schema.schema("GetTodayListResponse"))
