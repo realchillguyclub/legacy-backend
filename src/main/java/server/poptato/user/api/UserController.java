@@ -26,15 +26,15 @@ public class UserController {
      * 요청 본문으로 탈퇴 사유 또는 추가 인증 정보를 전달받습니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
-     * @param requestDTO 탈퇴 요청 정보 (탈퇴 사유 등)
+     * @param userDeleteRequestDTO 탈퇴 요청 정보 (탈퇴 사유 등)
      * @return 성공 여부를 나타내는 응답
      */
     @PostMapping("/delete")
     public ResponseEntity<ApiResponse<SuccessStatus>> deleteUser(
             @RequestHeader("Authorization") String authorizationHeader,
-            @RequestBody UserDeleteRequestDTO requestDTO
+            @RequestBody UserDeleteRequestDTO userDeleteRequestDTO
     ) {
-        userService.deleteUser(jwtService.extractUserIdFromToken(authorizationHeader), requestDTO);
+        userService.deleteUser(jwtService.extractUserIdFromToken(authorizationHeader), userDeleteRequestDTO);
         return ApiResponse.onSuccess(SuccessStatus._OK);
     }
 

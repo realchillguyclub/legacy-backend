@@ -1,8 +1,5 @@
 package server.poptato.todo.api;
 
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.enums.ParameterIn;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,10 +7,10 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import server.poptato.auth.application.service.JwtService;
-import server.poptato.todo.application.TodoTodayService;
-import server.poptato.todo.application.response.TodayListResponseDto;
 import server.poptato.global.response.ApiResponse;
 import server.poptato.global.response.status.SuccessStatus;
+import server.poptato.todo.application.TodoTodayService;
+import server.poptato.todo.application.response.TodayListResponseDto;
 import server.poptato.user.domain.value.MobileType;
 
 import java.time.LocalDate;
@@ -32,22 +29,17 @@ public class TodoTodayController {
      * 페이징된 데이터로 할 일 목록을 반환합니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
+     * @param mobileType 클라이언트의 모바일 타입
      * @param page 요청 페이지 번호 (기본값: 0)
      * @param size 한 페이지당 항목 수 (기본값: 8)
-     * @param mobileType 클라이언트의 모바일 타입
      * @return 오늘의 할 일 목록 및 페이징 정보
      */
     @GetMapping("/todays")
     public ResponseEntity<ApiResponse<TodayListResponseDto>> getTodayList(
             @RequestHeader("Authorization") String authorizationHeader,
+            @RequestHeader(value = "X-Mobile-Type", required = false, defaultValue = "ANDROID") MobileType mobileType,
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "8") int size,
-            @Parameter(name = "X-Mobile-Type", in = ParameterIn.HEADER,
-                    schema = @Schema(
-                            type = "string",
-                            allowableValues = {"ANDROID", "IOS"}
-                    )
-            ) MobileType mobileType
+            @RequestParam(value = "size", defaultValue = "8") int size
     ) {
         LocalDate todayDate = LocalDate.now();
         // 오늘의 할 일 목록 조회
@@ -58,7 +50,6 @@ public class TodoTodayController {
                 size,
                 todayDate
         );
-
         return ApiResponse.onSuccess(SuccessStatus._OK, response);
     }
 }

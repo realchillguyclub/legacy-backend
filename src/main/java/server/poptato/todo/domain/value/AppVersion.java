@@ -1,17 +1,18 @@
 package server.poptato.todo.domain.value;
 
-public class AppVersion {
-    private final double version;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-    public AppVersion(String version) {
-        this.version = Double.parseDouble(version);
-    }
+@Getter
+@RequiredArgsConstructor
+public enum AppVersion {
+    V1("1.0", 1.0),
+    V2("2.0", 2.0);
+
+    private final String label;
+    private final double value;
 
     public boolean isLegacy() {
-        return version < 2.0;
-    }
-
-    public double getValue() {
-        return version;
+        return this.value < 2.0;
     }
 }

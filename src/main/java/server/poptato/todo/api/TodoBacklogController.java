@@ -1,18 +1,17 @@
 package server.poptato.todo.api;
 
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.enums.ParameterIn;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import server.poptato.auth.application.service.JwtService;
-import server.poptato.todo.api.request.BacklogCreateRequestDto;
-import server.poptato.todo.application.TodoBacklogService;
-import server.poptato.todo.application.response.*;
 import server.poptato.global.response.ApiResponse;
 import server.poptato.global.response.status.SuccessStatus;
+import server.poptato.todo.api.request.BacklogCreateRequestDto;
+import server.poptato.todo.application.TodoBacklogService;
+import server.poptato.todo.application.response.BacklogCreateResponseDto;
+import server.poptato.todo.application.response.BacklogListResponseDto;
+import server.poptato.todo.application.response.PaginatedYesterdayResponseDto;
 import server.poptato.user.domain.value.MobileType;
 
 @RestController
@@ -29,24 +28,19 @@ public class TodoBacklogController {
      * 페이지 번호와 크기를 요청 파라미터로 전달받아 페이징된 데이터를 제공합니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
+     * @param mobileType 클라이언트의 모바일 타입
      * @param categoryId 조회할 카테고리 ID
      * @param page 요청 페이지 번호 (기본값: 0)
      * @param size 한 페이지당 항목 수 (기본값: 8)
-     * @param mobileType 클라이언트의 모바일 타입
      * @return 백로그 목록 및 페이징 정보
      */
     @GetMapping(value = "/backlogs")
     public ResponseEntity<ApiResponse<BacklogListResponseDto>> getBacklogList(
             @RequestHeader("Authorization") String authorizationHeader,
+            @RequestHeader(value = "X-Mobile-Type", required = false, defaultValue = "ANDROID") MobileType mobileType,
             @RequestParam(value = "category") Long categoryId,
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "8") int size,
-            @Parameter(name = "X-Mobile-Type", in = ParameterIn.HEADER,
-                    schema = @Schema(
-                            type = "string",
-                            allowableValues = {"ANDROID", "IOS"}
-                    )
-            ) MobileType mobileType
+            @RequestParam(value = "size", defaultValue = "8") int size
 
     ) {
         BacklogListResponseDto response = todoBacklogService.getBacklogList(jwtService.extractUserIdFromToken(authorizationHeader), categoryId, mobileType, page, size);

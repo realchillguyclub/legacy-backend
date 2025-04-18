@@ -22,7 +22,7 @@ public record TodayListResponseDto(
                 todos.stream()
                         .map((todo) -> {
                             Category category = todo.getCategory();
-                            String name = Optional.ofNullable(category)
+                            String categoryName = Optional.ofNullable(category)
                                     .map(Category::getName)
                                     .orElse(null);
                             String imageUrl = Optional.ofNullable(category)
@@ -31,7 +31,7 @@ public record TodayListResponseDto(
                                     .map((url) -> FileUtil.changeFileExtension(url, mobileType.getImageUrlExtension()))
                                     .orElse(null);
 
-                            return TodayResponseDto.of(todo, name, imageUrl);
+                            return TodayResponseDto.of(todo, categoryName, imageUrl);
                         })
                         .collect(Collectors.toList()),
                 totalPageCount

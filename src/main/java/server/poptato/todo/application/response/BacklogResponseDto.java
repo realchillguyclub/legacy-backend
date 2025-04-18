@@ -12,11 +12,11 @@ public record BacklogResponseDto(
         Boolean isRepeat,
         Integer dDay,
         LocalDate deadline,
-        String detailCategoryName,
+        String categoryName,
         String imageUrl
 ) {
 
-    public static BacklogResponseDto of(Todo todo, String detailCategoryName, String imageUrl) {
+    public static BacklogResponseDto of(Todo todo, String categoryName, String imageUrl) {
         LocalDate today = LocalDate.now();
         Integer dDay = null;
 
@@ -31,7 +31,7 @@ public record BacklogResponseDto(
                 todo.isRepeat(),
                 dDay,
                 todo.getDeadline(),
-                detailCategoryName,
+                categoryName,
                 imageUrl
         );
     }
