@@ -19,10 +19,7 @@ import server.poptato.auth.application.service.JwtService;
 import server.poptato.configuration.ControllerTestConfig;
 import server.poptato.todo.api.request.*;
 import server.poptato.todo.application.TodoService;
-import server.poptato.todo.application.response.HistoryCalendarListResponseDto;
-import server.poptato.todo.application.response.HistoryCalendarResponseDto;
-import server.poptato.todo.application.response.PaginatedHistoryResponseDto;
-import server.poptato.todo.application.response.TodoDetailResponseDto;
+import server.poptato.todo.application.response.*;
 import server.poptato.todo.domain.value.AppVersion;
 import server.poptato.todo.domain.value.Type;
 import server.poptato.user.domain.value.MobileType;
@@ -574,7 +571,9 @@ public class TodoControllerTest extends ControllerTestConfig {
     @DisplayName("특정 날짜의 할 일 히스토리를 조회한다.")
     public void getHistories() throws Exception {
         // given
-        PaginatedHistoryResponseDto response = new PaginatedHistoryResponseDto(List.of(), 2);
+        PaginatedHistoryResponseDto response = new PaginatedHistoryResponseDto(List.of(
+                new HistoryResponseDto(1L, "test", true)
+        ), 2);
 
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
         Mockito.when(todoService.getHistories(anyLong(), any(LocalDate.class), anyInt(), anyInt()))
@@ -615,6 +614,9 @@ public class TodoControllerTest extends ControllerTestConfig {
                                                 fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
                                                 fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
                                                 fieldWithPath("result.histories").type(JsonFieldType.ARRAY).description("히스토리 목록"),
+                                                fieldWithPath("result.histories[].todoId").type(JsonFieldType.NUMBER).description("할 일 ID"),
+                                                fieldWithPath("result.histories[].content").type(JsonFieldType.STRING).description("할 일 내용"),
+                                                fieldWithPath("result.histories[].isCompleted").type(JsonFieldType.BOOLEAN).description("할 일의 완료여부"),
                                                 fieldWithPath("result.totalPageCount").type(JsonFieldType.NUMBER).description("전체 페이지 수")
                                         )
                                         .responseSchema(Schema.schema("PaginatedHistoryResponse"))
