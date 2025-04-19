@@ -37,12 +37,10 @@ public class FcmNotificationBatchService {
      */
     @Async
     public void sendDeadlineNotifications() {
-        List<User> users = userRepository.findAll();
+        List<User> users = userRepository.findByIsPushAlarmTrue();
         BatchUtil.splitIntoBatches(users, batchSize).forEach(batch -> {
             for (User user : batch) {
-                if (Boolean.TRUE.equals(user.getIsPushAlarm())) {
-                    sendUserDeadlineNotification(user);
-                }
+                sendUserDeadlineNotification(user);
             }
         });
     }
@@ -74,18 +72,16 @@ public class FcmNotificationBatchService {
      */
     @Async
     public void sendStartNotifications() {
-        List<User> users = userRepository.findAll();
+        List<User> users = userRepository.findByIsPushAlarmTrue();
         BatchUtil.splitIntoBatches(users, batchSize).forEach(batch -> {
             for (User user : batch) {
-                if (Boolean.TRUE.equals(user.getIsPushAlarm())) {
-                    List<Mobile> mobiles = mobileRepository.findAllByUserId(user.getId());
-                    for (Mobile mobile : mobiles) {
-                        sendPushOrDeleteToken(
-                                mobile.getClientId(),
-                                FcmNotificationTemplate.START_OF_DAY.getTitle(),
-                                FcmNotificationTemplate.START_OF_DAY.getBody()
-                        );
-                    }
+                List<Mobile> mobiles = mobileRepository.findAllByUserId(user.getId());
+                for (Mobile mobile : mobiles) {
+                    sendPushOrDeleteToken(
+                            mobile.getClientId(),
+                            FcmNotificationTemplate.START_OF_DAY.getTitle(),
+                            FcmNotificationTemplate.START_OF_DAY.getBody()
+                    );
                 }
             }
         });
@@ -96,21 +92,19 @@ public class FcmNotificationBatchService {
      */
     @Async
     public void sendEndOfDayNotifications() {
-        List<User> users = userRepository.findAll();
+        List<User> users = userRepository.findByIsPushAlarmTrue();
         BatchUtil.splitIntoBatches(users, batchSize).forEach(batch -> {
             for (User user : batch) {
-                if (Boolean.TRUE.equals(user.getIsPushAlarm())) {
-                    boolean hasIncompleteTodayTodos =
-                            todoRepository.existsByUserIdAndTypeAndTodayStatus(user.getId(), Type.TODAY, TodayStatus.INCOMPLETE);
-                    if (hasIncompleteTodayTodos) {
-                        List<Mobile> mobiles = mobileRepository.findAllByUserId(user.getId());
-                        for (Mobile mobile : mobiles) {
-                            sendPushOrDeleteToken(
-                                    mobile.getClientId(),
-                                    FcmNotificationTemplate.END_OF_DAY.getTitle(),
-                                    FcmNotificationTemplate.END_OF_DAY.getBody()
-                            );
-                        }
+                boolean hasIncompleteTodayTodos =
+                        todoRepository.existsByUserIdAndTypeAndTodayStatus(user.getId(), Type.TODAY, TodayStatus.INCOMPLETE);
+                if (hasIncompleteTodayTodos) {
+                    List<Mobile> mobiles = mobileRepository.findAllByUserId(user.getId());
+                    for (Mobile mobile : mobiles) {
+                        sendPushOrDeleteToken(
+                                mobile.getClientId(),
+                                FcmNotificationTemplate.END_OF_DAY.getTitle(),
+                                FcmNotificationTemplate.END_OF_DAY.getBody()
+                        );
                     }
                 }
             }
