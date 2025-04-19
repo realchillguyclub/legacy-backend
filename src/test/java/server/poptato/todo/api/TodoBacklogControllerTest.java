@@ -17,11 +17,10 @@ import server.poptato.auth.application.service.JwtService;
 import server.poptato.configuration.ControllerTestConfig;
 import server.poptato.todo.api.request.BacklogCreateRequestDto;
 import server.poptato.todo.application.TodoBacklogService;
-import server.poptato.todo.application.response.BacklogCreateResponseDto;
-import server.poptato.todo.application.response.BacklogListResponseDto;
-import server.poptato.todo.application.response.PaginatedYesterdayResponseDto;
+import server.poptato.todo.application.response.*;
 import server.poptato.user.domain.value.MobileType;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
@@ -49,7 +48,9 @@ public class TodoBacklogControllerTest extends ControllerTestConfig {
     @DisplayName("백로그 목록을 조회한다.")
     public void getBacklogList() throws Exception {
         // given
-        BacklogListResponseDto response = new BacklogListResponseDto(10L, "Sample Category", List.of(), 1);
+        BacklogListResponseDto response = new BacklogListResponseDto(2L, "Sample Category",
+                List.of(new BacklogResponseDto(1L, "content1", true, false, 0, LocalDate.now(), "category1", "url1")
+                ), 1);
 
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
         Mockito.when(todoBacklogService.getBacklogList(anyLong(), anyLong(), any(MobileType.class), anyInt(), anyInt())).thenReturn(response);
@@ -92,6 +93,14 @@ public class TodoBacklogControllerTest extends ControllerTestConfig {
                                                 fieldWithPath("result.totalCount").type(JsonFieldType.NUMBER).description("백로그 총 개수"),
                                                 fieldWithPath("result.categoryName").type(JsonFieldType.STRING).description("카테고리 이름"),
                                                 fieldWithPath("result.backlogs").type(JsonFieldType.ARRAY).description("백로그 목록"),
+                                                fieldWithPath("result.backlogs[].todoId").type(JsonFieldType.NUMBER).description("할 일 ID"),
+                                                fieldWithPath("result.backlogs[].content").type(JsonFieldType.STRING).description("할 일 내용"),
+                                                fieldWithPath("result.backlogs[].isBookmark").type(JsonFieldType.BOOLEAN).description("중요 여부"),
+                                                fieldWithPath("result.backlogs[].isRepeat").type(JsonFieldType.BOOLEAN).description("반복 여부"),
+                                                fieldWithPath("result.backlogs[].dDay").type(JsonFieldType.NUMBER).description("마감일까지 남은 일 수"),
+                                                fieldWithPath("result.backlogs[].deadline").type(JsonFieldType.STRING).description("마감일"),
+                                                fieldWithPath("result.backlogs[].categoryName").type(JsonFieldType.STRING).description("카테고리명"),
+                                                fieldWithPath("result.backlogs[].imageUrl").type(JsonFieldType.STRING).description("카테고리 이모지 이미지 URL"),
                                                 fieldWithPath("result.totalPageCount").type(JsonFieldType.NUMBER).description("전체 페이지 수")
                                         )
                                         .responseSchema(Schema.schema("BacklogListResponse"))
@@ -157,7 +166,9 @@ public class TodoBacklogControllerTest extends ControllerTestConfig {
     @DisplayName("어제의 미완료 할 일들을 조회한다.")
     public void getYesterdays() throws Exception {
         // given
-        PaginatedYesterdayResponseDto response = new PaginatedYesterdayResponseDto(List.of(), 1);
+        PaginatedYesterdayResponseDto response = new PaginatedYesterdayResponseDto(
+                List.of(new YesterdayResponseDto(1L, 0, true, true, "content1")
+                ), 1);
 
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
         Mockito.when(todoBacklogService.getYesterdays(anyLong(), anyInt(), anyInt())).thenReturn(response);
@@ -195,6 +206,11 @@ public class TodoBacklogControllerTest extends ControllerTestConfig {
                                                 fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
                                                 fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
                                                 fieldWithPath("result.yesterdays").type(JsonFieldType.ARRAY).description("어제의 백로그 목록"),
+                                                fieldWithPath("result.yesterdays[].todoId").type(JsonFieldType.NUMBER).description("할 일 ID"),
+                                                fieldWithPath("result.yesterdays[].dDay").type(JsonFieldType.NUMBER).description("마감일까지 남은 일 수"),
+                                                fieldWithPath("result.yesterdays[].isBookmark").type(JsonFieldType.BOOLEAN).description("중요 여부"),
+                                                fieldWithPath("result.yesterdays[].isRepeat").type(JsonFieldType.BOOLEAN).description("반복 여부"),
+                                                fieldWithPath("result.yesterdays[].content").type(JsonFieldType.STRING).description("할 일 내용"),
                                                 fieldWithPath("result.totalPageCount").type(JsonFieldType.NUMBER).description("전체 페이지 수")
                                         )
                                         .responseSchema(Schema.schema("PaginatedYesterdayResponse"))

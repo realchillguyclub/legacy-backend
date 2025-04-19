@@ -68,8 +68,6 @@ public interface TodoRepository {
 
     Page<Todo> findTodosByUserIdAndCompletedDateTime(Long userId, LocalDate localDate, Pageable pageable);
 
-
-
     List<Todo> findByType(Type type);
 
     Page<Todo> findAllBacklogs(Long userId, Type type, TodayStatus status, Pageable pageable);
@@ -95,13 +93,22 @@ public interface TodoRepository {
     List<Todo> findIncompleteYesterdays(Long userId);
 
     /**
+     * 해당 연도와 월 기준으로, 미래 날짜 중 마감일이 설정된 백로그가 존재하는 날짜와 해당 날짜별 백로그 개수를 조회한다.
      *
      * @param userId 사용자 ID
-     * @param year 해당 연도
-     * @param month 해당 월
-     * @return 해당 연도-월 조회 일 기준 미래 날짜중 마감일이 정해진 백로그가 있는 날짜와 백로그 개수 목록
+     * @param year 조회할 연도 (예: "2025")
+     * @param month 조회할 월 (1~12)
+     * @return Tuple 리스트 (날짜, 백로그 개수)
      */
     List<Tuple> findDatesWithBacklogCount(Long userId, String year, int month);
 
-
+    /**
+     * 주어진 사용자 ID에 대해, 타입이 TODAY이고 상태가 INCOMPLETE인 할 일이 존재하는지 확인한다.
+     *
+     * @param userId 사용자 ID
+     * @param type 할 일 타입 (예: TODAY)
+     * @param todayStatus 오늘 상태 (예: INCOMPLETE)
+     * @return 조건에 맞는 할 일이 존재하면 true, 그렇지 않으면 false
+     */
+    boolean existsByUserIdAndTypeAndTodayStatus(Long userId, Type type, TodayStatus todayStatus);
 }

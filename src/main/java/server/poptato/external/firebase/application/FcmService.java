@@ -1,4 +1,4 @@
-package server.poptato.external.firebase.service;
+package server.poptato.external.firebase.application;
 
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
@@ -7,7 +7,7 @@ import com.google.firebase.messaging.Notification;
 import org.springframework.stereotype.Service;
 
 @Service
-public class FCMService {
+public class FcmService {
 
     /**
      * 푸시 알림을 보내는 메서드.

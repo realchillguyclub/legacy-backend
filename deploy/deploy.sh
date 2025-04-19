@@ -51,7 +51,7 @@ if [ -z "$IS_GREEN" ]; then
       echo "✅ health check success!!!"
       break
     fi
-    if [ $SECONDS -ge 60 ]; then
+    if [ $SECONDS -ge 120 ]; then
       echo "💥 health check failed (timeout)!!!"
       send_discord_message "$MESSAGE_FAILURE"
       exit 1
@@ -97,7 +97,7 @@ else
       echo "✅ health check success!!!"
       break
     fi
-    if [ $SECONDS -ge 60 ]; then
+    if [ $SECONDS -ge 120 ]; then
       echo "💥 health check failed (timeout)!!!"
       send_discord_message "$MESSAGE_FAILURE"
       exit 1
