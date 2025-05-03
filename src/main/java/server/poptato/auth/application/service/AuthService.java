@@ -41,6 +41,7 @@ public class AuthService {
      * @param request 사용자의 로그인 요청 정보 (소셜 타입, 액세스 토큰 등)
      * @return 로그인 결과로 생성된 액세스 토큰, 리프레시 토큰, 유저 ID, 신규 유저 여부
      */
+    @Transactional
     public LoginResponseDto login(final LoginRequestDto request) {
         SocialService socialService = socialServiceProvider.getSocialService(request.socialType());
         SocialUserInfo userInfo = socialService.getUserData(request);
@@ -140,6 +141,10 @@ public class AuthService {
      *
      * @param userId 로그아웃할 유저 ID
      */
+    /*
+    추후 Redis 연산 분리 후, 트랜잭셔널 적용 예정
+    @Transactional
+    */
     public void logout(final Long userId, FCMTokenRequestDto fcmTokenRequestDto) {
         userValidator.checkIsExistUser(userId);
         mobileRepository.deleteByClientId(fcmTokenRequestDto.clientId());
