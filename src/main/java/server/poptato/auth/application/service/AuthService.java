@@ -13,9 +13,6 @@ import server.poptato.external.oauth.SocialServiceProvider;
 import server.poptato.external.oauth.SocialUserInfo;
 import server.poptato.global.dto.TokenPair;
 import server.poptato.global.exception.CustomException;
-import server.poptato.todo.constant.TutorialMessage;
-import server.poptato.todo.domain.entity.Todo;
-import server.poptato.todo.domain.repository.TodoRepository;
 import server.poptato.user.domain.entity.Mobile;
 import server.poptato.user.domain.entity.User;
 import server.poptato.user.domain.repository.MobileRepository;
@@ -34,7 +31,6 @@ public class AuthService {
     private final SocialServiceProvider socialServiceProvider;
     private final UserRepository userRepository;
     private final UserValidator userValidator;
-    private final TodoRepository todoRepository;
     private final MobileRepository mobileRepository;
 
     /**
@@ -79,7 +75,7 @@ public class AuthService {
     /**
      * 신규 유저 데이터 저장 메서드.
      * - Apple 로그인인 경우, name 값이 없으면 예외 발생 (Apple은 최초 로그인 시에만 name 제공).
-     * - 유저 정보를 생성하고, 기본 튜토리얼 데이터를 추가로 저장.
+     * - 유저 정보를 생성하고 데이터를 저장.
      *
      * @param request 로그인 요청 정보 (프론트에서 받은 name, email 포함)
      * @param userInfo 소셜 유저 정보 (sub 값 포함)
@@ -93,10 +89,7 @@ public class AuthService {
         }
         String imageUrl = getHttpsUrl(userInfo.imageUrl());
         User user = User.create(request, userInfo, imageUrl);
-        User newUser = userRepository.save(user);
-        Todo tutorialTodo = Todo.createBacklog(newUser.getId(), TutorialMessage.GUIDE, 1);
-        todoRepository.save(tutorialTodo);
-        return newUser;
+        return userRepository.save(user);
     }
 
     /**
