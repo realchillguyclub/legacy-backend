@@ -51,7 +51,7 @@ public class FcmNotificationBatchService {
      * @param user 알림을 보낼 대상 유저
      */
     private void sendUserDeadlineNotification(User user) {
-        List<Todo> todosDueToday = todoRepository.findTodosDueToday(user.getId(), LocalDate.now());
+        List<Todo> todosDueToday = todoRepository.findTodosDueToday(user.getId(), LocalDate.now(), TodayStatus.INCOMPLETE);
         if (!todosDueToday.isEmpty()) {
             List<Mobile> mobiles = mobileRepository.findAllByUserId(user.getId());
             for (Mobile mobile : mobiles) {
