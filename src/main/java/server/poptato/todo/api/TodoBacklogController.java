@@ -85,4 +85,22 @@ public class TodoBacklogController {
         PaginatedYesterdayResponseDto response = todoBacklogService.getYesterdays(jwtService.extractUserIdFromToken(authorizationHeader), page, size);
         return ApiResponse.onSuccess(SuccessStatus._OK, response);
     }
+
+    /**
+     * 어제 백로그 생성 API.
+     *
+     * 어제 백로그 항목을 추가합니다.
+     *
+     * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
+     * @param backlogCreateRequestDto 백로그 생성 요청 데이터
+     * @return 생성된 어제 백로그 항목
+     */
+    @PostMapping("/yesterdays")
+    public ResponseEntity<ApiResponse<BacklogCreateResponseDto>> createYesterdayBacklog(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody BacklogCreateRequestDto backlogCreateRequestDto
+    ) {
+        BacklogCreateResponseDto response = todoBacklogService.createYesterdayBacklog(jwtService.extractUserIdFromToken(authorizationHeader), backlogCreateRequestDto);
+        return ApiResponse.onSuccess(SuccessStatus._CREATED, response);
+    }
 }
