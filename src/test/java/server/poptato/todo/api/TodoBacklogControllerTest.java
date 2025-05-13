@@ -24,9 +24,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
@@ -163,7 +161,7 @@ public class TodoBacklogControllerTest extends ControllerTestConfig {
     }
 
     @Test
-    @DisplayName("어제의 미완료 할 일들을 조회한다.")
+    @DisplayName("어제 백로그 항목들을 조회한다.")
     public void getYesterdays() throws Exception {
         // given
         PaginatedYesterdayResponseDto response = new PaginatedYesterdayResponseDto(
@@ -196,7 +194,7 @@ public class TodoBacklogControllerTest extends ControllerTestConfig {
                         resource(
                                 ResourceSnippetParameters.builder()
                                         .tag("Todo-Yesterday API")
-                                        .description("어제의 미완료 할 일들을 조회한다.")
+                                        .description("어제 백로그 항목들을 조회한다.")
                                         .queryParameters(
                                                 parameterWithName("page").description("요청 페이지 번호"),
                                                 parameterWithName("size").description("페이지 크기")
@@ -214,6 +212,59 @@ public class TodoBacklogControllerTest extends ControllerTestConfig {
                                                 fieldWithPath("result.totalPageCount").type(JsonFieldType.NUMBER).description("전체 페이지 수")
                                         )
                                         .responseSchema(Schema.schema("PaginatedYesterdayResponse"))
+                                        .build()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("어제 백로그를 생성한다.")
+    public void createYesterdayBacklog() throws Exception {
+        // given
+        BacklogCreateRequestDto request = new BacklogCreateRequestDto("어제의 할 일", -1L);
+        BacklogCreateResponseDto response = new BacklogCreateResponseDto(10L);
+
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
+        Mockito.when(todoBacklogService.createYesterdayBacklog(anyLong(), any(BacklogCreateRequestDto.class))).thenReturn(response);
+
+        String requestContent = objectMapper.writeValueAsString(request);
+
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.post("/yesterdays")
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .content(requestContent)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-201"))
+                .andExpect(jsonPath("$.message").value("생성에 성공했습니다."))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("backlog/create-yesterday-backlog",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Todo-Yesterday API")
+                                        .description("어제 백로그를 생성한다.")
+                                        .requestSchema(Schema.schema("BacklogCreateRequest"))
+                                        .responseSchema(Schema.schema("BacklogCreateResponse"))
+                                        .requestFields(
+                                                fieldWithPath("content").type(JsonFieldType.STRING).description("백로그 내용"),
+                                                fieldWithPath("categoryId").type(JsonFieldType.NUMBER).description("카테고리 ID")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
+                                                fieldWithPath("result.todoId").type(JsonFieldType.NUMBER).description("생성된 백로그 ID")
+                                        )
                                         .build()
                         )
                 ));

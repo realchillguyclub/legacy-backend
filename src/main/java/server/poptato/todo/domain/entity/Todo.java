@@ -91,6 +91,17 @@ public class Todo {
                 .build();
     }
 
+    public static Todo createYesterdayBacklog(Long userId, String content, Integer backlogOrder) {
+        return Todo.builder()
+                .userId(userId)
+                .content(content)
+                .backlogOrder(backlogOrder)
+                .isBookmark(false)
+                .type(Type.YESTERDAY)
+                .todayStatus(TodayStatus.INCOMPLETE)
+                .build();
+    }
+
     public void toggleBookmark() {
         this.isBookmark = !this.isBookmark;
     }
