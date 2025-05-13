@@ -33,7 +33,7 @@ public class TodoBacklogService {
     private static final Long BOOKMARK_CATEGORY = 0L;
 
     /**
-     * 백로그 목록 조회 API.
+     * 백로그 목록 조회 메서드.
      *
      * 사용자 ID와 카테고리 ID를 기반으로 페이지네이션된 백로그 목록을 반환합니다.
      *
@@ -52,7 +52,7 @@ public class TodoBacklogService {
     }
 
     /**
-     * 백로그 생성 API.
+     * 백로그 생성 메서드.
      *
      * 사용자 ID와 요청 데이터를 기반으로 새로운 백로그를 생성합니다.
      *
@@ -69,7 +69,7 @@ public class TodoBacklogService {
     }
 
     /**
-     * 어제 할 일 목록 조회 API.
+     * 어제 할 일 목록 조회 메서드.
      *
      * 사용자 ID를 기반으로 어제 완료되지 않은 할 일 목록을 페이지네이션된 형식으로 반환합니다.
      *
@@ -88,7 +88,25 @@ public class TodoBacklogService {
     }
 
     /**
-     * 백로그 목록 페이지네이션.
+     * 어제 백로그 생성 메서드.
+     *
+     * 사용자 ID와 요청 데이터를 기반으로 어제 백로그 항목을 생성합니다.
+     *
+     * @param userId 사용자 ID
+     * @param backlogCreateRequestDto 어제 백로그 생성 요청 데이터
+     * @return 생성된 어제 백로그 항목
+     */
+    public BacklogCreateResponseDto createYesterdayBacklog(Long userId, BacklogCreateRequestDto backlogCreateRequestDto) {
+        userValidator.checkIsExistUser(userId);
+        categoryValidator.validateCategory(userId, backlogCreateRequestDto.categoryId());
+        Integer maxBacklogOrder = todoRepository.findMaxBacklogOrderByUserIdOrZero(userId);
+        Todo newYesterdayBacklog = Todo.createYesterdayBacklog(userId, backlogCreateRequestDto.content(), maxBacklogOrder);
+        todoRepository.save(newYesterdayBacklog);
+        return BacklogCreateResponseDto.from(newYesterdayBacklog);
+    }
+
+    /**
+     * 백로그 목록 페이지네이션 메서드.
      *
      * 사용자 ID와 카테고리 ID를 기반으로 백로그 목록을 페이지네이션합니다.
      *
@@ -109,7 +127,7 @@ public class TodoBacklogService {
     }
 
     /**
-     * 새로운 백로그 생성.
+     * 새로운 백로그 생성 메서드.
      *
      * 요청 데이터를 기반으로 백로그를 생성하고 저장합니다.
      *
@@ -121,12 +139,13 @@ public class TodoBacklogService {
     private Todo createNewBacklog(Long userId, BacklogCreateRequestDto backlogCreateRequestDto, Integer maxBacklogOrder) {
         Todo backlog = null;
         Long categoryId = backlogCreateRequestDto.categoryId();
-        if (Objects.equals(categoryId, ALL_CATEGORY))
+        if (Objects.equals(categoryId, ALL_CATEGORY)) {
             backlog = Todo.createBacklog(userId, backlogCreateRequestDto.content(), maxBacklogOrder + 1);
-        if (Objects.equals(categoryId, BOOKMARK_CATEGORY))
+        } else if (Objects.equals(categoryId, BOOKMARK_CATEGORY)) {
             backlog = Todo.createBookmarkBacklog(userId, backlogCreateRequestDto.content(), maxBacklogOrder + 1);
-        if (categoryId > BOOKMARK_CATEGORY)
+        } else if (categoryId > BOOKMARK_CATEGORY) {
             backlog = Todo.createCategoryBacklog(userId, categoryId, backlogCreateRequestDto.content(), maxBacklogOrder + 1);
+        }
         return todoRepository.save(backlog);
     }
 }
