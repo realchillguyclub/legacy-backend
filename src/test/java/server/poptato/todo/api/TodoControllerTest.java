@@ -26,6 +26,7 @@ import server.poptato.user.domain.value.MobileType;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
@@ -236,6 +237,7 @@ public class TodoControllerTest extends ControllerTestConfig {
         // given
         TodoDetailResponseDto response = new TodoDetailResponseDto(
                 "할 일 내용",
+                LocalTime.of(12, 59),
                 LocalDate.of(2025, 1, 30),
                 "개발",
                 "http://example.com/emoji.png",
@@ -283,6 +285,7 @@ public class TodoControllerTest extends ControllerTestConfig {
                                                 fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
                                                 fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
                                                 fieldWithPath("result.content").type(JsonFieldType.STRING).description("할 일 내용"),
+                                                fieldWithPath("result.time").type(JsonFieldType.STRING).description("시간"),
                                                 fieldWithPath("result.deadline").type(JsonFieldType.STRING).description("마감 기한"),
                                                 fieldWithPath("result.categoryName").type(JsonFieldType.STRING).description("카테고리 이름"),
                                                 fieldWithPath("result.emojiImageUrl").type(JsonFieldType.STRING).description("카테고리 이모지 이미지 URL"),
@@ -302,6 +305,7 @@ public class TodoControllerTest extends ControllerTestConfig {
         Long todoId = 1L;
         TodoDetailResponseDto response = new TodoDetailResponseDto(
                 "Sample Todo",
+                LocalTime.of(23,59),
                 LocalDate.of(2025, 4, 20),
                 "Work",
                 "https://example.com/emoji.png",
@@ -326,6 +330,55 @@ public class TodoControllerTest extends ControllerTestConfig {
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.code").value("GLOBAL-200"))
                 .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."));
+    }
+
+    @Test
+    @DisplayName("할 일의 시간을 업데이트한다.")
+    public void updateTime() throws Exception{
+        //given
+        TimeUpdateRequestDto request = new TimeUpdateRequestDto(LocalTime.of(23,59));
+        Mockito.doNothing().when(todoService).updateTime(anyLong(), anyLong(), any(TimeUpdateRequestDto.class));
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
+
+        String requestContent = objectMapper.writeValueAsString(request);
+        //when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.patch("/todo/{todoId}/time", 1L)
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .content(requestContent)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+        //then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/update-time",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Todo API")
+                                        .description("할 일의 시간을 업데이트한다.")
+                                        .pathParameters(
+                                                parameterWithName("todoId").description("시간을 변경할 할 일 ID")
+                                        )
+                                        .requestFields(
+                                                fieldWithPath("time").type(JsonFieldType.STRING).description("시간 (HH:mm)")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
+                                        )
+                                        .responseSchema(Schema.schema("BaseResponse"))
+                                        .build()
+                        )
+                ));
     }
 
     @Test

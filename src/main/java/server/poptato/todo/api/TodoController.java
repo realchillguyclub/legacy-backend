@@ -122,6 +122,26 @@ public class TodoController {
     }
 
     /**
+     * 할 일 시간 업데이트 API.
+     *
+     * 사용자가 특정 할 일의 시간을 업데이트합니다.
+     *
+     * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
+     * @param todoId 업데이트할 할 일 ID
+     * @param timeUpdateRequestDto 시간 업데이트 요청 데이터
+     * @return 성공 여부를 나타내는 응답
+     */
+    @PatchMapping("/todo/{todoId}/time")
+    public ResponseEntity<ApiResponse<SuccessStatus>> updateTime(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @PathVariable Long todoId,
+            @Valid @RequestBody TimeUpdateRequestDto timeUpdateRequestDto
+    ) {
+        todoService.updateTime(jwtService.extractUserIdFromToken(authorizationHeader), todoId, timeUpdateRequestDto);
+        return ApiResponse.onSuccess(SuccessStatus._OK);
+    }
+
+    /**
      * 할 일 기한 업데이트 API.
      *
      * 사용자가 특정 할 일의 마감 기한을 업데이트합니다.

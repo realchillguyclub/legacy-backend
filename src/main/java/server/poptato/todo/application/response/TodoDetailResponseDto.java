@@ -2,12 +2,13 @@ package server.poptato.todo.application.response;
 
 import server.poptato.todo.domain.entity.Todo;
 import server.poptato.category.domain.entity.Category;
-import server.poptato.emoji.domain.entity.Emoji;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 public record TodoDetailResponseDto(
         String content,
+        LocalTime time,
         LocalDate deadline,
         String categoryName,
         String emojiImageUrl,
@@ -17,6 +18,7 @@ public record TodoDetailResponseDto(
     public static TodoDetailResponseDto of(Todo todo, Category category, String imageUrl) {
         return new TodoDetailResponseDto(
                 todo.getContent(),
+                todo.getTime(),
                 todo.getDeadline(),
                 category != null ? category.getName() : null,
                 imageUrl,

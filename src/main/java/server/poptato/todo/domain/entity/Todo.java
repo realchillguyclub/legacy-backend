@@ -13,6 +13,7 @@ import server.poptato.todo.domain.value.Type;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Getter
 @Entity
@@ -36,6 +37,8 @@ public class Todo {
     @Lob
     @Column(columnDefinition = "LONGTEXT")
     private String content;
+    @Nullable
+    private LocalTime time;
     @Nullable
     private LocalDate deadline;
     @NotNull
@@ -128,6 +131,10 @@ public class Todo {
 
     public void setBacklogOrder(int order) {
         this.backlogOrder = order;
+    }
+
+    public void updateTime(LocalTime time) {
+        this.time = time;
     }
 
     public void updateDeadline(LocalDate deadline) {
