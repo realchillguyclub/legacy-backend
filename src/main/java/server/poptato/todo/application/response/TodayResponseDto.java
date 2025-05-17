@@ -4,6 +4,7 @@ import server.poptato.todo.domain.entity.Todo;
 import server.poptato.todo.domain.value.TodayStatus;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 
 public record TodayResponseDto(
@@ -13,6 +14,7 @@ public record TodayResponseDto(
         Boolean isBookmark,
         Boolean isRepeat,
         Integer dDay,
+        LocalTime time,
         LocalDate deadline,
         String categoryName,
         String imageUrl
@@ -30,6 +32,7 @@ public record TodayResponseDto(
                 todo.isBookmark(),
                 todo.isRepeat(),
                 dDay,
+                todo.getTime(),
                 todo.getDeadline(),
                 categoryName,
                 imageUrl
