@@ -218,6 +218,19 @@ public class TodoService {
     }
 
     /**
+     * 특정 할 일의 시간을 업데이트합니다.
+     *
+     * @param userId 사용자 ID
+     * @param todoId 업데이트할 할 일 ID
+     * @param requestDto 시간 업데이트 요청 데이터
+     */
+    public void updateTime(Long userId, Long todoId, TimeUpdateRequestDto requestDto) {
+        userValidator.checkIsExistUser(userId);
+        Todo findTodo = validateAndReturnTodo(userId, todoId);
+        findTodo.updateTime(requestDto.time());
+    }
+
+    /**
      * 특정 할 일의 마감 기한을 업데이트합니다.
      *
      * @param userId 사용자 ID
