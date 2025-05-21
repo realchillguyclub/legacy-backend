@@ -237,7 +237,7 @@ public class TodoControllerTest extends ControllerTestConfig {
         // given
         TodoDetailResponseDto response = new TodoDetailResponseDto(
                 "할 일 내용",
-                LocalTime.of(12, 59),
+                LocalTime.of(12, 55),
                 LocalDate.of(2025, 1, 30),
                 "개발",
                 "http://example.com/emoji.png",
@@ -305,7 +305,7 @@ public class TodoControllerTest extends ControllerTestConfig {
         Long todoId = 1L;
         TodoDetailResponseDto response = new TodoDetailResponseDto(
                 "Sample Todo",
-                LocalTime.of(23,59),
+                LocalTime.of(23,55),
                 LocalDate.of(2025, 4, 20),
                 "Work",
                 "https://example.com/emoji.png",
@@ -336,7 +336,7 @@ public class TodoControllerTest extends ControllerTestConfig {
     @DisplayName("할 일의 시간을 업데이트한다.")
     public void updateTime() throws Exception{
         //given
-        TimeUpdateRequestDto request = new TimeUpdateRequestDto(LocalTime.of(23,59));
+        TimeUpdateRequestDto request = new TimeUpdateRequestDto(LocalTime.of(23,55));
         Mockito.doNothing().when(todoService).updateTime(anyLong(), anyLong(), any(TimeUpdateRequestDto.class));
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
 

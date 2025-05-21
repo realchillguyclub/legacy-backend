@@ -48,7 +48,7 @@ public class TodoBacklogControllerTest extends ControllerTestConfig {
     public void getBacklogList() throws Exception {
         // given
         BacklogListResponseDto response = new BacklogListResponseDto(2L, "Sample Category",
-                List.of(new BacklogResponseDto(1L, "content1", true, false, 0, LocalTime.of(23, 59), LocalDate.now(), "category1", "url1")
+                List.of(new BacklogResponseDto(1L, "content1", true, false, 0, LocalTime.of(23, 55), LocalDate.now(), "category1", "url1")
                 ), 1);
 
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);

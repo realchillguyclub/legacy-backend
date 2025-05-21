@@ -50,7 +50,7 @@ public class TodoTodayControllerTest extends ControllerTestConfig {
         // given
         TodayListResponseDto response = new TodayListResponseDto(
                 LocalDate.of(2025, 1, 29),
-                List.of(new TodayResponseDto(1L, "content1", TodayStatus.COMPLETED, true, true, 0, LocalTime.of(12, 59), LocalDate.now(), "category1", "url1")
+                List.of(new TodayResponseDto(1L, "content1", TodayStatus.COMPLETED, true, true, 0, LocalTime.of(12, 55), LocalDate.now(), "category1", "url1")
                 ), 2);
 
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
