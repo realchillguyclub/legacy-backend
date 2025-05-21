@@ -21,6 +21,7 @@ import server.poptato.todo.application.response.*;
 import server.poptato.user.domain.value.MobileType;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
@@ -47,7 +48,7 @@ public class TodoBacklogControllerTest extends ControllerTestConfig {
     public void getBacklogList() throws Exception {
         // given
         BacklogListResponseDto response = new BacklogListResponseDto(2L, "Sample Category",
-                List.of(new BacklogResponseDto(1L, "content1", true, false, 0, LocalDate.now(), "category1", "url1")
+                List.of(new BacklogResponseDto(1L, "content1", true, false, 0, LocalTime.of(23, 55), LocalDate.now(), "category1", "url1")
                 ), 1);
 
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
@@ -96,6 +97,7 @@ public class TodoBacklogControllerTest extends ControllerTestConfig {
                                                 fieldWithPath("result.backlogs[].isBookmark").type(JsonFieldType.BOOLEAN).description("중요 여부"),
                                                 fieldWithPath("result.backlogs[].isRepeat").type(JsonFieldType.BOOLEAN).description("반복 여부"),
                                                 fieldWithPath("result.backlogs[].dDay").type(JsonFieldType.NUMBER).description("마감일까지 남은 일 수"),
+                                                fieldWithPath("result.backlogs[].time").type(JsonFieldType.STRING).description("시간"),
                                                 fieldWithPath("result.backlogs[].deadline").type(JsonFieldType.STRING).description("마감일"),
                                                 fieldWithPath("result.backlogs[].categoryName").type(JsonFieldType.STRING).description("카테고리명"),
                                                 fieldWithPath("result.backlogs[].imageUrl").type(JsonFieldType.STRING).description("카테고리 이모지 이미지 URL"),
