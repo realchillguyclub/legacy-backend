@@ -3,14 +3,20 @@ package server.poptato.policy.application.response;
 import lombok.Builder;
 import server.poptato.policy.domain.value.Policy;
 
+import java.time.LocalDateTime;
+
 @Builder
 public record PolicyResponseDto(
-        String content
+        Long id,
+        String content,
+        LocalDateTime createdAt
 ) {
 
     public static PolicyResponseDto from(Policy policy) {
         return new PolicyResponseDto(
-                policy.getContent()
+                policy.getId(),
+                policy.getContent(),
+                policy.getCreatedAt()
         );
     }
 }
