@@ -16,6 +16,8 @@ import server.poptato.global.response.status.SuccessStatus;
 import server.poptato.policy.application.PolicyService;
 import server.poptato.policy.application.response.PolicyResponseDto;
 
+import java.time.LocalDateTime;
+
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
@@ -37,7 +39,9 @@ public class PolicyControllerTest extends ControllerTestConfig {
     public void getPolicy() throws Exception {
         // given
         PolicyResponseDto response = PolicyResponseDto.builder()
+                .id(1L)
                 .content("This is the privacy policy content.")
+                .createdAt(LocalDateTime.now())
                 .build();
 
         when(policyService.getPrivacyPolicy()).thenReturn(response);
@@ -54,7 +58,9 @@ public class PolicyControllerTest extends ControllerTestConfig {
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.code").value(SuccessStatus._OK.getReasonHttpStatus().getCode()))
                 .andExpect(jsonPath("$.message").value(SuccessStatus._OK.getReasonHttpStatus().getMessage()))
+                .andExpect(jsonPath("$.result.id").value(1))
                 .andExpect(jsonPath("$.result.content").value("This is the privacy policy content."))
+                .andExpect(jsonPath("$.result.createdAt").exists())
 
                 // docs
                 .andDo(MockMvcRestDocumentationWrapper.document("policy/get-policy",
@@ -68,7 +74,9 @@ public class PolicyControllerTest extends ControllerTestConfig {
                                                 fieldWithPath("isSuccess").type("Boolean").description("성공 여부"),
                                                 fieldWithPath("code").type("String").description("응답 코드"),
                                                 fieldWithPath("message").type("String").description("응답 메시지"),
-                                                fieldWithPath("result.content").type("String").description("정책 내용")
+                                                fieldWithPath("result.id").type("Number").description("정책 ID"),
+                                                fieldWithPath("result.content").type("String").description("정책 내용"),
+                                                fieldWithPath("result.createdAt").type("String").description("정책 생성 날짜")
                                         )
                                         .responseSchema(Schema.schema("PolicyResponseSchema"))
                                         .build()
