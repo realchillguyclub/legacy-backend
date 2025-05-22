@@ -1,8 +1,6 @@
 name: 🚀 Build & Deploy workflow on test environment
 
 on:
-  push:
-    branches: [develop, 'release/v**']
   pull_request:
     branches: [develop, 'release/v**']
 
