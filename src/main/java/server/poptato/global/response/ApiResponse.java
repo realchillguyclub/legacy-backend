@@ -16,32 +16,22 @@ public class ApiResponse<T> {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private final T result;
 
-    // 성공 응답 - 페이로드 포함
     public static <T> ResponseEntity<ApiResponse<T>> onSuccess(BaseCode code, T result) {
         ApiResponse<T> response = new ApiResponse<>(true, code.getReasonHttpStatus().getCode(), code.getReasonHttpStatus().getMessage(), result);
         return ResponseEntity.status(code.getReasonHttpStatus().getHttpStatus()).body(response);
     }
 
-    // 성공 응답 - 페이로드 없음
     public static <T> ResponseEntity<ApiResponse<T>> onSuccess(BaseCode code) {
         ApiResponse<T> response = new ApiResponse<>(true, code.getReasonHttpStatus().getCode(), code.getReasonHttpStatus().getMessage(), null);
         return ResponseEntity.status(code.getReasonHttpStatus().getHttpStatus()).body(response);
     }
 
-    // 실패 응답 - 기본 메시지
     public static <T> ResponseEntity<ApiResponse<T>> onFailure(BaseErrorCode code) {
         ApiResponse<T> response = new ApiResponse<>(false, code.getReasonHttpStatus().getCode(), code.getReasonHttpStatus().getMessage(), null);
         return ResponseEntity.status(code.getReasonHttpStatus().getHttpStatus()).body(response);
     }
 
-    // 실패 응답 - 커스텀 메시지 (페이로드 없음)
-    public static <T> ResponseEntity<ApiResponse<T>> onFailureWithCustomMessage(BaseErrorCode code, String customMessage) {
-        ApiResponse<T> response = new ApiResponse<>(false, code.getReasonHttpStatus().getCode(), customMessage, null);
-        return ResponseEntity.status(code.getReasonHttpStatus().getHttpStatus()).body(response);
-    }
-
-    // 실패 응답 - 오버라이드 메서드용
-    public static <T> ResponseEntity<Object> onFailureForOverrideMethod(BaseErrorCode code, String message) {
+    public static <T> ResponseEntity<Object> onFailure(BaseErrorCode code, String message) {
         ApiResponse<T> response = new ApiResponse<>(false, code.getReasonHttpStatus().getCode(), message, null);
         return ResponseEntity.status(code.getReasonHttpStatus().getHttpStatus()).body(response);
     }
