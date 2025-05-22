@@ -13,4 +13,4 @@ COPY ./illdan-firebase-adminsdk-fbsvc-f2e4b78293.json /illdan-firebase-adminsdk-
 ENTRYPOINT ["java", "-jar", "app.jar"]
 
 # 컨테이너가 사용하는 포트
-EXPOSE 8080
+EXPOSE 8085
