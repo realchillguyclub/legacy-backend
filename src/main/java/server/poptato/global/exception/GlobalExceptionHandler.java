@@ -51,6 +51,30 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ApiResponse.onFailure(ErrorStatus._BAD_REQUEST, errorMessage);
     }
 
+    // NullPointerException 처리
+    @ExceptionHandler(NullPointerException.class)
+    public ResponseEntity<Object> handleNullPointerException(NullPointerException e) {
+        String errorMessage = "서버에서 예기치 않은 오류가 발생했습니다. 요청을 처리하는 중에 Null 값이 참조되었습니다.";
+        logError("NullPointerException", e);
+        return ApiResponse.onFailure(ErrorStatus._INTERNAL_SERVER_ERROR, errorMessage);
+    }
+
+    // NumberFormatException 처리
+    @ExceptionHandler(NumberFormatException.class)
+    public ResponseEntity<Object> handleNumberFormatException(NumberFormatException e) {
+        String errorMessage = "숫자 형식이 잘못되었습니다: " + e.getMessage();
+        logError("NumberFormatException", e);
+        return ApiResponse.onFailure(ErrorStatus._BAD_REQUEST, errorMessage);
+    }
+
+    // IndexOutOfBoundsException 처리
+    @ExceptionHandler(IndexOutOfBoundsException.class)
+    public ResponseEntity<Object> handleIndexOutOfBoundsException(IndexOutOfBoundsException e) {
+        String errorMessage = "인덱스가 범위를 벗어났습니다: " + e.getMessage();
+        logError("IndexOutOfBoundsException", e);
+        return ApiResponse.onFailure(ErrorStatus._BAD_REQUEST, errorMessage);
+    }
+
     // ConstraintViolationException 처리 (쿼리 파라미터에 올바른 값이 들어오지 않은 경우)
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Object> handleValidationParameterError(ConstraintViolationException ex) {
