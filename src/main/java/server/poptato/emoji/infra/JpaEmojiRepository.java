@@ -9,8 +9,18 @@ import server.poptato.emoji.domain.entity.Emoji;
 import server.poptato.emoji.domain.repository.EmojiRepository;
 
 public interface JpaEmojiRepository extends EmojiRepository, JpaRepository<Emoji, Long> {
-    @Query("SELECT e.imageUrl FROM Emoji e WHERE e.id = :emojiId")
+
+    @Query("""
+    SELECT e.imageUrl
+    FROM Emoji e
+    WHERE e.id = :emojiId
+    """)
     String findImageUrlById(@Param("emojiId") Long emojiId);
-    @Query("SELECT e FROM Emoji e WHERE e.id >= 3")
+
+    @Query("""
+    SELECT e
+    FROM Emoji e
+    WHERE e.id >= 3
+    """)
     Page<Emoji> findAllEmojis(Pageable pageable);
 }
