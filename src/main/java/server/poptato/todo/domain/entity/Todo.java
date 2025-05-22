@@ -1,67 +1,86 @@
 package server.poptato.todo.domain.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import org.springframework.lang.Nullable;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import server.poptato.category.domain.entity.Category;
+import server.poptato.global.dao.BaseEntity;
 import server.poptato.todo.domain.value.TodayStatus;
 import server.poptato.todo.domain.value.Type;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Getter
 @Entity
-@Builder
-@EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-public class Todo {
+@Table(name = "todo")
+public class Todo extends BaseEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @NotNull
+
+    @Column(name = "user_id", nullable = false)
     private Long userId;
-    @Nullable
+
     @Column(name = "category_id")
-    private Long  categoryId;
-    @NotNull
+    private Long categoryId;
+
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Type type;
-    @NotNull
+
     @Lob
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(name = "content", columnDefinition = "LONGTEXT", nullable = false)
     private String content;
-    @Nullable
+
     private LocalTime time;
-    @Nullable
+
     private LocalDate deadline;
-    @NotNull
+
+    @Column(name = "is_bookmark", nullable = false)
     private boolean isBookmark;
-    @NotNull
+
+    @Column(name = "is_repeat", nullable = false)
     private boolean isRepeat;
-    @Nullable
+
+    @Column(name = "today_date")
     private LocalDate todayDate;
+
     @Enumerated(EnumType.STRING)
+    @Column(name = "today_status")
     private TodayStatus todayStatus;
-    @Nullable
+
+    @Column(name = "today_order")
     private Integer todayOrder;
-    @Nullable
+
+    @Column(name = "backlog_order")
     private Integer backlogOrder;
-    @CreatedDate
-    @Column(updatable = false)
-    private LocalDateTime createDate;
-    @LastModifiedDate
-    private LocalDateTime modifyDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", insertable = false, updatable = false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Category category;
+
+    @Builder
+    public Todo(Long userId, Long categoryId, Type type, String content, LocalTime time, LocalDate deadline,
+                boolean isBookmark, boolean isRepeat, LocalDate todayDate, TodayStatus todayStatus,
+                Integer todayOrder, Integer backlogOrder) {
+        this.userId = userId;
+        this.categoryId = categoryId;
+        this.type = type;
+        this.content = content;
+        this.time = time;
+        this.deadline = deadline;
+        this.isBookmark = isBookmark;
+        this.isRepeat = isRepeat;
+        this.todayDate = todayDate;
+        this.todayStatus = todayStatus;
+        this.todayOrder = todayOrder;
+        this.backlogOrder = backlogOrder;
+    }
 
     public static Todo createBacklog(Long userId, String content, Integer backlogOrder) {
         return Todo.builder()
@@ -86,11 +105,11 @@ public class Todo {
     public static Todo createCategoryBacklog(Long userId, Long categoryId, String content, int backlogOrder) {
         return Todo.builder()
                 .userId(userId)
+                .categoryId(categoryId)
                 .content(content)
                 .backlogOrder(backlogOrder)
                 .isBookmark(false)
                 .type(Type.BACKLOG)
-                .categoryId(categoryId)
                 .build();
     }
 
@@ -125,14 +144,6 @@ public class Todo {
         this.todayDate = null;
     }
 
-    public void setTodayOrder(Integer order) {
-        this.todayOrder = order;
-    }
-
-    public void setBacklogOrder(int order) {
-        this.backlogOrder = order;
-    }
-
     public void updateTime(LocalTime time) {
         this.time = time;
     }
@@ -165,19 +176,27 @@ public class Todo {
         this.backlogOrder = ++maxBacklogOrder;
     }
 
-    public void setType(Type type) {
-        this.type = type;
-    }
-
-    public void setTodayStatus(TodayStatus todayStatus) {
-        this.todayStatus = todayStatus;
-    }
-
     public void updateCategory(Long categoryId) {
         this.categoryId = categoryId;
     }
 
     public void updateIsRepeat() {
-        this.isRepeat=!this.isRepeat;
+        this.isRepeat = !this.isRepeat;
+    }
+
+    public void updateTodayStatus(TodayStatus todayStatus) {
+        this.todayStatus = todayStatus;
+    }
+
+    public void updateType(Type type) {
+        this.type = type;
+    }
+
+    public void updateTodayOrder(Integer order) {
+        this.todayOrder = order;
+    }
+
+    public void updateBacklogOrder(int order) {
+        this.backlogOrder = order;
     }
 }

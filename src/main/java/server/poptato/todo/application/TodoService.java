@@ -157,9 +157,9 @@ public class TodoService {
                 .toList();
 
         if (Type.TODAY == requestDto.type()) {
-            reassignOrder(todos, Todo::getTodayOrder, Todo::setTodayOrder);
+            reassignOrder(todos, Todo::getTodayOrder, Todo::updateTodayOrder);
         } else if (Type.BACKLOG == requestDto.type()) {
-            reassignOrder(todos, Todo::getBacklogOrder, Todo::setBacklogOrder);
+            reassignOrder(todos, Todo::getBacklogOrder, Todo::updateBacklogOrder);
         }
     }
 
@@ -366,7 +366,7 @@ public class TodoService {
         // 2. 체크되지 않은 할 일들 (BACKLOG로 이동)
         List<Todo> backloggedTodos = allYesterdays.stream()
                 .filter(todo -> !checkedTodoIds.contains(todo.getId()))
-                .peek(todo -> todo.setType(Type.BACKLOG))
+                .peek(todo -> todo.updateType(Type.BACKLOG))
                 .toList();
 
         completedTodos.forEach(todoRepository::save);

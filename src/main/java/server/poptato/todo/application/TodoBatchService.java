@@ -52,14 +52,14 @@ public class TodoBatchService {
 
             for (Todo todo : todos) {
                 if (todo.getTodayStatus() == TodayStatus.COMPLETED && todo.isRepeat()) {
-                    todo.setType(Type.BACKLOG);
-                    todo.setTodayStatus(null);
-                    todo.setTodayOrder(null);
-                    todo.setBacklogOrder(startingOrder++);
+                    todo.updateType(Type.BACKLOG);
+                    todo.updateTodayStatus(null);
+                    todo.updateTodayOrder(null);
+                    todo.updateBacklogOrder(startingOrder++);
                 } else if (todo.getTodayStatus() == TodayStatus.INCOMPLETE) {
-                    todo.setType(Type.YESTERDAY);
-                    todo.setTodayOrder(null);
-                    todo.setBacklogOrder(startingOrder++);
+                    todo.updateType(Type.YESTERDAY);
+                    todo.updateTodayOrder(null);
+                    todo.updateBacklogOrder(startingOrder++);
                 }
             }
         });
