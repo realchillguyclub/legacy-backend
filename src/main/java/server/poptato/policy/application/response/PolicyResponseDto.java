@@ -1,22 +1,16 @@
 package server.poptato.policy.application.response;
 
 import lombok.Builder;
-import server.poptato.policy.domain.entity.Policy;
-
-import java.time.LocalDateTime;
+import server.poptato.policy.domain.value.Policy;
 
 @Builder
 public record PolicyResponseDto(
-        Long id,
-        String content,
-        LocalDateTime createdAt
+        String content
 ) {
 
     public static PolicyResponseDto from(Policy policy) {
         return new PolicyResponseDto(
-                policy.getId(),
-                policy.getContent(),
-                policy.getCreatedAt()
+                policy.getContent()
         );
     }
 }
