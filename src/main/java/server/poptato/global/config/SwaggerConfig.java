@@ -24,7 +24,7 @@ public class SwaggerConfig {
         OpenAPI openAPI = new OpenAPI()
                 .info(new Info()
                         .title("Legacy Illdan API Documentation")
-                        .version("v1.0.1")
+                        .version("v1.0.5")
                         .description("Spring REST Docs with Swagger UI.")
                         .contact(new Contact()
                                 .name("Sangho Han")
@@ -32,7 +32,7 @@ public class SwaggerConfig {
                                 .email("hchsa77@gmail.com"))
                 )
                 .servers(List.of(
-                        new Server().url("http://localhost:8080").description("로컬 서버"),
+                        new Server().url("http://localhost:8085").description("로컬 서버"),
                         new Server().url("https://prev-illdan.store").description("테스트 서버")
                 ));
 
