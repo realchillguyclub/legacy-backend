@@ -25,7 +25,6 @@ import server.poptato.todo.domain.value.Type;
 import server.poptato.user.domain.value.MobileType;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -487,7 +486,7 @@ public class TodoControllerTest extends ControllerTestConfig {
     @DisplayName("할 일의 완료 상태를 업데이트한다.")
     public void updateIsCompleted() throws Exception {
         // given
-        Mockito.doNothing().when(todoService).updateIsCompleted(anyLong(), anyLong(), any(LocalDateTime.class));
+        Mockito.doNothing().when(todoService).updateIsCompleted(anyLong(), anyLong());
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
 
         // when

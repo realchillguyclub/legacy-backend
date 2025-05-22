@@ -261,15 +261,14 @@ public class TodoService {
      *
      * @param userId 사용자 ID
      * @param todoId 업데이트할 할 일 ID
-     * @param now 현재 시간
      */
-    public void updateIsCompleted(Long userId, Long todoId, LocalDateTime now) {
+    public void updateIsCompleted(Long userId, Long todoId) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
         if (Type.YESTERDAY == findTodo.getType()) {
             updateYesterdayIsCompleted(findTodo);
         } else if (Type.TODAY == findTodo.getType()) {
-            updateTodayIsCompleted(findTodo, now);
+            updateTodayIsCompleted(findTodo);
         }
     }
 
@@ -290,7 +289,6 @@ public class TodoService {
         completedDateTimeRepository.save(
                 CompletedDateTime.builder()
                         .todoId(findTodo.getId())
-                        .dateTime(yesterday)
                         .build()
         );
 
@@ -321,13 +319,16 @@ public class TodoService {
      * - 완료된 날짜 기록(CompletedDateTime)이 존재하지 않으면 예외를 발생시킵니다.
      *
      * @param findTodo 업데이트할 할 일 객체
-     * @param now 현재 시간
      */
-    private void updateTodayIsCompleted(Todo findTodo, LocalDateTime now) {
+    private void updateTodayIsCompleted(Todo findTodo) {
         if (TodayStatus.INCOMPLETE.equals(findTodo.getTodayStatus())) {
             // 오늘 완료 상태로 변경하고 현재 시간을 완료 시간으로 저장
             findTodo.updateTodayToCompleted();
-            completedDateTimeRepository.save(new CompletedDateTime(findTodo.getId(), now));
+            completedDateTimeRepository.save(
+                    CompletedDateTime.builder()
+                    .todoId(findTodo.getId())
+                    .build()
+            );
             return;
         }
         if (TodayStatus.COMPLETED.equals(findTodo.getTodayStatus())) {
@@ -336,7 +337,7 @@ public class TodoService {
             findTodo.updateTodayToInComplete(minTodayOrder);
 
             // 기존 완료 기록이 존재하면 삭제, 없으면 예외 발생
-            CompletedDateTime completedDateTime = completedDateTimeRepository.findByDateAndTodoId(findTodo.getId(), findTodo.getTodayDate())
+            CompletedDateTime completedDateTime = completedDateTimeRepository.findByCreateDateAndTodoId(findTodo.getId(), findTodo.getTodayDate())
                     .orElseThrow(() -> new CustomException(TodoErrorStatus._COMPLETED_DATETIME_NOT_EXIST));
             completedDateTimeRepository.delete(completedDateTime);
         }
