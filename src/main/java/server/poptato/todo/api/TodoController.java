@@ -18,7 +18,6 @@ import server.poptato.todo.domain.value.AppVersion;
 import server.poptato.user.domain.value.MobileType;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -195,7 +194,7 @@ public class TodoController {
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Long todoId
     ) {
-        todoService.updateIsCompleted(jwtService.extractUserIdFromToken(authorizationHeader), todoId, LocalDateTime.now());
+        todoService.updateIsCompleted(jwtService.extractUserIdFromToken(authorizationHeader), todoId);
         return ApiResponse.onSuccess(SuccessStatus._OK);
     }
 

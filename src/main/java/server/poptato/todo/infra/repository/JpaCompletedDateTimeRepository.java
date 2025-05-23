@@ -11,21 +11,27 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-public interface JpaCompletedDateTimeRepository extends CompletedDateTimeRepository, JpaRepository<CompletedDateTime,Long> {
+public interface JpaCompletedDateTimeRepository extends CompletedDateTimeRepository, JpaRepository<CompletedDateTime, Long> {
+
     @Query("""
     SELECT c
     FROM CompletedDateTime c 
-    WHERE c.todoId = :todoId AND FUNCTION('DATE', c.dateTime) = :todayDate
+    WHERE c.todoId = :todoId
+      AND FUNCTION('DATE', c.createDate) = :createDate
     """)
-    Optional<CompletedDateTime> findByDateAndTodoId(@Param("todoId") Long todoId, @Param("todayDate") LocalDate todayDate);
+    Optional<CompletedDateTime> findByCreateDateAndTodoId(
+            @Param("todoId") Long todoId,
+            @Param("createDate") LocalDate createDate
+    );
 
-    @Query(value = "SELECT DISTINCT c.date_time " +
-            "FROM completed_date_time c " +
-            "JOIN todo t ON c.todo_id = t.id " +
-            "WHERE t.user_id = :userId " +
-            "AND YEAR(c.date_time) = :year " +
-            "AND MONTH(c.date_time) = :month",
-            nativeQuery = true)
+    @Query(value = """
+    SELECT DISTINCT c.create_date
+    FROM completed_date_time c
+    JOIN todo t ON c.todo_id = t.id
+    WHERE t.user_id = :userId
+      AND YEAR(c.create_date) = :year
+      AND MONTH(c.create_date) = :month
+    """, nativeQuery = true)
     List<Timestamp> findDistinctCompletedDateTimesByUserIdAndYearMonth(
             @Param("userId") Long userId,
             @Param("year") String year,

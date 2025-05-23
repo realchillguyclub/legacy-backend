@@ -93,31 +93,9 @@ public interface TodoRepository {
                                    @Param("userIds") List<Long> userIds,
                                    @Param("basicTodayOrder") Integer basicTodayOrder);
 
-    /**
-     * 어제 한 일 중 미완료된 할 일 목록 조회.
-     *
-     * @param userId 사용자 ID
-     * @return 미완료된 어제의 할 일 목록
-     */
     List<Todo> findIncompleteYesterdays(Long userId);
 
-    /**
-     * 해당 연도와 월 기준으로, 미래 날짜 중 마감일이 설정된 백로그가 존재하는 날짜와 해당 날짜별 백로그 개수를 조회한다.
-     *
-     * @param userId 사용자 ID
-     * @param year 조회할 연도 (예: "2025")
-     * @param month 조회할 월 (1~12)
-     * @return Tuple 리스트 (날짜, 백로그 개수)
-     */
     List<Tuple> findDatesWithBacklogCount(Long userId, String year, int month);
 
-    /**
-     * 주어진 사용자 ID에 대해, 타입이 TODAY이고 상태가 INCOMPLETE인 할 일이 존재하는지 확인한다.
-     *
-     * @param userId 사용자 ID
-     * @param type 할 일 타입 (예: TODAY)
-     * @param todayStatus 오늘 상태 (예: INCOMPLETE)
-     * @return 조건에 맞는 할 일이 존재하면 true, 그렇지 않으면 false
-     */
     boolean existsByUserIdAndTypeAndTodayStatus(Long userId, Type type, TodayStatus todayStatus);
 }
