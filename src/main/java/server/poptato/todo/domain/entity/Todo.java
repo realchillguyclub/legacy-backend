@@ -118,6 +118,7 @@ public class Todo extends BaseEntity {
                 .userId(userId)
                 .content(content)
                 .backlogOrder(backlogOrder)
+                .todayDate(LocalDate.now().minusDays(1))
                 .isBookmark(false)
                 .type(Type.YESTERDAY)
                 .todayStatus(TodayStatus.INCOMPLETE)
