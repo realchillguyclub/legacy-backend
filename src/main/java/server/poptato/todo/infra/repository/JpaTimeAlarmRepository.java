@@ -14,8 +14,10 @@ public interface JpaTimeAlarmRepository extends TimeAlarmRepository, JpaReposito
     @Query("""
         SELECT ta
         FROM TimeAlarm ta
+        JOIN Todo t ON ta.todoId = t.id
         JOIN User u ON ta.userId = u.id
-        WHERE ta.todoTime BETWEEN :from AND :to
+        WHERE t.type = 'TODAY'
+          AND t.time BETWEEN :from AND :to
           AND ta.notified = false
           AND u.isPushAlarm = true
     """)
