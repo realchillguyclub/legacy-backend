@@ -367,7 +367,7 @@ public class TodoControllerTest extends ControllerTestConfig {
                                                 parameterWithName("todoId").description("시간을 변경할 할 일 ID")
                                         )
                                         .requestFields(
-                                                fieldWithPath("time").type(JsonFieldType.STRING).description("시간 (HH:mm)")
+                                                fieldWithPath("todoTime").type(JsonFieldType.STRING).description("시간 (HH:mm)")
                                         )
                                         .responseFields(
                                                 fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),

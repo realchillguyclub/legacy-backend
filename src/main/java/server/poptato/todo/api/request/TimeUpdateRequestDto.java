@@ -6,6 +6,6 @@ import java.time.LocalTime;
 
 public record TimeUpdateRequestDto(
         @JsonFormat(pattern = "HH:mm")
-        LocalTime time
+        LocalTime todoTime
 ) {
 }

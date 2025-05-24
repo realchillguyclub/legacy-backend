@@ -49,4 +49,14 @@ public class FcmNotificationScheduler {
     public void sendDeadlineNotifications() {
         fcmNotificationBatchService.sendDeadlineNotifications();
     }
+
+    /**
+     * 설정한 시간 1시간 전에 푸쉬알림을 전송한다.
+     * - 대상: 시간이 설정된 오늘 할 일을 보유한 유저
+     */
+    @Scheduled(cron = "${scheduling.timeDeadlineNotificationCron}")
+    @Async
+    public void sendTimeDeadlineNotification() {
+        fcmNotificationBatchService.sendTimeDeadlineNotifications();
+    }
 }
