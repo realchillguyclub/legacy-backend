@@ -8,7 +8,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import server.poptato.external.firebase.template.FcmNotificationTemplate;
 import server.poptato.global.util.BatchUtil;
+import server.poptato.todo.domain.entity.TimeAlarm;
 import server.poptato.todo.domain.entity.Todo;
+import server.poptato.todo.domain.repository.TimeAlarmRepository;
 import server.poptato.todo.domain.repository.TodoRepository;
 import server.poptato.todo.domain.value.TodayStatus;
 import server.poptato.todo.domain.value.Type;
@@ -18,7 +20,10 @@ import server.poptato.user.domain.repository.MobileRepository;
 import server.poptato.user.domain.repository.UserRepository;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +33,7 @@ public class FcmNotificationBatchService {
     private final UserRepository userRepository;
     private final MobileRepository mobileRepository;
     private final TodoRepository todoRepository;
+    private final TimeAlarmRepository timeAlarmRepository;
 
     @Value("${batch.size}")
     private int batchSize;
@@ -109,6 +115,49 @@ public class FcmNotificationBatchService {
                 }
             }
         });
+    }
+
+    /**
+     * 시간이 설정된 할 일이 있는 유저에게 1시간 전 푸쉬알림을 전송한다.
+     */
+    @Async
+    public void sendTimeDeadlineNotifications() {
+        LocalTime from = LocalTime.now().withSecond(0).withNano(0);
+        LocalTime to = from.plusHours(1);
+
+        List<TimeAlarm> alarms = timeAlarmRepository.findPushEnabledAlarms(from, to);
+
+        Map<Long, List<TimeAlarm>> alarmsByUser = alarms.stream()
+                .collect(Collectors.groupingBy(TimeAlarm::getUserId));
+
+        List<Long> userIds = alarmsByUser.keySet().stream().toList();
+        BatchUtil.splitIntoBatches(userIds, batchSize).forEach(batch -> {
+            for (Long userId : batch) {
+                sendUserTimeNotification(userId, alarmsByUser.get(userId));
+            }
+        });
+    }
+
+    /**
+     *
+     * @param userId 유저 아이디
+     * @param alarmList 알림을 보낼 목록
+     */
+    private void sendUserTimeNotification(Long userId, List<TimeAlarm> alarmList) {
+        List<Mobile> mobiles = mobileRepository.findAllByUserId(userId);
+        for (Mobile mobile : mobiles) {
+            for (TimeAlarm timeAlarm : alarmList) {
+                todoRepository.findById(timeAlarm.getTodoId())
+                        .ifPresent(todo -> {
+                            sendPushOrDeleteToken(
+                                    mobile.getClientId(),
+                                    FcmNotificationTemplate.TIME_DEADLINE.getTitle(),
+                                    todo.getContent());
+                            timeAlarm.updateNotified(true);
+                            timeAlarmRepository.save(timeAlarm);
+                        });
+            }
+        }
     }
 
     /**
