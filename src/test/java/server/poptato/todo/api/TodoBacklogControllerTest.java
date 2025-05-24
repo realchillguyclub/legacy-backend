@@ -47,9 +47,23 @@ public class TodoBacklogControllerTest extends ControllerTestConfig {
     @DisplayName("백로그 목록을 조회한다.")
     public void getBacklogList() throws Exception {
         // given
-        BacklogListResponseDto response = new BacklogListResponseDto(2L, "Sample Category",
-                List.of(new BacklogResponseDto(1L, "content1", true, false, 0, LocalTime.of(23, 55), LocalDate.now(), "category1", "url1")
-                ), 1);
+        BacklogListResponseDto response = new BacklogListResponseDto(
+                2L,
+                "Sample Category",
+                List.of(new BacklogResponseDto(
+                        1L,
+                        "content1",
+                        true,
+                        false,
+                        0,
+                        LocalTime.of(23, 55),
+                        LocalDate.now(),
+                        List.of("월", "화"),
+                        "category1",
+                        "url1"
+                )),
+                1
+        );
 
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
         Mockito.when(todoBacklogService.getBacklogList(anyLong(), anyLong(), any(MobileType.class), anyInt(), anyInt())).thenReturn(response);
@@ -99,6 +113,7 @@ public class TodoBacklogControllerTest extends ControllerTestConfig {
                                                 fieldWithPath("result.backlogs[].dDay").type(JsonFieldType.NUMBER).description("마감일까지 남은 일 수"),
                                                 fieldWithPath("result.backlogs[].time").type(JsonFieldType.STRING).description("시간"),
                                                 fieldWithPath("result.backlogs[].deadline").type(JsonFieldType.STRING).description("마감일"),
+                                                fieldWithPath("result.backlogs[].routineDays").type(JsonFieldType.ARRAY).description("루틴 요일 목록"),
                                                 fieldWithPath("result.backlogs[].categoryName").type(JsonFieldType.STRING).description("카테고리명"),
                                                 fieldWithPath("result.backlogs[].imageUrl").type(JsonFieldType.STRING).description("카테고리 이모지 이미지 URL"),
                                                 fieldWithPath("result.totalPageCount").type(JsonFieldType.NUMBER).description("전체 페이지 수")

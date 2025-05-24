@@ -238,6 +238,7 @@ public class TodoControllerTest extends ControllerTestConfig {
                 "할 일 내용",
                 LocalTime.of(12, 55),
                 LocalDate.of(2025, 1, 30),
+                List.of("월", "수"),
                 "개발",
                 "http://example.com/emoji.png",
                 true,
@@ -263,6 +264,8 @@ public class TodoControllerTest extends ControllerTestConfig {
                 .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
                 .andExpect(jsonPath("$.result.content").value("할 일 내용"))
                 .andExpect(jsonPath("$.result.deadline").value("2025-01-30"))
+                .andExpect(jsonPath("$.result.routineDays[0]").value("월"))
+                .andExpect(jsonPath("$.result.routineDays[1]").value("수"))
                 .andExpect(jsonPath("$.result.categoryName").value("개발"))
                 .andExpect(jsonPath("$.result.emojiImageUrl").value("http://example.com/emoji.png"))
                 .andExpect(jsonPath("$.result.isBookmark").value(true))
@@ -286,6 +289,7 @@ public class TodoControllerTest extends ControllerTestConfig {
                                                 fieldWithPath("result.content").type(JsonFieldType.STRING).description("할 일 내용"),
                                                 fieldWithPath("result.time").type(JsonFieldType.STRING).description("시간"),
                                                 fieldWithPath("result.deadline").type(JsonFieldType.STRING).description("마감 기한"),
+                                                fieldWithPath("result.routineDays").type(JsonFieldType.ARRAY).description("루틴 요일 목록"),
                                                 fieldWithPath("result.categoryName").type(JsonFieldType.STRING).description("카테고리 이름"),
                                                 fieldWithPath("result.emojiImageUrl").type(JsonFieldType.STRING).description("카테고리 이모지 이미지 URL"),
                                                 fieldWithPath("result.isBookmark").type(JsonFieldType.BOOLEAN).description("즐겨찾기 여부"),
@@ -306,6 +310,7 @@ public class TodoControllerTest extends ControllerTestConfig {
                 "Sample Todo",
                 LocalTime.of(23,55),
                 LocalDate.of(2025, 4, 20),
+                List.of("월", "수"),
                 "Work",
                 "https://example.com/emoji.png",
                 true,
@@ -368,6 +373,57 @@ public class TodoControllerTest extends ControllerTestConfig {
                                         )
                                         .requestFields(
                                                 fieldWithPath("time").type(JsonFieldType.STRING).description("시간 (HH:mm)")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
+                                        )
+                                        .responseSchema(Schema.schema("BaseResponse"))
+                                        .build()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("할 일의 루틴을 업데이트한다.")
+    public void updateRoutine() throws Exception {
+        // given
+        RoutineUpdateRequestDto request = new RoutineUpdateRequestDto(List.of("월", "수", "금"));
+        Mockito.doNothing().when(todoService).updateRoutine(anyLong(), anyLong(), any(RoutineUpdateRequestDto.class));
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
+
+        String requestContent = objectMapper.writeValueAsString(request);
+
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.patch("/todo/{todoId}/routine", 1L)
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .content(requestContent)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/update-routine",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Todo API")
+                                        .description("할 일의 루틴을 업데이트한다.")
+                                        .pathParameters(
+                                                parameterWithName("todoId").description("루틴을 변경할 할 일 ID")
+                                        )
+                                        .requestFields(
+                                                fieldWithPath("routineDays").type(JsonFieldType.ARRAY).description("루틴 요일 목록 (예: [\"월\", \"화\"])")
                                         )
                                         .responseFields(
                                                 fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
