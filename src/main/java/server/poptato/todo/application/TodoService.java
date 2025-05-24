@@ -20,12 +20,13 @@ import server.poptato.todo.application.response.HistoryCalendarListResponseDto;
 import server.poptato.todo.application.response.PaginatedHistoryResponseDto;
 import server.poptato.todo.application.response.TodoDetailResponseDto;
 import server.poptato.todo.domain.entity.CompletedDateTime;
+import server.poptato.todo.domain.entity.Routine;
 import server.poptato.todo.domain.entity.Todo;
 import server.poptato.todo.domain.repository.CompletedDateTimeRepository;
+import server.poptato.todo.domain.repository.RoutineRepository;
 import server.poptato.todo.domain.repository.TodoRepository;
 import server.poptato.todo.domain.value.TodayStatus;
 import server.poptato.todo.domain.value.Type;
-import server.poptato.todo.infra.repository.JpaTodoRepository;
 import server.poptato.todo.status.TodoErrorStatus;
 import server.poptato.user.domain.value.MobileType;
 import server.poptato.user.validator.UserValidator;
@@ -49,7 +50,7 @@ public class TodoService {
     private final UserValidator userValidator;
     private final CategoryValidator categoryValidator;
     private final TodoRepository todoRepository;
-    private final JpaTodoRepository jpaTodoRepository;
+    private final RoutineRepository routineRepository;
     private final CompletedDateTimeRepository completedDateTimeRepository;
     private final CategoryRepository categoryRepository;
     private final EmojiRepository emojiRepository;
@@ -214,7 +215,11 @@ public class TodoService {
                 emojiRepository.findById(findCategory.getEmojiId()).orElse(null) : null;
         String modifiedImageUrl = findEmoji != null && findEmoji.getImageUrl() != null ?
                 FileUtil.changeFileExtension(findEmoji.getImageUrl(), imageUrlExtension) : null;
-        return TodoDetailResponseDto.of(findTodo, findCategory, modifiedImageUrl);
+        List<String> routineDays = routineRepository.findAllByTodoId(todoId).stream()
+                .map(Routine::getDay)
+                .toList();
+
+        return TodoDetailResponseDto.of(findTodo, findCategory, modifiedImageUrl, routineDays);
     }
 
     /**
@@ -241,6 +246,32 @@ public class TodoService {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
         findTodo.updateDeadline(requestDto.deadline());
+    }
+
+    /**
+     * 특정 할 일의 루틴을 업데이트합니다.
+     *
+     * @param userId 사용자 ID
+     * @param todoId 업데이트할 할 일 ID
+     * @param requestDto 시간 업데이트 요청 데이터
+     */
+    public void updateRoutine(Long userId, Long todoId, RoutineUpdateRequestDto requestDto) {
+        userValidator.checkIsExistUser(userId);
+        if (!todoRepository.existsById(todoId)) {
+            throw new CustomException(TodoErrorStatus._TODO_NOT_EXIST);
+        }
+
+        routineRepository.deleteByTodoId(todoId);
+        List<String> newDays = requestDto.routineDays();
+        if (newDays != null && !newDays.isEmpty()) {
+            List<Routine> routines = newDays.stream()
+                    .map(day -> Routine.builder()
+                            .todoId(todoId)
+                            .day(day)
+                            .build())
+                    .toList();
+            routineRepository.saveAll(routines);
+        }
     }
 
     /**
@@ -274,7 +305,6 @@ public class TodoService {
 
     /**
      * 특정 할 일의 어제 완료 상태를 업데이트합니다.
-     *
      * - 미완료(INCOMPLETE) 상태 → 완료(COMPLETED) 상태로 변경
      * - 완료 시간을 "어제 날짜의 23:59"로 설정
      * - 반복 할 일이면 새로운 백로그 할 일을 생성
@@ -311,7 +341,6 @@ public class TodoService {
 
     /**
      * 특정 할 일의 오늘 완료 상태를 업데이트합니다.
-     *
      * - 할 일이 미완료(INCOMPLETE) 상태라면, 오늘 완료(COMPLETED) 상태로 변경하고
      *   완료 시간을 현재 시간(now)으로 저장합니다.
      * - 할 일이 완료(COMPLETED) 상태라면, 다시 미완료(INCOMPLETE) 상태로 변경하고
@@ -345,7 +374,6 @@ public class TodoService {
 
     /**
      * 어제 한 일을 체크하고, 상태를 변경합니다.
-     *
      * - 체크된 할 일들은 `COMPLETED` 상태로 변경됩니다.
      * - 체크되지 않은 할 일들은 `BACKLOG`로 이동합니다.
      *
@@ -397,11 +425,9 @@ public class TodoService {
 
     /**
      * 오늘(TODAY)의 할 일 목록을 조회합니다.
-     *
      * 오늘 날짜 기준으로 다음의 할 일들을 조회하여 반환합니다:
      * - 미완료 상태(INCOMPLETE)의 할 일
      * - 완료 상태(COMPLETED)의 할 일
-     *
      * 두 목록을 하나로 합친 후, 요청된 페이지 기준으로 페이징 처리합니다.
      *
      * @param userId 사용자 ID
@@ -424,7 +450,6 @@ public class TodoService {
 
     /**
      * 히스토리 캘린더 데이터를 조회합니다 (v1 - Legacy).
-     *
      * 사용자에게 히스토리가 존재하는 날짜 리스트만 반환합니다.
      * - 앱 버전이 1.2.0 미만일 때 호출됩니다.
      *
@@ -442,11 +467,9 @@ public class TodoService {
 
     /**
      * 히스토리 캘린더 데이터를 조회합니다 (v2 - New).
-     *
      * 다음의 정보를 날짜별로 통합하여 반환합니다:
      * - 완료된 할 일이 존재하는 날짜 (히스토리)
      * - 마감기한이 설정된 백로그가 존재하는 날짜
-     *
      * 날짜별로 해당 날짜의 백로그 개수가 함께 포함되며,
      * 히스토리 날짜는 기본적으로 count -1로 표시됩니다.
      *
@@ -506,7 +529,6 @@ public class TodoService {
 
     /**
      * 마감기한이 된 백로그 할 일들을 오늘 할 일(TODAY)로 변경합니다.
-     *
      * - 백로그에서 마감기한(today)과 일치하는 할 일들을 찾아 TODAY 상태로 업데이트합니다.
      * - 기본적인 todayOrder 값을 설정하여 정렬 순서를 유지합니다.
      * - 엔티티 매니저를 활용하여 변경 사항을 즉시 반영하고, 영속성 컨텍스트를 비웁니다.
