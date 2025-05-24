@@ -7,6 +7,7 @@ import server.poptato.category.domain.entity.Category;
 import java.util.Optional;
 
 public interface CategoryRepository {
+
     Optional<Integer> findMaxCategoryOrderByUserId(Long userId);
 
     Category save(Category category);

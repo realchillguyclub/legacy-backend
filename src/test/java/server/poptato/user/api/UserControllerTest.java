@@ -102,7 +102,6 @@ public class UserControllerTest extends ControllerTestConfig {
         // given
         Long userId = 1L;
         User user = User.builder()
-                .id(userId)
                 .socialType(SocialType.KAKAO)
                 .socialId("123456")
                 .name("John Doe")

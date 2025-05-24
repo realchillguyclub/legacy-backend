@@ -54,7 +54,14 @@ public class CategoryService {
         emojiValidator.checkIsExistEmoji(request.emojiId());
         int maxCategoryId = categoryRepository.findMaxCategoryOrderByUserId(userId).orElseThrow(
                 () -> new CustomException(CategoryErrorStatus._DEFAULT_CATEGORY_NOT_EXIST));
-        Category newCategory = categoryRepository.save(Category.create(userId, maxCategoryId, request));
+        Category newCategory = categoryRepository.save(
+                Category.builder()
+                        .userId(userId)
+                        .categoryOrder(maxCategoryId + 1)
+                        .emojiId(request.emojiId())
+                        .name(request.name())
+                        .build()
+        );
         return CategoryCreateResponseDto.of(newCategory.getId());
     }
 
@@ -177,7 +184,7 @@ public class CategoryService {
         List<Integer> categoryOrders = getCategoryOrders(categoryIds);
         Collections.sort(categoryOrders);
         for (int i = 0; i < categories.size(); i++) {
-            categories.get(i).setCategoryOrder(categoryOrders.get(i));
+            categories.get(i).updateCategoryOrder(categoryOrders.get(i));
             categoryRepository.save(categories.get(i));
         }
     }

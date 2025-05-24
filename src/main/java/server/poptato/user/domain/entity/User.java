@@ -1,69 +1,66 @@
 package server.poptato.user.domain.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import org.springframework.lang.Nullable;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import server.poptato.auth.api.request.LoginRequestDto;
 import server.poptato.external.oauth.SocialUserInfo;
+import server.poptato.global.dao.BaseEntity;
 import server.poptato.user.domain.value.SocialType;
 
-import java.time.LocalDateTime;
-
-@Entity
 @Getter
-@Builder
+@Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 @Table(name = "users")
-@EntityListeners(AuditingEntityListener.class)
-public class User {
+public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
+    @Column(name = "social_type", nullable = false)
     private SocialType socialType;
 
-    @NotNull
+    @Column(name = "social_id", nullable = false)
     private String socialId;
 
-    @NotNull
+    @Column(nullable = false)
     private String name;
 
-    @NotNull
+    @Column(nullable = false)
     private String email;
 
-    @Nullable
+    @Column(name = "image_url")
     private String imageUrl;
 
-    @NotNull
+    @Column(name = "is_push_alarm", nullable = false)
     private Boolean isPushAlarm;
 
-    @CreatedDate
-    @Column(updatable = false)
-    private LocalDateTime createDate;
-
-    @LastModifiedDate
-    private LocalDateTime modifyDate;
+    @Builder
+    public User(SocialType socialType, String socialId, String name, String email, String imageUrl, Boolean isPushAlarm) {
+        this.socialType = socialType;
+        this.socialId = socialId;
+        this.name = name;
+        this.email = email;
+        this.imageUrl = imageUrl;
+        this.isPushAlarm = isPushAlarm;
+    }
 
     public void updateImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
     }
 
-    public static User create(LoginRequestDto request, SocialUserInfo userInfo, String imageUrl){
+    public static User create(LoginRequestDto request, SocialUserInfo userInfo, String imageUrl) {
         return User.builder()
                 .socialType(request.socialType())
-                .isPushAlarm(true)
                 .socialId(userInfo.socialId())
                 .name(userInfo.name())
                 .email(userInfo.email())
                 .imageUrl(imageUrl)
+                .isPushAlarm(true)
                 .build();
     }
 }

@@ -1,53 +1,46 @@
 package server.poptato.category.domain.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import server.poptato.category.api.request.CategoryCreateUpdateRequestDto;
 import server.poptato.emoji.domain.entity.Emoji;
-
-import java.time.LocalDateTime;
+import server.poptato.global.dao.BaseEntity;
 
 @Getter
 @Entity
-@Builder
-@EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-public class Category {
+@Table(name = "category")
+public class Category extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @NotNull
+
+    @Column(name = "user_id", nullable = false)
     private Long userId;
-    @NotNull
-    @Column(name = "emoji_id")
+
+    @Column(name = "emoji_id", nullable = false)
     private Long emojiId;
-    @NotNull
+
+    @Column(name = "category_order", nullable = false)
     private int categoryOrder;
-    @NotNull
+
+    @Column(nullable = false)
     private String name;
-    @CreatedDate
-    @Column(updatable = false)
-    private LocalDateTime createDate;
-    @LastModifiedDate
-    private LocalDateTime modifyDate;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "emoji_id", insertable = false, updatable = false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Emoji emoji;
 
-    public static Category create(Long userId, int maxCategoryId, CategoryCreateUpdateRequestDto request) {
-        return Category.builder()
-                .userId(userId)
-                .categoryOrder(++maxCategoryId)
-                .emojiId(request.emojiId())
-                .name(request.name())
-                .build();
-
+    @Builder
+    public Category(Long userId, Long emojiId, int categoryOrder, String name) {
+        this.userId = userId;
+        this.emojiId = emojiId;
+        this.categoryOrder = categoryOrder;
+        this.name = name;
     }
 
     public void update(CategoryCreateUpdateRequestDto updateRequestDto) {
@@ -55,7 +48,7 @@ public class Category {
         this.emojiId = updateRequestDto.emojiId();
     }
 
-    public void setCategoryOrder(int categoryOrder) {
+    public void updateCategoryOrder(int categoryOrder) {
         this.categoryOrder = categoryOrder;
     }
 }
