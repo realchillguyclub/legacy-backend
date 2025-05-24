@@ -244,6 +244,7 @@ public class TodoService {
 
         if (timeAlarm != null) {
             if (requestDto.todoTime() != null) {
+                timeAlarm.updateNotified(false);
                 timeAlarmRepository.save(timeAlarm);
             } else {
                 timeAlarmRepository.delete(timeAlarm);
