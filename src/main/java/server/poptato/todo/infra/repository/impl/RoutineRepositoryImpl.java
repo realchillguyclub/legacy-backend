@@ -20,8 +20,8 @@ public class RoutineRepositoryImpl implements RoutineRepository {
     }
 
     @Override
-    public void saveAll(List<Routine> routines) {
-        jpaRoutineRepository.saveAll(routines);
+    public void saveAll(List<Routine> routineDays) {
+        jpaRoutineRepository.saveAll(routineDays);
     }
 
     @Override

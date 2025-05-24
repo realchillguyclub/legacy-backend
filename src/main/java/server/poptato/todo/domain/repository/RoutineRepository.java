@@ -8,7 +8,7 @@ public interface RoutineRepository {
 
     void deleteByTodoId(Long todoId);
 
-    void saveAll(List<Routine> routines);
+    void saveAll(List<Routine> routineDays);
 
     List<Routine> findAllByTodoId(Long todoId);
 }

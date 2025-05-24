@@ -264,13 +264,13 @@ public class TodoService {
         routineRepository.deleteByTodoId(todoId);
         List<String> newDays = requestDto.routineDays();
         if (newDays != null && !newDays.isEmpty()) {
-            List<Routine> routines = newDays.stream()
+            List<Routine> routineDays = newDays.stream()
                     .map(day -> Routine.builder()
                             .todoId(todoId)
                             .day(day)
                             .build())
                     .toList();
-            routineRepository.saveAll(routines);
+            routineRepository.saveAll(routineDays);
         }
     }
 
