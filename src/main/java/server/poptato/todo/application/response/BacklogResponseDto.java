@@ -5,6 +5,7 @@ import server.poptato.todo.domain.entity.Todo;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 public record BacklogResponseDto(
         Long todoId,
@@ -14,11 +15,12 @@ public record BacklogResponseDto(
         Integer dDay,
         LocalTime time,
         LocalDate deadline,
+        List<String> routineDays,
         String categoryName,
         String imageUrl
 ) {
 
-    public static BacklogResponseDto of(Todo todo, String categoryName, String imageUrl) {
+    public static BacklogResponseDto of(Todo todo, String categoryName, String imageUrl, List<String> routineDays) {
         LocalDate today = LocalDate.now();
         Integer dDay = null;
 
@@ -34,6 +36,7 @@ public record BacklogResponseDto(
                 dDay,
                 todo.getTime(),
                 todo.getDeadline(),
+                routineDays,
                 categoryName,
                 imageUrl
         );
