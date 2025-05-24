@@ -25,6 +25,8 @@ public interface TodoRepository {
 
     Optional<Todo> findById(Long todoId);
 
+    boolean existsById(Long id);
+
     void delete(Todo todo);
 
     Todo save(Todo todo);

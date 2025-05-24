@@ -13,7 +13,8 @@ public class UserValidator {
     private final UserRepository userRepository;
 
     public void checkIsExistUser(Long userId){
-        userRepository.findById(userId).orElseThrow(() -> new CustomException(UserErrorStatus._USER_NOT_EXIST));
+        userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(UserErrorStatus._USER_NOT_EXIST));
     }
 
     public User checkIsExistAndReturnUser(Long userId){

@@ -30,7 +30,6 @@ public class TodoController {
 
     /**
      * 할 일 삭제 API.
-     *
      * 사용자가 특정 할 일을 삭제합니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
@@ -48,7 +47,6 @@ public class TodoController {
 
     /**
      * 할 일 상태 스와이프 API.
-     *
      * 사용자가 할 일 상태를 스와이프 방식으로 업데이트합니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
@@ -66,7 +64,6 @@ public class TodoController {
 
     /**
      * 할 일 즐겨찾기 상태 토글 API.
-     *
      * 사용자가 특정 할 일의 즐겨찾기 상태를 토글합니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
@@ -84,7 +81,6 @@ public class TodoController {
 
     /**
      * 할 일 드래그 앤 드롭 API.
-     *
      * 사용자가 드래그 앤 드롭 방식으로 할 일 순서를 변경합니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
@@ -102,7 +98,6 @@ public class TodoController {
 
     /**
      * 할 일 상세 조회 API.
-     *
      * 특정 할 일의 세부 정보를 조회합니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
@@ -122,7 +117,6 @@ public class TodoController {
 
     /**
      * 할 일 시간 업데이트 API.
-     *
      * 사용자가 특정 할 일의 시간을 업데이트합니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
@@ -142,7 +136,6 @@ public class TodoController {
 
     /**
      * 할 일 기한 업데이트 API.
-     *
      * 사용자가 특정 할 일의 마감 기한을 업데이트합니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
@@ -161,8 +154,27 @@ public class TodoController {
     }
 
     /**
-     * 할 일 내용 수정 API.
+     * 할 일 루틴 요일 설정 API.
+     * 사용자가 특정 할 일에 반복할 요일을 설정합니다.
+     * 요청된 요일 리스트로 기존 루틴을 대체하며, 빈 리스트일 경우 루틴을 모두 삭제합니다.
      *
+     * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
+     * @param todoId 루틴을 설정할 할 일 ID
+     * @param routineUpdateRequestDto 루틴 요일 설정 요청 데이터
+     * @return 성공 여부를 나타내는 응답
+     */
+    @PatchMapping("/todo/{todoId}/routine")
+    public ResponseEntity<ApiResponse<SuccessStatus>> updateRoutine(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @PathVariable Long todoId,
+            @Valid @RequestBody RoutineUpdateRequestDto routineUpdateRequestDto
+    ) {
+        todoService.updateRoutine(jwtService.extractUserIdFromToken(authorizationHeader), todoId, routineUpdateRequestDto);
+        return ApiResponse.onSuccess(SuccessStatus._OK);
+    }
+
+    /**
+     * 할 일 내용 수정 API.
      * 사용자가 특정 할 일의 내용을 수정합니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
@@ -182,7 +194,6 @@ public class TodoController {
 
     /**
      * 할 일 완료 상태 업데이트 API.
-     *
      * 사용자가 특정 할 일의 완료 상태를 업데이트합니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
@@ -200,7 +211,6 @@ public class TodoController {
 
     /**
      * 어제 한 일 체크 API.
-     *
      * 사용자의 어제 한 일 중에서 완료된 항목을 체크하고, 미완료 항목을 백로그로 이동시킵니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
@@ -218,7 +228,6 @@ public class TodoController {
 
     /**
      * 할 일 카테고리 변경 API.
-     *
      * 사용자가 특정 할 일의 카테고리를 변경합니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
@@ -238,7 +247,6 @@ public class TodoController {
 
     /**
      * 반복 설정 업데이트 API.
-     *
      * 사용자가 특정 할 일의 반복 설정을 업데이트합니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
@@ -256,7 +264,6 @@ public class TodoController {
 
     /**
      * 히스토리 조회 API.
-     *
      * 사용자가 특정 날짜의 할 일 히스토리를 조회합니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
@@ -278,7 +285,6 @@ public class TodoController {
 
     /**
      * 히스토리 캘린더 조회 API.
-     *
      * 사용자가 특정 연도 및 월의 할 일 히스토리를 조회합니다.
      * - 앱 버전이 V2 미만일 경우, 날짜 리스트를 감싼 응답 형식(`LegacyHistoryCalendarResponseDto`)으로 반환됩니다.
      * - 앱 버전이 V2 이상일 경우, 날짜별 히스토리 및 백로그 개수를 포함한 응답 형식(`HistoryCalendarListResponseDto`)으로 반환됩니다.

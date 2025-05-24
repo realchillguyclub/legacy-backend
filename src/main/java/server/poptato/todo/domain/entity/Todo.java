@@ -120,6 +120,7 @@ public class Todo extends BaseEntity {
                 .backlogOrder(backlogOrder)
                 .todayDate(LocalDate.now().minusDays(1))
                 .isBookmark(false)
+                .todayDate(LocalDate.now().minusDays(1))
                 .type(Type.YESTERDAY)
                 .todayStatus(TodayStatus.INCOMPLETE)
                 .build();

@@ -6,6 +6,7 @@ import server.poptato.todo.domain.value.TodayStatus;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 public record TodayResponseDto(
         Long todoId,
@@ -16,10 +17,16 @@ public record TodayResponseDto(
         Integer dDay,
         LocalTime time,
         LocalDate deadline,
+        List<String> routineDays,
         String categoryName,
         String imageUrl
 ) {
-    public static TodayResponseDto of(Todo todo, String categoryName, String imageUrl) {
+    public static TodayResponseDto of(
+            Todo todo,
+            String categoryName,
+            String imageUrl,
+            List<String> routineDays
+    ) {
         Integer dDay = null;
         if (todo.getDeadline() != null && todo.getTodayDate() != null) {
             dDay = (int) ChronoUnit.DAYS.between(todo.getTodayDate(), todo.getDeadline());
@@ -34,6 +41,7 @@ public record TodayResponseDto(
                 dDay,
                 todo.getTime(),
                 todo.getDeadline(),
+                routineDays,
                 categoryName,
                 imageUrl
         );
