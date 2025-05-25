@@ -386,21 +386,67 @@ public class TodoControllerTest extends ControllerTestConfig {
     }
 
     @Test
-    @DisplayName("할 일의 루틴을 업데이트한다.")
-    public void updateRoutine() throws Exception {
+    @DisplayName("할 일의 요일 반복 설정을 등록한다.(v1.3.0~)")
+    public void createRoutine() throws Exception {
         // given
         RoutineUpdateRequestDto request = new RoutineUpdateRequestDto(List.of("월", "수", "금"));
-        Mockito.doNothing().when(todoService).updateRoutine(anyLong(), anyLong(), any(RoutineUpdateRequestDto.class));
+        Mockito.doNothing().when(todoService).createRoutine(anyLong(), anyLong(), any(RoutineUpdateRequestDto.class));
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
 
         String requestContent = objectMapper.writeValueAsString(request);
 
         // when
         ResultActions resultActions = this.mockMvc.perform(
-                RestDocumentationRequestBuilders.patch("/todo/{todoId}/routine", 1L)
+                RestDocumentationRequestBuilders.put("/todo/{todoId}/routine", 1L)
                         .header(HttpHeaders.AUTHORIZATION, token)
                         .content(requestContent)
                         .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-201"))
+                .andExpect(jsonPath("$.message").value("생성에 성공했습니다."))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/create-routine",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Todo API")
+                                        .description("할 일의 요일 반복 설정을 등록한다.(v1.3.0~)")
+                                        .pathParameters(
+                                                parameterWithName("todoId").description("요일 반복 설정할 할 일 ID")
+                                        )
+                                        .requestFields(
+                                                fieldWithPath("routineDays").type(JsonFieldType.ARRAY).description("반복 요일 목록 (예: [\"월\", \"화\"])")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
+                                        )
+                                        .responseSchema(Schema.schema("BaseResponse"))
+                                        .build()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("할 일의 요일 반복 설정을 삭제한다.(v1.3.0~)")
+    public void deleteRoutine() throws Exception {
+        // given
+        Mockito.doNothing().when(todoService).deleteRoutine(anyLong(), anyLong());
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
+
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.delete("/todo/{todoId}/routine", 1L)
+                        .header(HttpHeaders.AUTHORIZATION, token)
                         .accept(MediaType.APPLICATION_JSON)
         );
 
@@ -412,18 +458,15 @@ public class TodoControllerTest extends ControllerTestConfig {
                 .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
 
                 // docs
-                .andDo(MockMvcRestDocumentationWrapper.document("todo/update-routine",
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/delete-routine",
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
                         resource(
                                 ResourceSnippetParameters.builder()
                                         .tag("Todo API")
-                                        .description("할 일의 루틴을 업데이트한다.")
+                                        .description("할 일의 요일 반복 설정을 삭제한다.(v1.3.0~)")
                                         .pathParameters(
-                                                parameterWithName("todoId").description("루틴을 변경할 할 일 ID")
-                                        )
-                                        .requestFields(
-                                                fieldWithPath("routineDays").type(JsonFieldType.ARRAY).description("루틴 요일 목록 (예: [\"월\", \"화\"])")
+                                                parameterWithName("todoId").description("요일 반복 설정을 삭제할 할 일 ID")
                                         )
                                         .responseFields(
                                                 fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
@@ -633,10 +676,10 @@ public class TodoControllerTest extends ControllerTestConfig {
     }
 
     @Test
-    @DisplayName("할 일의 반복 설정을 업데이트한다.")
+    @DisplayName("할 일의 반복 설정을 업데이트한다.(~v1.2.x)")
     public void updateIsRepeat() throws Exception {
         // given
-        Mockito.doNothing().when(todoService).updateRepeat(anyLong(), anyLong());
+        Mockito.doNothing().when(todoService).updateIsRepeat(anyLong(), anyLong());
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
 
         // when
@@ -660,9 +703,95 @@ public class TodoControllerTest extends ControllerTestConfig {
                         resource(
                                 ResourceSnippetParameters.builder()
                                         .tag("Todo API")
-                                        .description("할 일의 반복 설정을 업데이트한다.")
+                                        .description("할 일의 반복 설정을 업데이트한다.(~v1.2.x)")
                                         .pathParameters(
                                                 parameterWithName("todoId").description("반복 설정을 변경할 할 일 ID")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
+                                        )
+                                        .responseSchema(Schema.schema("BaseResponse"))
+                                        .build()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("할 일의 일반 반복 설정을 등록한다.(v1.3.0~)")
+    public void createIsRepeat() throws Exception {
+        // given
+        Mockito.doNothing().when(todoService).createIsRepeat(anyLong(), anyLong());
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
+
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.post("/todo/{todoId}/repeat", 1L)
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/create-repeat",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Todo API")
+                                        .description("할 일의 일반 반복 설정을 등록한다.(v1.3.0~)")
+                                        .pathParameters(
+                                                parameterWithName("todoId").description("일반 반복 설정할 할 일 ID")
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
+                                        )
+                                        .responseSchema(Schema.schema("BaseResponse"))
+                                        .build()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("할 일의 일반 반복 설정을 삭제한다.(v1.3.0~)")
+    public void deleteIsRepeat() throws Exception {
+        // given
+        Mockito.doNothing().when(todoService).deleteIsRepeat(anyLong(), anyLong());
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
+
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.delete("/todo/{todoId}/repeat", 1L)
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("GLOBAL-200"))
+                .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/delete-repeat",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Todo API")
+                                        .description("할 일의 일반 반복 설정을 삭제한다.(v1.3.0~)")
+                                        .pathParameters(
+                                                parameterWithName("todoId").description("일반 반복 설정을 삭제할 할 일 ID")
                                         )
                                         .responseFields(
                                                 fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),

@@ -249,17 +249,17 @@ public class TodoService {
     }
 
     /**
-     * 특정 할 일의 루틴을 업데이트합니다.
+     * 특정 할 일의 루틴을 등록합니다. (v1.3.0~)
      *
      * @param userId 사용자 ID
-     * @param todoId 업데이트할 할 일 ID
-     * @param requestDto 시간 업데이트 요청 데이터
+     * @param todoId 루틴을 등록할 할 일 ID
+     * @param requestDto 루틴 등록 요일
      */
-    public void updateRoutine(Long userId, Long todoId, RoutineUpdateRequestDto requestDto) {
+    public void createRoutine(Long userId, Long todoId, RoutineUpdateRequestDto requestDto) {
         userValidator.checkIsExistUser(userId);
-        if (!todoRepository.existsById(todoId)) {
-            throw new CustomException(TodoErrorStatus._TODO_NOT_EXIST);
-        }
+        Todo findTodo = validateAndReturnTodo(userId, todoId);
+        findTodo.setIsRoutineTrue();
+        findTodo.setIsRepeatFalse();
 
         routineRepository.deleteByTodoId(todoId);
         List<String> newDays = requestDto.routineDays();
@@ -272,6 +272,19 @@ public class TodoService {
                     .toList();
             routineRepository.saveAll(routineDays);
         }
+    }
+
+    /**
+     * 특정 할 일의 루틴을 삭제합니다. (v1.3.0~)
+     *
+     * @param userId 사용자 ID
+     * @param todoId 루틴을 삭제할 할 일 ID
+     */
+    public void deleteRoutine(Long userId, Long todoId) {
+        userValidator.checkIsExistUser(userId);
+        Todo findTodo = validateAndReturnTodo(userId, todoId);
+        findTodo.setIsRoutineFalse();
+        routineRepository.deleteByTodoId(todoId);
     }
 
     /**
@@ -516,15 +529,42 @@ public class TodoService {
     }
 
     /**
-     * 특정 할 일의 반복 설정을 업데이트합니다.
+     * 특정 할 일의 반복 설정을 업데이트합니다. (~v1.2.x)
+     * True <-> False
      *
      * @param userId 사용자 ID
      * @param todoId 업데이트할 할 일 ID
      */
-    public void updateRepeat(Long userId, Long todoId) {
+    public void updateIsRepeat(Long userId, Long todoId) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
         findTodo.updateIsRepeat();
+    }
+
+    /**
+     * 특정 할 일의 일반 반복 설정을 등록합니다. (v1.3.0~)
+     *
+     * @param userId 사용자 ID
+     * @param todoId 일반 반복 설정할 할 일 ID
+     */
+    public void createIsRepeat(Long userId, Long todoId) {
+        userValidator.checkIsExistUser(userId);
+        Todo findTodo = validateAndReturnTodo(userId, todoId);
+        findTodo.setIsRepeatTrue();
+        findTodo.setIsRoutineFalse();
+        routineRepository.deleteByTodoId(todoId);
+    }
+
+    /**
+     * 특정 할 일의 일반 반복 설정을 삭제합니다. (v1.3.0~)
+     *
+     * @param userId 사용자 ID
+     * @param todoId 일반 반복 설정을 삭제할 할 일 ID
+     */
+    public void deleteIsRepeat(Long userId, Long todoId) {
+        userValidator.checkIsExistUser(userId);
+        Todo findTodo = validateAndReturnTodo(userId, todoId);
+        findTodo.setIsRepeatFalse();
     }
 
     /**

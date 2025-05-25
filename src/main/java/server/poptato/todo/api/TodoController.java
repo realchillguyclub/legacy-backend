@@ -154,22 +154,39 @@ public class TodoController {
     }
 
     /**
-     * 할 일 루틴 요일 설정 API.
-     * 사용자가 특정 할 일에 반복할 요일을 설정합니다.
-     * 요청된 요일 리스트로 기존 루틴을 대체하며, 빈 리스트일 경우 루틴을 모두 삭제합니다.
+     * 할 일 루틴 요일 등록 API. (v1.3.0~)
+     * 사용자가 특정 할 일에 반복할 요일을 등록합니다.
+     * 요청된 요일 리스트로 기존 루틴을 대체합니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
-     * @param todoId 루틴을 설정할 할 일 ID
-     * @param routineUpdateRequestDto 루틴 요일 설정 요청 데이터
+     * @param todoId 루틴을 등록할 할 일 ID
+     * @param routineUpdateRequestDto 루틴 요일 등록 요청 데이터
      * @return 성공 여부를 나타내는 응답
      */
-    @PatchMapping("/todo/{todoId}/routine")
-    public ResponseEntity<ApiResponse<SuccessStatus>> updateRoutine(
+    @PutMapping("/todo/{todoId}/routine")
+    public ResponseEntity<ApiResponse<SuccessStatus>> createRoutine(
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Long todoId,
             @Valid @RequestBody RoutineUpdateRequestDto routineUpdateRequestDto
     ) {
-        todoService.updateRoutine(jwtService.extractUserIdFromToken(authorizationHeader), todoId, routineUpdateRequestDto);
+        todoService.createRoutine(jwtService.extractUserIdFromToken(authorizationHeader), todoId, routineUpdateRequestDto);
+        return ApiResponse.onSuccess(SuccessStatus._CREATED);
+    }
+
+    /**
+     * 할 일 루틴 삭제 API. (v1.3.0~)
+     * 사용자가 특정 할 일의 루틴을 삭제합니다.
+     *
+     * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
+     * @param todoId 루틴을 삭제할 할 일 ID
+     * @return 성공 여부를 나타내는 응답
+     */
+    @DeleteMapping("/todo/{todoId}/routine")
+    public ResponseEntity<ApiResponse<SuccessStatus>> deleteRoutine(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @PathVariable Long todoId
+    ) {
+        todoService.deleteRoutine(jwtService.extractUserIdFromToken(authorizationHeader), todoId);
         return ApiResponse.onSuccess(SuccessStatus._OK);
     }
 
@@ -246,7 +263,7 @@ public class TodoController {
     }
 
     /**
-     * 반복 설정 업데이트 API.
+     * 반복 설정 업데이트 API. (~v1.2.x)
      * 사용자가 특정 할 일의 반복 설정을 업데이트합니다.
      *
      * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
@@ -258,7 +275,41 @@ public class TodoController {
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Long todoId
     ) {
-        todoService.updateRepeat(jwtService.extractUserIdFromToken(authorizationHeader), todoId);
+        todoService.updateIsRepeat(jwtService.extractUserIdFromToken(authorizationHeader), todoId);
+        return ApiResponse.onSuccess(SuccessStatus._OK);
+    }
+
+    /**
+     * 일반 반복 설정 등록 API. (v1.3.0~)
+     * 특정 할 일의 일반 반복 설정을 등록합니다.
+     *
+     * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
+     * @param todoId 일반 반복 설정할 할 일 ID
+     * @return 성공 여부를 나타내는 응답
+     */
+    @PostMapping("/todo/{todoId}/repeat")
+    public ResponseEntity<ApiResponse<SuccessStatus>> createIsRepeat(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @PathVariable Long todoId
+    ) {
+        todoService.createIsRepeat(jwtService.extractUserIdFromToken(authorizationHeader), todoId);
+        return ApiResponse.onSuccess(SuccessStatus._OK);
+    }
+
+    /**
+     * 일반 반복 설정 삭제 API. (v1.3.0~)
+     * 특정 할 일의 일반 반복 설정을 삭제합니다.
+     *
+     * @param authorizationHeader 요청 헤더의 Authorization (Bearer 토큰)
+     * @param todoId 일반 반복 설정을 삭제할 할 일 ID
+     * @return 성공 여부를 나타내는 응답
+     */
+    @DeleteMapping("/todo/{todoId}/repeat")
+    public ResponseEntity<ApiResponse<SuccessStatus>> deleteIsRepeat(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @PathVariable Long todoId
+    ) {
+        todoService.deleteIsRepeat(jwtService.extractUserIdFromToken(authorizationHeader), todoId);
         return ApiResponse.onSuccess(SuccessStatus._OK);
     }
 
