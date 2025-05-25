@@ -36,10 +36,7 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -230,26 +227,20 @@ public class TodoService {
     public void updateTime(Long userId, Long todoId, TimeUpdateRequestDto requestDto) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
-        TimeAlarm timeAlarm = timeAlarmRepository.findByTodoId(todoId)
-                .orElseGet(() -> {
-                    if (requestDto.todoTime() != null) {
-                        return TimeAlarm.builder()
-                                .todoId(todoId)
-                                .userId(userId)
-                                .build();
-                    } else {
-                        return null;
-                    }
-                });
+        Optional<TimeAlarm> optionalAlarm = timeAlarmRepository.findByTodoId(todoId);
 
-        if (timeAlarm != null) {
-            if (requestDto.todoTime() != null) {
-                timeAlarm.updateNotified(false);
-                timeAlarmRepository.save(timeAlarm);
-            } else {
-                timeAlarmRepository.delete(timeAlarm);
-            }
+        if (requestDto.todoTime() != null) {
+            TimeAlarm timeAlarm = optionalAlarm.orElseGet(() ->
+                    TimeAlarm.builder()
+                            .todoId(todoId)
+                            .userId(userId)
+                            .build());
+            timeAlarm.updateNotified(false);
+            timeAlarmRepository.save(timeAlarm);
+        } else {
+            optionalAlarm.ifPresent(timeAlarmRepository::delete);
         }
+
         findTodo.updateTime(requestDto.todoTime());
     }
 
