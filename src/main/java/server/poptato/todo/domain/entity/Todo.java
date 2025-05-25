@@ -175,11 +175,6 @@ public class Todo extends BaseEntity {
         this.backlogOrder = null;
     }
 
-    public void updateYesterdayToInComplete(int maxBacklogOrder) {
-        this.todayStatus = TodayStatus.COMPLETED;
-        this.backlogOrder = ++maxBacklogOrder;
-    }
-
     public void updateCategory(Long categoryId) {
         this.categoryId = categoryId;
     }
