@@ -37,17 +37,19 @@ public class Todo extends BaseEntity {
     @Column(name = "content", columnDefinition = "LONGTEXT", nullable = false)
     private String content;
 
+    @Column(name = "time")
     private LocalTime time;
 
+    @Column(name = "deadline")
     private LocalDate deadline;
 
-    @Column(name = "is_bookmark", nullable = false)
+    @Column(name = "is_bookmark", nullable = false, columnDefinition = "false")
     private boolean isBookmark;
 
-    @Column(name = "is_repeat", nullable = false)
+    @Column(name = "is_repeat", nullable = false, columnDefinition = "false")
     private boolean isRepeat;
 
-    @Column(name = "is_routine", nullable = false)
+    @Column(name = "is_routine", nullable = false, columnDefinition = "false")
     private boolean isRoutine;
 
     @Column(name = "today_date")
@@ -91,7 +93,6 @@ public class Todo extends BaseEntity {
                 .userId(userId)
                 .content(content)
                 .backlogOrder(backlogOrder)
-                .isBookmark(false)
                 .type(Type.BACKLOG)
                 .build();
     }
@@ -112,7 +113,6 @@ public class Todo extends BaseEntity {
                 .categoryId(categoryId)
                 .content(content)
                 .backlogOrder(backlogOrder)
-                .isBookmark(false)
                 .type(Type.BACKLOG)
                 .build();
     }
@@ -122,7 +122,6 @@ public class Todo extends BaseEntity {
                 .userId(userId)
                 .content(content)
                 .backlogOrder(backlogOrder)
-                .isBookmark(false)
                 .todayDate(LocalDate.now().minusDays(1))
                 .type(Type.YESTERDAY)
                 .todayStatus(TodayStatus.INCOMPLETE)
