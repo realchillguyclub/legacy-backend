@@ -17,20 +17,20 @@ public interface JpaCompletedDateTimeRepository extends CompletedDateTimeReposit
     SELECT c
     FROM CompletedDateTime c 
     WHERE c.todoId = :todoId
-      AND FUNCTION('DATE', c.createDate) = :createDate
+      AND FUNCTION('DATE', c.dateTime) = :todayDate
     """)
-    Optional<CompletedDateTime> findByCreateDateAndTodoId(
+    Optional<CompletedDateTime> findByTodoIdAndDate(
             @Param("todoId") Long todoId,
-            @Param("createDate") LocalDate createDate
+            @Param("todayDate") LocalDate todayDate
     );
 
     @Query(value = """
-    SELECT DISTINCT c.create_date
+    SELECT DISTINCT c.date_time
     FROM completed_date_time c
     JOIN todo t ON c.todo_id = t.id
     WHERE t.user_id = :userId
-      AND YEAR(c.create_date) = :year
-      AND MONTH(c.create_date) = :month
+      AND YEAR(c.date_time) = :year
+      AND MONTH(c.date_time) = :month
     """, nativeQuery = true)
     List<Timestamp> findDistinctCompletedDateTimesByUserIdAndYearMonth(
             @Param("userId") Long userId,

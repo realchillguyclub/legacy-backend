@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface CompletedDateTimeRepository {
 
-    Optional<CompletedDateTime> findByCreateDateAndTodoId(Long id, LocalDate todayDate);
+    Optional<CompletedDateTime> findByTodoIdAndDate(Long id, LocalDate todayDate);
 
     void delete(CompletedDateTime completedDateTime);
 

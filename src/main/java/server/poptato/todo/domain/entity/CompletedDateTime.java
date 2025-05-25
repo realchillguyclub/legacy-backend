@@ -22,16 +22,12 @@ public class CompletedDateTime extends BaseEntity {
     @Column(name = "todo_id", nullable = false)
     private Long todoId;
 
+    @Column(name = "date_time", nullable = false)
+    private LocalDateTime dateTime;
+
     @Builder
-    public CompletedDateTime(Long todoId) {
+    public CompletedDateTime(Long todoId, LocalDateTime dateTime) {
         this.todoId = todoId;
-    }
-
-    public void updateCreateDate(LocalDateTime createDate) {
-        this.createDate = createDate;
-    }
-
-    public void updateModifyDate(LocalDateTime modifyDate) {
-        this.modifyDate = modifyDate;
+        this.dateTime = dateTime;
     }
 }
