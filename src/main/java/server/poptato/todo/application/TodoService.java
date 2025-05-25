@@ -20,8 +20,10 @@ import server.poptato.todo.application.response.HistoryCalendarListResponseDto;
 import server.poptato.todo.application.response.PaginatedHistoryResponseDto;
 import server.poptato.todo.application.response.TodoDetailResponseDto;
 import server.poptato.todo.domain.entity.CompletedDateTime;
+import server.poptato.todo.domain.entity.TimeAlarm;
 import server.poptato.todo.domain.entity.Todo;
 import server.poptato.todo.domain.repository.CompletedDateTimeRepository;
+import server.poptato.todo.domain.repository.TimeAlarmRepository;
 import server.poptato.todo.domain.repository.TodoRepository;
 import server.poptato.todo.domain.value.TodayStatus;
 import server.poptato.todo.domain.value.Type;
@@ -34,10 +36,7 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -49,6 +48,7 @@ public class TodoService {
     private final UserValidator userValidator;
     private final CategoryValidator categoryValidator;
     private final TodoRepository todoRepository;
+    private final TimeAlarmRepository timeAlarmRepository;
     private final JpaTodoRepository jpaTodoRepository;
     private final CompletedDateTimeRepository completedDateTimeRepository;
     private final CategoryRepository categoryRepository;
@@ -227,7 +227,21 @@ public class TodoService {
     public void updateTime(Long userId, Long todoId, TimeUpdateRequestDto requestDto) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
-        findTodo.updateTime(requestDto.time());
+        Optional<TimeAlarm> optionalAlarm = timeAlarmRepository.findByTodoId(todoId);
+
+        if (requestDto.todoTime() != null) {
+            TimeAlarm timeAlarm = optionalAlarm.orElseGet(() ->
+                    TimeAlarm.builder()
+                            .todoId(todoId)
+                            .userId(userId)
+                            .build());
+            timeAlarm.updateNotified(false);
+            timeAlarmRepository.save(timeAlarm);
+        } else {
+            optionalAlarm.ifPresent(timeAlarmRepository::delete);
+        }
+
+        findTodo.updateTime(requestDto.todoTime());
     }
 
     /**

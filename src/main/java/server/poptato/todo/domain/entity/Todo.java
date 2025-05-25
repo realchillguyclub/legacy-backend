@@ -37,6 +37,7 @@ public class Todo extends BaseEntity {
     @Column(name = "content", columnDefinition = "LONGTEXT", nullable = false)
     private String content;
 
+    @Column(name = "time")
     private LocalTime time;
 
     private LocalDate deadline;
