@@ -352,8 +352,9 @@ public class TodoService {
             findTodo.updateTodayToCompleted();
             completedDateTimeRepository.save(
                     CompletedDateTime.builder()
-                    .todoId(findTodo.getId())
-                    .build()
+                            .todoId(findTodo.getId())
+                            .dateTime(LocalDateTime.now())
+                            .build()
             );
             return;
         }
