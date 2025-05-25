@@ -11,22 +11,24 @@ public record TodoDetailResponseDto(
         String content,
         LocalTime time,
         LocalDate deadline,
-        List<String> routineDays,
         String categoryName,
         String emojiImageUrl,
         Boolean isBookmark,
-        Boolean isRepeat
+        Boolean isRepeat,
+        Boolean isRoutine,
+        List<String> routineDays
 ) {
     public static TodoDetailResponseDto of(Todo todo, Category category, String imageUrl, List<String> routineDays) {
         return new TodoDetailResponseDto(
                 todo.getContent(),
                 todo.getTime(),
                 todo.getDeadline(),
-                routineDays,
                 category != null ? category.getName() : null,
                 imageUrl,
                 todo.isBookmark(),
-                todo.isRepeat()
+                todo.isRepeat(),
+                todo.isRoutine(),
+                routineDays
         );
     }
 }

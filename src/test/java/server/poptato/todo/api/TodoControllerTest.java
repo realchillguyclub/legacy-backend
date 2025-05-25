@@ -238,11 +238,12 @@ public class TodoControllerTest extends ControllerTestConfig {
                 "할 일 내용",
                 LocalTime.of(12, 55),
                 LocalDate.of(2025, 1, 30),
-                List.of("월", "수"),
                 "개발",
                 "http://example.com/emoji.png",
                 true,
-                false
+                false,
+                true,
+                List.of("월", "수")
         );
 
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
@@ -264,12 +265,13 @@ public class TodoControllerTest extends ControllerTestConfig {
                 .andExpect(jsonPath("$.message").value("요청 응답에 성공했습니다."))
                 .andExpect(jsonPath("$.result.content").value("할 일 내용"))
                 .andExpect(jsonPath("$.result.deadline").value("2025-01-30"))
-                .andExpect(jsonPath("$.result.routineDays[0]").value("월"))
-                .andExpect(jsonPath("$.result.routineDays[1]").value("수"))
                 .andExpect(jsonPath("$.result.categoryName").value("개발"))
                 .andExpect(jsonPath("$.result.emojiImageUrl").value("http://example.com/emoji.png"))
                 .andExpect(jsonPath("$.result.isBookmark").value(true))
                 .andExpect(jsonPath("$.result.isRepeat").value(false))
+                .andExpect(jsonPath("$.result.isRoutine").value(true))
+                .andExpect(jsonPath("$.result.routineDays[0]").value("월"))
+                .andExpect(jsonPath("$.result.routineDays[1]").value("수"))
 
                 // docs
                 .andDo(MockMvcRestDocumentationWrapper.document("todo/get-detail",
@@ -289,11 +291,12 @@ public class TodoControllerTest extends ControllerTestConfig {
                                                 fieldWithPath("result.content").type(JsonFieldType.STRING).description("할 일 내용"),
                                                 fieldWithPath("result.time").type(JsonFieldType.STRING).description("시간"),
                                                 fieldWithPath("result.deadline").type(JsonFieldType.STRING).description("마감 기한"),
-                                                fieldWithPath("result.routineDays").type(JsonFieldType.ARRAY).description("루틴 요일 목록"),
                                                 fieldWithPath("result.categoryName").type(JsonFieldType.STRING).description("카테고리 이름"),
                                                 fieldWithPath("result.emojiImageUrl").type(JsonFieldType.STRING).description("카테고리 이모지 이미지 URL"),
                                                 fieldWithPath("result.isBookmark").type(JsonFieldType.BOOLEAN).description("즐겨찾기 여부"),
-                                                fieldWithPath("result.isRepeat").type(JsonFieldType.BOOLEAN).description("반복 설정 여부")
+                                                fieldWithPath("result.isRepeat").type(JsonFieldType.BOOLEAN).description("일반 반복 설정 여부"),
+                                                fieldWithPath("result.isRoutine").type(JsonFieldType.BOOLEAN).description("요일 반복 설정 여부"),
+                                                fieldWithPath("result.routineDays").type(JsonFieldType.ARRAY).description("루틴 요일 목록")
                                         )
                                         .responseSchema(Schema.schema("TodoDetailResponse"))
                                         .build()
@@ -307,14 +310,15 @@ public class TodoControllerTest extends ControllerTestConfig {
         // given
         Long todoId = 1L;
         TodoDetailResponseDto response = new TodoDetailResponseDto(
-                "Sample Todo",
-                LocalTime.of(23,55),
-                LocalDate.of(2025, 4, 20),
-                List.of("월", "수"),
-                "Work",
-                "https://example.com/emoji.png",
+                "할 일 내용",
+                LocalTime.of(12, 55),
+                LocalDate.of(2025, 1, 30),
+                "개발",
+                "http://example.com/emoji.png",
                 true,
-                false
+                false,
+                true,
+                List.of("월", "수")
         );
 
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
