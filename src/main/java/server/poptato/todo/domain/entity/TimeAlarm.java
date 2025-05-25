@@ -2,14 +2,10 @@ package server.poptato.todo.domain.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Getter
 @Entity
-@Builder
-@EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 @Table(name = "time_alarm")
 public class TimeAlarm {
 
@@ -24,7 +20,7 @@ public class TimeAlarm {
     private Long userId;
 
     @Column(name = "notified", nullable = false)
-    private Boolean notified = false;
+    private boolean notified;
 
     @Builder
     public TimeAlarm(Long todoId, Long userId) {
@@ -33,8 +29,7 @@ public class TimeAlarm {
         this.notified = false;
     }
 
-    public void updateNotified(Boolean notified) {
+    public void updateNotified(boolean notified) {
         this.notified = notified;
     }
-
 }
