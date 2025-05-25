@@ -117,8 +117,8 @@ public interface JpaTodoRepository extends TodoRepository, JpaRepository<Todo, L
         WHERE t.userId = :userId
           AND t.type = 'TODAY'
           AND t.todayStatus = 'COMPLETED'
-          AND FUNCTION('DATE', c.createDate) = :todayDate
-        ORDER BY c.createDate ASC
+          AND FUNCTION('DATE', c.dateTime) = :todayDate
+        ORDER BY c.dateTime ASC
         """)
     List<Todo> findCompletedTodayByUserIdOrderByCompletedDateTimeAsc(
             @Param("userId") Long userId,
@@ -133,8 +133,8 @@ public interface JpaTodoRepository extends TodoRepository, JpaRepository<Todo, L
         WHERE t.userId = :userId
           AND t.type = 'TODAY'
           AND t.todayStatus = 'COMPLETED'
-          AND FUNCTION('DATE', c.createDate) = :todayDate
-        ORDER BY c.createDate ASC
+          AND FUNCTION('DATE', c.dateTime) = :todayDate
+        ORDER BY c.dateTime ASC
         """)
     List<Todo> findCompletedTodayByUserIdOrderByCompletedDateTimeAscWithCategory(
             @Param("userId") Long userId,
@@ -160,20 +160,31 @@ public interface JpaTodoRepository extends TodoRepository, JpaRepository<Todo, L
         WHERE t.id IN (
             SELECT c.todoId
             FROM CompletedDateTime c
-            WHERE DATE(c.createDate) = :localDate
+            WHERE DATE(c.dateTime) = :localDate
         )
           AND t.userId = :userId
         ORDER BY (
-            SELECT c.createDate
+            SELECT c.dateTime
             FROM CompletedDateTime c
             WHERE c.todoId = t.id
-              AND DATE(c.createDate) = :localDate
+              AND DATE(c.dateTime) = :localDate
         ) ASC
         """)
     Page<Todo> findTodosByUserIdAndCompletedDateTime(
             @Param("userId") Long userId,
             @Param("localDate") LocalDate localDate,
             Pageable pageable
+    );
+
+    @Query("""
+    SELECT t FROM Todo t
+    WHERE t.userId = :userId
+      AND t.deadline = :deadline
+      AND t.todayStatus = :todayStatus
+    """)
+    List<Todo> findTodosDueToday(@Param("userId") Long userId,
+                                 @Param("deadline") LocalDate deadline,
+                                 @Param("todayStatus") TodayStatus todayStatus
     );
 
     @Modifying(clearAutomatically = true)
@@ -190,6 +201,26 @@ public interface JpaTodoRepository extends TodoRepository, JpaRepository<Todo, L
         """)
     void updateBacklogTodosToToday(
             @Param("today") LocalDate today,
+            @Param("userIds") List<Long> userIds,
+            @Param("basicTodayOrder") Integer basicTodayOrder
+    );
+
+    @Modifying
+    @Query(value = """
+    UPDATE todo t
+    JOIN routine r ON t.id = r.todo_id
+    SET t.type = 'TODAY',
+        t.today_order = :basicTodayOrder,
+        t.today_status = 'INCOMPLETE',
+        t.today_date = :today,
+        t.backlog_order = NULL
+    WHERE t.type = 'BACKLOG'
+      AND r.day = :todayDay
+      AND t.user_id IN (:userIds)
+    """, nativeQuery = true)
+    void updateBacklogTodosToTodayByRoutine(
+            @Param("today") LocalDate today,
+            @Param("todayDay") String todayDay,
             @Param("userIds") List<Long> userIds,
             @Param("basicTodayOrder") Integer basicTodayOrder
     );

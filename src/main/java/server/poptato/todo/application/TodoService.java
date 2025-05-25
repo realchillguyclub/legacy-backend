@@ -34,11 +34,8 @@ import server.poptato.user.validator.UserValidator;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.time.format.TextStyle;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -309,11 +306,7 @@ public class TodoService {
     public void updateIsCompleted(Long userId, Long todoId) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
-        if (Type.YESTERDAY == findTodo.getType()) {
-            updateYesterdayIsCompleted(findTodo);
-        } else if (Type.TODAY == findTodo.getType()) {
-            updateTodayIsCompleted(findTodo);
-        }
+        updateTodayIsCompleted(findTodo);
     }
 
     /**
@@ -325,30 +318,19 @@ public class TodoService {
      * @param findTodo 업데이트할 할 일 객체
      */
     private void updateYesterdayIsCompleted(Todo findTodo) {
-        // 완료 처리
-        LocalDateTime yesterday = LocalDateTime.of(findTodo.getTodayDate(), LocalTime.of(23, 59));
         int existBacklogOrder = findTodo.getBacklogOrder();
         findTodo.updateYesterdayToCompleted();
-        completedDateTimeRepository.save(
-                CompletedDateTime.builder()
-                        .todoId(findTodo.getId())
-                        .build()
-        );
+        // 완료 시간을 "어제 날짜의 23:59"로 설정
+        LocalDateTime yesterday = LocalDate.now().minusDays(1).atTime(23, 59);
+        CompletedDateTime completedDateTime = CompletedDateTime.builder()
+                .todoId(findTodo.getId())
+                .dateTime(yesterday)
+                .build();
+        completedDateTimeRepository.save(completedDateTime);
 
-        // 반복 할 일이라면, 새로운 객체를 백로그에 추가
-        if (findTodo.isRepeat()) {
-            Todo newRepeatedTodo = Todo.builder()
-                    .userId(findTodo.getUserId())
-                    .categoryId(findTodo.getCategoryId())
-                    .content(findTodo.getContent())
-                    .type(Type.BACKLOG)
-                    .backlogOrder(existBacklogOrder)
-                    .todayDate(LocalDate.now())
-                    .isBookmark(findTodo.isBookmark())
-                    .isRepeat(true)
-                    .deadline(findTodo.getDeadline())
-                    .build();
-            todoRepository.save(newRepeatedTodo);
+        // 반복 할 일이라면, 오늘 날짜로 지정하여 백로그에 추가
+        if (findTodo.isRepeat() || findTodo.isRoutine()) {
+            findTodo.changeToBacklog(existBacklogOrder);
         }
     }
 
@@ -379,7 +361,7 @@ public class TodoService {
             findTodo.updateTodayToInComplete(minTodayOrder);
 
             // 기존 완료 기록이 존재하면 삭제, 없으면 예외 발생
-            CompletedDateTime completedDateTime = completedDateTimeRepository.findByCreateDateAndTodoId(findTodo.getId(), findTodo.getTodayDate())
+            CompletedDateTime completedDateTime = completedDateTimeRepository.findByTodoIdAndDate(findTodo.getId(), findTodo.getTodayDate())
                     .orElseThrow(() -> new CustomException(TodoErrorStatus._COMPLETED_DATETIME_NOT_EXIST));
             completedDateTimeRepository.delete(completedDateTime);
         }
@@ -412,6 +394,13 @@ public class TodoService {
 
         completedTodos.forEach(todoRepository::save);
         backloggedTodos.forEach(todoRepository::save);
+        entityManager.flush();
+        entityManager.clear();
+
+        // 3. BACKLOG로 이동한 Todo 중에서, 아래의 경우를 처리
+        //  1) 오늘 날짜 == 마감 기한
+        //  2) 오늘 요일 == 요일 반복 설정
+        processUpdateDeadlineTodos(LocalDate.now(), List.of(userId));
     }
 
     /**
@@ -568,10 +557,10 @@ public class TodoService {
     }
 
     /**
-     * 마감기한이 된 백로그 할 일들을 오늘 할 일(TODAY)로 변경합니다.
-     * - 백로그에서 마감기한(today)과 일치하는 할 일들을 찾아 TODAY 상태로 업데이트합니다.
+     * 마감기한 또는 요일 반복이 설정된 할 일 -> 오늘(TODAY)로 변경합니다.
+     * 1. 오늘 날짜 == 마감 기한과 일치하는 할 일들을 찾아 TODAY 상태로 업데이트합니다.
+     * 2. 오늘 요일 == 요일 반복 설정과 일치하는 할 일들을 찾아 TODAY 상태로 업데이트합니다.
      * - 기본적인 todayOrder 값을 설정하여 정렬 순서를 유지합니다.
-     * - 엔티티 매니저를 활용하여 변경 사항을 즉시 반영하고, 영속성 컨텍스트를 비웁니다.
      *
      * @param today 오늘 날짜
      * @param userIds 업데이트할 사용자 ID 목록
@@ -579,7 +568,12 @@ public class TodoService {
     @Transactional
     public void processUpdateDeadlineTodos(LocalDate today, List<Long> userIds) {
         int basicTodayOrder = 0;
+        // 1. 마감 기한이 오늘인 할 일들 -> TODAY
         todoRepository.updateBacklogTodosToToday(today, userIds, basicTodayOrder);
+        // 2. 오늘 요일이 포함된 요일 반복 설정된 할 일들 -> TODAY
+        String todayDay = today.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN);
+        todoRepository.updateBacklogTodosToTodayByRoutine(today, todayDay, userIds, basicTodayOrder);
+
         entityManager.flush();
         entityManager.clear();
     }
