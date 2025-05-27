@@ -29,7 +29,6 @@ import server.poptato.todo.domain.repository.TimeAlarmRepository;
 import server.poptato.todo.domain.repository.TodoRepository;
 import server.poptato.todo.domain.value.TodayStatus;
 import server.poptato.todo.domain.value.Type;
-import server.poptato.todo.infra.repository.JpaTodoRepository;
 import server.poptato.todo.status.TodoErrorStatus;
 import server.poptato.user.domain.value.MobileType;
 import server.poptato.user.validator.UserValidator;
@@ -51,7 +50,6 @@ public class TodoService {
     private final CategoryValidator categoryValidator;
     private final TodoRepository todoRepository;
     private final TimeAlarmRepository timeAlarmRepository;
-    private final JpaTodoRepository jpaTodoRepository;
     private final RoutineRepository routineRepository;
     private final CompletedDateTimeRepository completedDateTimeRepository;
     private final CategoryRepository categoryRepository;
@@ -279,7 +277,7 @@ public class TodoService {
 
         routineRepository.deleteByTodoId(todoId);
         List<String> newDays = requestDto.routineDays();
-        if (newDays != null && !newDays.isEmpty()) {
+        if (!newDays.isEmpty()) {
             List<Routine> routineDays = newDays.stream()
                     .map(day -> Routine.builder()
                             .todoId(todoId)
