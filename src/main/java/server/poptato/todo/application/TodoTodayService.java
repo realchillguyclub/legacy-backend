@@ -3,9 +3,6 @@ package server.poptato.todo.application;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import server.poptato.category.domain.entity.Category;
-import server.poptato.emoji.domain.entity.Emoji;
-import server.poptato.global.util.FileUtil;
 import server.poptato.todo.application.response.TodayListResponseDto;
 import server.poptato.todo.application.response.TodayResponseDto;
 import server.poptato.todo.domain.entity.Routine;
@@ -20,7 +17,6 @@ import server.poptato.user.validator.UserValidator;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Transactional
