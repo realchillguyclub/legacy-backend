@@ -6,11 +6,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import server.poptato.category.domain.entity.Category;
 import server.poptato.category.domain.repository.CategoryRepository;
 import server.poptato.category.validator.CategoryValidator;
-import server.poptato.emoji.domain.entity.Emoji;
-import server.poptato.global.util.FileUtil;
 import server.poptato.todo.api.request.BacklogCreateRequestDto;
 import server.poptato.todo.application.response.BacklogCreateResponseDto;
 import server.poptato.todo.application.response.BacklogListResponseDto;
@@ -27,7 +24,6 @@ import server.poptato.user.validator.UserValidator;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -61,24 +57,14 @@ public class TodoBacklogService {
 
         List<BacklogResponseDto> backlogDtos = backlogs.getContent().stream()
                 .map(todo -> {
-                    String detailCategoryName = Optional.ofNullable(todo.getCategory())
-                            .map(Category::getName)
-                            .orElse(null);
-
-                    String imageUrl = Optional.ofNullable(todo.getCategory())
-                            .map(Category::getEmoji)
-                            .map(Emoji::getImageUrl)
-                            .map(url -> FileUtil.changeFileExtension(url, mobileType.getImageUrlExtension()))
-                            .orElse(null);
-
                     List<String> routineDays = routineRepository.findAllByTodoId(todo.getId())
                             .stream()
                             .map(Routine::getDay)
                             .collect(Collectors.toList());
 
-                    return BacklogResponseDto.of(todo, detailCategoryName, imageUrl, routineDays);
+                    return BacklogResponseDto.of(todo, mobileType, routineDays);
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         return BacklogListResponseDto.of(
                 categoryName,

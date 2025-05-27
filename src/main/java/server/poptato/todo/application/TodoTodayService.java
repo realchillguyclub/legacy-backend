@@ -51,22 +51,11 @@ public class TodoTodayService {
 
         List<TodayResponseDto> todayDtos = todaySubList.stream()
                 .map(todo -> {
-                    String categoryName = Optional.ofNullable(todo.getCategory())
-                            .map(Category::getName)
-                            .orElse(null);
-
-                    String imageUrl = Optional.ofNullable(todo.getCategory())
-                            .map(Category::getEmoji)
-                            .map(Emoji::getImageUrl)
-                            .map(url -> FileUtil.changeFileExtension(url, mobileType.getImageUrlExtension()))
-                            .orElse(null);
-
                     List<String> routineDays = routineRepository.findAllByTodoId(todo.getId())
                             .stream()
                             .map(Routine::getDay)
                             .collect(Collectors.toList());
-
-                    return TodayResponseDto.of(todo, categoryName, imageUrl, routineDays);
+                    return TodayResponseDto.of(todo, routineDays, mobileType);
                 })
                 .collect(Collectors.toList());
 
