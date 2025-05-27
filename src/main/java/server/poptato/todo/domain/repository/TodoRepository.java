@@ -3,7 +3,6 @@ package server.poptato.todo.domain.repository;
 import jakarta.persistence.Tuple;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import server.poptato.todo.domain.entity.Todo;
 import server.poptato.todo.domain.value.TodayStatus;
@@ -24,6 +23,8 @@ public interface TodoRepository {
     List<Todo> findCompletedTodayByUserIdOrderByCompletedDateTimeAscWithCategory(Long userId, LocalDate todayDate);
 
     Optional<Todo> findById(Long todoId);
+
+    boolean existsById(Long id);
 
     void delete(Todo todo);
 
@@ -79,19 +80,21 @@ public interface TodoRepository {
 
     void deleteAllByCategoryId(Long categoryId);
 
-    @Query("""
-    SELECT t FROM Todo t
-    WHERE t.userId = :userId
-      AND t.deadline = :deadline
-      AND t.todayStatus = :todayStatus
-    """)
     List<Todo> findTodosDueToday(@Param("userId") Long userId,
                                  @Param("deadline") LocalDate deadline,
-                                 @Param("todayStatus") TodayStatus todayStatus);
+                                 @Param("todayStatus") TodayStatus todayStatus
+    );
 
     void updateBacklogTodosToToday(@Param("today") LocalDate today,
                                    @Param("userIds") List<Long> userIds,
-                                   @Param("basicTodayOrder") Integer basicTodayOrder);
+                                   @Param("basicTodayOrder") Integer basicTodayOrder
+    );
+
+    void updateBacklogTodosToTodayByRoutine(@Param("today") LocalDate today,
+                                            @Param("todayDay") String todayDay,
+                                            @Param("userIds") List<Long> userIds,
+                                            @Param("basicTodayOrder") Integer basicTodayOrder
+    );
 
     List<Todo> findIncompleteYesterdays(Long userId);
 
