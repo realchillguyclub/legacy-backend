@@ -186,6 +186,15 @@ public interface JpaTodoRepository extends TodoRepository, JpaRepository<Todo, L
                                  @Param("todayStatus") TodayStatus todayStatus
     );
 
+    @Query("""
+    SELECT t FROM Todo t
+    WHERE t.type = 'BACKLOG'
+        AND t.userId = :userId
+        AND t.deadline = :deadline
+    """)
+    List<Todo> findTodosByDeadLine(@Param("userId") Long userId,
+                                 @Param("deadline") LocalDate deadline);
+
     @Query(value = """
     SELECT t.* FROM todo t
     JOIN routine r ON t.id = r.todo_id

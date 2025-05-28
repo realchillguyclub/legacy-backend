@@ -610,7 +610,7 @@ public class TodoService {
             int todayOrder = todoRepository.findMaxTodayOrderByUserIdOrZero(userId);
 
             // 1. 마감 기한이 오늘인 BACKLOG -> TODAY
-            List<Todo> deadlineMatchedTodos = todoRepository.findTodosDueToday(userId, today, TodayStatus.INCOMPLETE);
+            List<Todo> deadlineMatchedTodos = todoRepository.findTodosByDeadLine(userId, today);
 
             for (Todo todo : deadlineMatchedTodos) {
                 todo.changeToToday(todayOrder++);

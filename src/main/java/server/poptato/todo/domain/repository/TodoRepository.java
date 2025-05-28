@@ -85,6 +85,10 @@ public interface TodoRepository {
                                  @Param("todayStatus") TodayStatus todayStatus
     );
 
+    List<Todo> findTodosByDeadLine(@Param("userId") Long userId,
+                                   @Param("deadline") LocalDate deadline
+    );
+
     List<Todo> findRoutineTodosByDay(@Param("userId") Long userId,
                                      @Param("todayDay") String todayDay
     );
