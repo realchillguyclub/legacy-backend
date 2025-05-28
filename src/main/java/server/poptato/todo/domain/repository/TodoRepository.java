@@ -85,15 +85,12 @@ public interface TodoRepository {
                                  @Param("todayStatus") TodayStatus todayStatus
     );
 
-    void updateBacklogTodosToToday(@Param("today") LocalDate today,
-                                   @Param("userIds") List<Long> userIds,
-                                   @Param("basicTodayOrder") Integer basicTodayOrder
+    List<Todo> findTodosByDeadLine(@Param("userId") Long userId,
+                                   @Param("deadline") LocalDate deadline
     );
 
-    void updateBacklogTodosToTodayByRoutine(@Param("today") LocalDate today,
-                                            @Param("todayDay") String todayDay,
-                                            @Param("userIds") List<Long> userIds,
-                                            @Param("basicTodayOrder") Integer basicTodayOrder
+    List<Todo> findRoutineTodosByDay(@Param("userId") Long userId,
+                                     @Param("todayDay") String todayDay
     );
 
     List<Todo> findIncompleteYesterdays(Long userId);

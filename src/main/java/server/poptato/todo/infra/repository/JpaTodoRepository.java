@@ -5,7 +5,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import server.poptato.todo.domain.entity.Todo;
@@ -187,43 +186,24 @@ public interface JpaTodoRepository extends TodoRepository, JpaRepository<Todo, L
                                  @Param("todayStatus") TodayStatus todayStatus
     );
 
-    @Modifying(clearAutomatically = true)
     @Query("""
-        UPDATE Todo t
-        SET t.type = 'TODAY',
-            t.todayOrder = :basicTodayOrder,
-            t.todayStatus = 'INCOMPLETE',
-            t.todayDate = :today,
-            t.backlogOrder = NULL
-        WHERE t.type = 'BACKLOG'
-          AND t.deadline = :today
-          AND t.userId IN :userIds
-        """)
-    void updateBacklogTodosToToday(
-            @Param("today") LocalDate today,
-            @Param("userIds") List<Long> userIds,
-            @Param("basicTodayOrder") Integer basicTodayOrder
-    );
+    SELECT t FROM Todo t
+    WHERE t.type = 'BACKLOG'
+        AND t.userId = :userId
+        AND t.deadline = :deadline
+    """)
+    List<Todo> findTodosByDeadLine(@Param("userId") Long userId,
+                                 @Param("deadline") LocalDate deadline);
 
-    @Modifying
     @Query(value = """
-    UPDATE todo t
+    SELECT t.* FROM todo t
     JOIN routine r ON t.id = r.todo_id
-    SET t.type = 'TODAY',
-        t.today_order = :basicTodayOrder,
-        t.today_status = 'INCOMPLETE',
-        t.today_date = :today,
-        t.backlog_order = NULL
     WHERE t.type = 'BACKLOG'
       AND r.day = :todayDay
-      AND t.user_id IN (:userIds)
+      AND t.user_id = :userId
     """, nativeQuery = true)
-    void updateBacklogTodosToTodayByRoutine(
-            @Param("today") LocalDate today,
-            @Param("todayDay") String todayDay,
-            @Param("userIds") List<Long> userIds,
-            @Param("basicTodayOrder") Integer basicTodayOrder
-    );
+    List<Todo> findRoutineTodosByDay(@Param("userId") Long userId,
+                                     @Param("todayDay") String todayDay);
 
     @Query("""
         SELECT t

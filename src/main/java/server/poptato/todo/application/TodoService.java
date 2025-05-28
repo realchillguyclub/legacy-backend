@@ -42,7 +42,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Transactional
 @RequiredArgsConstructor
 @Service
 public class TodoService {
@@ -64,6 +63,8 @@ public class TodoService {
      * @param userId 사용자 ID
      * @param todoId 삭제할 할 일 ID
      */
+
+    @Transactional
     public void deleteTodoById(Long userId, Long todoId) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
@@ -92,6 +93,7 @@ public class TodoService {
      * @param userId 사용자 ID
      * @param todoId 대상 할 일 ID
      */
+    @Transactional
     public void toggleIsBookmark(Long userId, Long todoId) {
         Todo todo = validateAndReturnTodo(userId, todoId);
         todo.toggleBookmark();
@@ -103,6 +105,7 @@ public class TodoService {
      * @param userId 사용자 ID
      * @param swipeRequestDto 스와이프 요청 데이터
      */
+    @Transactional
     public void swipe(Long userId, SwipeRequestDto swipeRequestDto) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, swipeRequestDto.todoId());
@@ -142,6 +145,7 @@ public class TodoService {
      * @param userId 사용자 ID
      * @param requestDto 순서 변경 요청 데이터
      */
+    @Transactional
     public void dragAndDrop(Long userId, TodoDragAndDropRequestDto requestDto) {
         userValidator.checkIsExistUser(userId);
 
@@ -205,6 +209,7 @@ public class TodoService {
      * @param todoId 조회할 할 일 ID
      * @return 할 일 상세 정보
      */
+    @Transactional(readOnly = true)
     public TodoDetailResponseDto getTodoInfo(Long userId, MobileType mobileType, Long todoId) {
         userValidator.checkIsExistUser(userId);
         String imageUrlExtension = mobileType.getImageUrlExtension();
@@ -229,6 +234,7 @@ public class TodoService {
      * @param todoId 업데이트할 할 일 ID
      * @param requestDto 시간 업데이트 요청 데이터
      */
+    @Transactional
     public void updateTime(Long userId, Long todoId, TimeUpdateRequestDto requestDto) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
@@ -256,6 +262,7 @@ public class TodoService {
      * @param todoId 업데이트할 할 일 ID
      * @param requestDto 마감 기한 업데이트 요청 데이터
      */
+    @Transactional
     public void updateDeadline(Long userId, Long todoId, DeadlineUpdateRequestDto requestDto) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
@@ -269,6 +276,7 @@ public class TodoService {
      * @param todoId 루틴을 등록할 할 일 ID
      * @param requestDto 루틴 등록 요일
      */
+    @Transactional
     public void createRoutine(Long userId, Long todoId, RoutineUpdateRequestDto requestDto) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
@@ -294,6 +302,7 @@ public class TodoService {
      * @param userId 사용자 ID
      * @param todoId 루틴을 삭제할 할 일 ID
      */
+    @Transactional
     public void deleteRoutine(Long userId, Long todoId) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
@@ -308,6 +317,7 @@ public class TodoService {
      * @param todoId 업데이트할 할 일 ID
      * @param requestDto 내용 업데이트 요청 데이터
      */
+    @Transactional
     public void updateContent(Long userId, Long todoId, ContentUpdateRequestDto requestDto) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
@@ -320,35 +330,11 @@ public class TodoService {
      * @param userId 사용자 ID
      * @param todoId 업데이트할 할 일 ID
      */
+    @Transactional
     public void updateIsCompleted(Long userId, Long todoId) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
         updateTodayIsCompleted(findTodo);
-    }
-
-    /**
-     * 특정 할 일의 어제 완료 상태를 업데이트합니다.
-     * - 미완료(INCOMPLETE) 상태 → 완료(COMPLETED) 상태로 변경
-     * - 완료 시간을 "어제 날짜의 23:59"로 설정
-     * - 반복 할 일이면 새로운 백로그 할 일을 생성
-     *
-     * @param findTodo 업데이트할 할 일 객체
-     */
-    private void updateYesterdayIsCompleted(Todo findTodo) {
-        int existBacklogOrder = findTodo.getBacklogOrder();
-        findTodo.updateYesterdayToCompleted();
-        // 완료 시간을 "어제 날짜의 23:59"로 설정
-        LocalDateTime yesterday = LocalDate.now().minusDays(1).atTime(23, 59);
-        CompletedDateTime completedDateTime = CompletedDateTime.builder()
-                .todoId(findTodo.getId())
-                .dateTime(yesterday)
-                .build();
-        completedDateTimeRepository.save(completedDateTime);
-
-        // 반복 할 일이라면, 오늘 날짜로 지정하여 백로그에 추가
-        if (findTodo.isRepeat() || findTodo.isRoutine()) {
-            findTodo.changeToBacklog(existBacklogOrder);
-        }
     }
 
     /**
@@ -393,6 +379,7 @@ public class TodoService {
      * @param userId 사용자 ID
      * @param request 체크된 할 일 목록 DTO
      */
+    @Transactional
     public void checkYesterdayTodos(Long userId, CheckYesterdayTodosRequestDto request) {
         userValidator.checkIsExistUser(userId);
         List<Todo> allYesterdays = todoRepository.findIncompleteYesterdays(userId);
@@ -422,6 +409,31 @@ public class TodoService {
     }
 
     /**
+     * 특정 할 일의 어제 완료 상태를 업데이트합니다.
+     * - 미완료(INCOMPLETE) 상태 → 완료(COMPLETED) 상태로 변경
+     * - 완료 시간을 "어제 날짜의 23:59"로 설정
+     * - 반복 할 일이면 새로운 백로그 할 일을 생성
+     *
+     * @param findTodo 업데이트할 할 일 객체
+     */
+    private void updateYesterdayIsCompleted(Todo findTodo) {
+        int existBacklogOrder = findTodo.getBacklogOrder();
+        findTodo.updateYesterdayToCompleted();
+        // 완료 시간을 "어제 날짜의 23:59"로 설정
+        LocalDateTime yesterday = LocalDate.now().minusDays(1).atTime(23, 59);
+        CompletedDateTime completedDateTime = CompletedDateTime.builder()
+                .todoId(findTodo.getId())
+                .dateTime(yesterday)
+                .build();
+        completedDateTimeRepository.save(completedDateTime);
+
+        // 반복 할 일이라면, 오늘 날짜로 지정하여 백로그에 추가
+        if (findTodo.isRepeat() || findTodo.isRoutine()) {
+            findTodo.changeToBacklog(existBacklogOrder);
+        }
+    }
+
+    /**
      * 히스토리 데이터를 조회합니다.
      *
      * @param userId 사용자 ID
@@ -430,6 +442,7 @@ public class TodoService {
      * @param size 페이지 크기
      * @return 히스토리 데이터
      */
+    @Transactional(readOnly = true)
     public PaginatedHistoryResponseDto getHistories(Long userId, LocalDate localDate, int page, int size) {
         userValidator.checkIsExistUser(userId);
         if (localDate.isBefore(LocalDate.now())) {
@@ -478,6 +491,7 @@ public class TodoService {
      * @param month 조회할 월
      * @return 할 일이 존재하는 날짜 리스트
      */
+    @Transactional(readOnly = true)
     public List<LocalDate> getLegacyHistoriesCalendar(Long userId, String year, int month) {
         return completedDateTimeRepository.findHistoryExistingDates(userId, year, month).stream()
                 .map(LocalDateTime::toLocalDate)
@@ -498,6 +512,7 @@ public class TodoService {
      * @param month 조회할 월 (1~12)
      * @return 날짜별 히스토리/백로그 정보 DTO
      */
+    @Transactional(readOnly = true)
     public HistoryCalendarListResponseDto getHistoriesCalendar(Long userId, String year, int month) {
         Map<LocalDate, Integer> historyCountByDate =
                 completedDateTimeRepository.findHistoryExistingDates(userId, year, month).stream()
@@ -526,6 +541,7 @@ public class TodoService {
      * @param todoId 업데이트할 할 일 ID
      * @param requestDto 카테고리 업데이트 요청 데이터
      */
+    @Transactional
     public void updateCategory(Long userId, Long todoId, TodoCategoryUpdateRequestDto requestDto) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
@@ -542,6 +558,7 @@ public class TodoService {
      * @param userId 사용자 ID
      * @param todoId 업데이트할 할 일 ID
      */
+    @Transactional
     public void updateIsRepeat(Long userId, Long todoId) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
@@ -554,6 +571,7 @@ public class TodoService {
      * @param userId 사용자 ID
      * @param todoId 일반 반복 설정할 할 일 ID
      */
+    @Transactional
     public void createIsRepeat(Long userId, Long todoId) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
@@ -568,6 +586,7 @@ public class TodoService {
      * @param userId 사용자 ID
      * @param todoId 일반 반복 설정을 삭제할 할 일 ID
      */
+    @Transactional
     public void deleteIsRepeat(Long userId, Long todoId) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
@@ -585,14 +604,24 @@ public class TodoService {
      */
     @Transactional
     public void processUpdateDeadlineTodos(LocalDate today, List<Long> userIds) {
-        int basicTodayOrder = 0;
-        // 1. 마감 기한이 오늘인 할 일들 -> TODAY
-        todoRepository.updateBacklogTodosToToday(today, userIds, basicTodayOrder);
-        // 2. 오늘 요일이 포함된 요일 반복 설정된 할 일들 -> TODAY
         String todayDay = today.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN);
-        todoRepository.updateBacklogTodosToTodayByRoutine(today, todayDay, userIds, basicTodayOrder);
 
-        entityManager.flush();
-        entityManager.clear();
+        for (Long userId : userIds) {
+            int todayOrder = todoRepository.findMaxTodayOrderByUserIdOrZero(userId);
+
+            // 1. 마감 기한이 오늘인 BACKLOG -> TODAY
+            List<Todo> deadlineMatchedTodos = todoRepository.findTodosByDeadLine(userId, today);
+
+            for (Todo todo : deadlineMatchedTodos) {
+                todo.changeToToday(todayOrder++);
+            }
+
+            // 2. 오늘 요일이 포함된 요일 반복 설정된 BACKLOG -> TODAY
+            List<Todo> routineMatchedTodos = todoRepository.findRoutineTodosByDay(userId, todayDay);
+
+            for (Todo todo : routineMatchedTodos) {
+                todo.changeToToday(todayOrder++);
+            }
+        }
     }
 }
