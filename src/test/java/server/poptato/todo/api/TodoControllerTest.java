@@ -813,7 +813,7 @@ public class TodoControllerTest extends ControllerTestConfig {
     public void getHistories() throws Exception {
         // given
         PaginatedHistoryResponseDto response = new PaginatedHistoryResponseDto(List.of(
-                new HistoryResponseDto(1L, "test", true)
+                new HistoryResponseDto(1L, "test", LocalTime.of(16, 0, 0), true)
         ), 2);
 
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
@@ -857,6 +857,7 @@ public class TodoControllerTest extends ControllerTestConfig {
                                                 fieldWithPath("result.histories").type(JsonFieldType.ARRAY).description("히스토리 목록"),
                                                 fieldWithPath("result.histories[].todoId").type(JsonFieldType.NUMBER).description("할 일 ID"),
                                                 fieldWithPath("result.histories[].content").type(JsonFieldType.STRING).description("할 일 내용"),
+                                                fieldWithPath("result.histories[].time").type(JsonFieldType.STRING).description("할 일에 설정한 시간"),
                                                 fieldWithPath("result.histories[].isCompleted").type(JsonFieldType.BOOLEAN).description("할 일의 완료여부"),
                                                 fieldWithPath("result.totalPageCount").type(JsonFieldType.NUMBER).description("전체 페이지 수")
                                         )
