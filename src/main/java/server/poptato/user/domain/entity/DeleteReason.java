@@ -1,36 +1,31 @@
 package server.poptato.user.domain.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import org.springframework.lang.Nullable;
-
-import java.time.LocalDateTime;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import server.poptato.global.dao.BaseEntity;
 
 @Getter
 @Entity
-@Builder
-@EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-public class DeleteReason {
+@Table(name = "delete_reason")
+public class DeleteReason extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull
-    Long userId;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
-    @Nullable
+    @Column(name = "delete_reason")
     private String deleteReason;
 
-    @CreatedDate
-    @Column(updatable = false)
-    private LocalDateTime createDate;
-    @LastModifiedDate
-    private LocalDateTime modifyDate;
+    @Builder
+    public DeleteReason(Long userId, String deleteReason) {
+        this.userId = userId;
+        this.deleteReason = deleteReason;
+    }
 }

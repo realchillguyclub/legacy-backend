@@ -1,51 +1,45 @@
 package server.poptato.user.domain.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import server.poptato.auth.api.request.LoginRequestDto;
+import server.poptato.global.dao.BaseEntity;
 import server.poptato.user.domain.value.MobileType;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Entity
-@Builder
-@EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-public class Mobile {
+@Table(name = "mobile")
+public class Mobile extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull
-    Long userId;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     @Enumerated(EnumType.STRING)
-    MobileType type;
+    @Column(nullable = false)
+    private MobileType type;
 
     @Lob
-    @Column(columnDefinition = "LONGTEXT", nullable = false)
-    @NotNull
+    @Column(name = "client_id", columnDefinition = "LONGTEXT", nullable = false)
     private String clientId;
 
-    @CreatedDate
-    @Column(updatable = false)
-    private LocalDateTime createDate;
-
-    @LastModifiedDate
-    private LocalDateTime modifyDate;
-
-    public void setModifyDate(LocalDateTime modifyDate){
-        this.modifyDate = modifyDate;
+    @Builder
+    public Mobile(Long userId, MobileType type, String clientId) {
+        this.userId = userId;
+        this.type = type;
+        this.clientId = clientId;
     }
 
-    public void setClientId(String clientId){
+    public void updateClientId(String clientId) {
         this.clientId = clientId;
     }
 

@@ -1,34 +1,33 @@
 package server.poptato.emoji.domain.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import org.springframework.lang.Nullable;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import server.poptato.emoji.domain.value.GroupName;
+import server.poptato.global.dao.BaseEntity;
 
-import java.time.LocalDateTime;
-
-@Getter
 @Entity
-@Builder
-@EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-public class Emoji {
+@Getter
+@Table(name = "emoji")
+public class Emoji extends BaseEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @NotNull
+
+    @Column(name = "image_url", nullable = false)
     private String imageUrl;
-    @Nullable
+
     @Enumerated(EnumType.STRING)
+    @Column(name = "group_name")
     private GroupName groupName;
-    @CreatedDate
-    @Column(updatable = false)
-    private LocalDateTime createDate;
-    @LastModifiedDate
-    private LocalDateTime modifyDate;
+
+    @Builder
+    public Emoji(String imageUrl, GroupName groupName) {
+        this.imageUrl = imageUrl;
+        this.groupName = groupName;
+    }
 }

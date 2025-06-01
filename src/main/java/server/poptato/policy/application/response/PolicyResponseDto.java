@@ -1,7 +1,7 @@
 package server.poptato.policy.application.response;
 
 import lombok.Builder;
-import server.poptato.policy.domain.entity.Policy;
+import server.poptato.policy.domain.value.Policy;
 
 import java.time.LocalDateTime;
 

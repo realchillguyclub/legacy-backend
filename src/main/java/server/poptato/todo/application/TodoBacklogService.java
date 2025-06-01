@@ -11,15 +11,20 @@ import server.poptato.category.validator.CategoryValidator;
 import server.poptato.todo.api.request.BacklogCreateRequestDto;
 import server.poptato.todo.application.response.BacklogCreateResponseDto;
 import server.poptato.todo.application.response.BacklogListResponseDto;
+import server.poptato.todo.application.response.BacklogResponseDto;
 import server.poptato.todo.application.response.PaginatedYesterdayResponseDto;
+import server.poptato.todo.domain.entity.Routine;
 import server.poptato.todo.domain.entity.Todo;
+import server.poptato.todo.domain.repository.RoutineRepository;
 import server.poptato.todo.domain.repository.TodoRepository;
 import server.poptato.todo.domain.value.TodayStatus;
 import server.poptato.todo.domain.value.Type;
 import server.poptato.user.domain.value.MobileType;
 import server.poptato.user.validator.UserValidator;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Transactional
 @RequiredArgsConstructor
@@ -27,6 +32,7 @@ import java.util.Objects;
 public class TodoBacklogService {
     private final TodoRepository todoRepository;
     private final CategoryRepository categoryRepository;
+    private final RoutineRepository routineRepository;
     private final UserValidator userValidator;
     private final CategoryValidator categoryValidator;
     private static final Long ALL_CATEGORY = -1L;
@@ -34,7 +40,6 @@ public class TodoBacklogService {
 
     /**
      * 백로그 목록 조회 메서드.
-     *
      * 사용자 ID와 카테고리 ID를 기반으로 페이지네이션된 백로그 목록을 반환합니다.
      *
      * @param userId 사용자 ID
@@ -46,14 +51,31 @@ public class TodoBacklogService {
     public BacklogListResponseDto getBacklogList(Long userId, Long categoryId, MobileType mobileType, int page, int size) {
         userValidator.checkIsExistUser(userId);
         categoryValidator.validateCategory(userId, categoryId);
+
         Page<Todo> backlogs = getBacklogsPagination(userId, categoryId, page, size);
         String categoryName = categoryRepository.findById(categoryId).get().getName();
-        return BacklogListResponseDto.of(categoryName, mobileType, backlogs);
+
+        List<BacklogResponseDto> backlogDtos = backlogs.getContent().stream()
+                .map(todo -> {
+                    List<String> routineDays = routineRepository.findAllByTodoId(todo.getId())
+                            .stream()
+                            .map(Routine::getDay)
+                            .collect(Collectors.toList());
+
+                    return BacklogResponseDto.of(todo, mobileType, routineDays);
+                })
+                .toList();
+
+        return BacklogListResponseDto.of(
+                categoryName,
+                backlogDtos,
+                backlogs.getTotalElements(),
+                backlogs.getTotalPages()
+        );
     }
 
     /**
      * 백로그 생성 메서드.
-     *
      * 사용자 ID와 요청 데이터를 기반으로 새로운 백로그를 생성합니다.
      *
      * @param userId 사용자 ID
@@ -70,7 +92,6 @@ public class TodoBacklogService {
 
     /**
      * 어제 할 일 목록 조회 메서드.
-     *
      * 사용자 ID를 기반으로 어제 완료되지 않은 할 일 목록을 페이지네이션된 형식으로 반환합니다.
      *
      * @param userId 사용자 ID
@@ -89,7 +110,6 @@ public class TodoBacklogService {
 
     /**
      * 어제 백로그 생성 메서드.
-     *
      * 사용자 ID와 요청 데이터를 기반으로 어제 백로그 항목을 생성합니다.
      *
      * @param userId 사용자 ID
@@ -107,7 +127,6 @@ public class TodoBacklogService {
 
     /**
      * 백로그 목록 페이지네이션 메서드.
-     *
      * 사용자 ID와 카테고리 ID를 기반으로 백로그 목록을 페이지네이션합니다.
      *
      * @param userId 사용자 ID
@@ -128,7 +147,6 @@ public class TodoBacklogService {
 
     /**
      * 새로운 백로그 생성 메서드.
-     *
      * 요청 데이터를 기반으로 백로그를 생성하고 저장합니다.
      *
      * @param userId 사용자 ID

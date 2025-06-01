@@ -9,10 +9,13 @@ import java.util.List;
 import java.util.Optional;
 
 public interface CompletedDateTimeRepository {
-    Optional<CompletedDateTime> findByDateAndTodoId(Long id, LocalDate todayDate);
-    boolean existsByDateTimeAndTodoId(LocalDateTime dateTime, Long todoId);
+
+    Optional<CompletedDateTime> findByTodoIdAndDate(Long id, LocalDate todayDate);
+
     void delete(CompletedDateTime completedDateTime);
+
     CompletedDateTime save(CompletedDateTime completedDateTime);
+
     List<Timestamp> findDistinctCompletedDateTimesByUserIdAndYearMonth(Long userId, String year, int month);
 
     default List<LocalDateTime> findHistoryExistingDates(Long userId, String year, int month) {

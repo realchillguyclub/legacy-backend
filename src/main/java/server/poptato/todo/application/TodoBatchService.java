@@ -51,15 +51,17 @@ public class TodoBatchService {
             int startingOrder = todoRepository.findMaxBacklogOrderByUserIdOrZero(userId) + 1;
 
             for (Todo todo : todos) {
-                if (todo.getTodayStatus() == TodayStatus.COMPLETED && todo.isRepeat()) {
-                    todo.setType(Type.BACKLOG);
-                    todo.setTodayStatus(null);
-                    todo.setTodayOrder(null);
-                    todo.setBacklogOrder(startingOrder++);
+                if (todo.getTodayStatus() == TodayStatus.COMPLETED && (todo.isRepeat() || todo.isRoutine())) {
+                    // 완료된 반복 할 일 -> 백로그로 이동
+                    todo.updateType(Type.BACKLOG);
+                    todo.updateTodayStatus(null);
+                    todo.updateTodayOrder(null);
+                    todo.updateBacklogOrder(startingOrder++);
                 } else if (todo.getTodayStatus() == TodayStatus.INCOMPLETE) {
-                    todo.setType(Type.YESTERDAY);
-                    todo.setTodayOrder(null);
-                    todo.setBacklogOrder(startingOrder++);
+                    // 이 외에는 YESTERDAY로 처리
+                    todo.updateType(Type.YESTERDAY);
+                    todo.updateTodayOrder(null);
+                    todo.updateBacklogOrder(startingOrder++);
                 }
             }
         });
@@ -77,7 +79,7 @@ public class TodoBatchService {
     }
 
     /**
-     * 마감기한이 된 할 일을 오늘 할 일(TODAY)로 변경한다.
+     * 마감기한 또는 요일 반복이 설정된 할 일 -> 오늘(TODAY)로 변경한다.
      */
     public void updateDeadlineTodos() {
         LocalDate today = LocalDate.now();
