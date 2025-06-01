@@ -43,13 +43,13 @@ public class Todo extends BaseEntity {
     @Column(name = "deadline")
     private LocalDate deadline;
 
-    @Column(name = "is_bookmark", nullable = false, columnDefinition = "false")
+    @Column(name = "is_bookmark", nullable = false)
     private boolean isBookmark;
 
-    @Column(name = "is_repeat", nullable = false, columnDefinition = "false")
+    @Column(name = "is_repeat", nullable = false)
     private boolean isRepeat;
 
-    @Column(name = "is_routine", nullable = false, columnDefinition = "false")
+    @Column(name = "is_routine", nullable = false)
     private boolean isRoutine;
 
     @Column(name = "today_date")
@@ -88,32 +88,27 @@ public class Todo extends BaseEntity {
         this.backlogOrder = backlogOrder;
     }
 
-    public static Todo createBacklog(Long userId, String content, Integer backlogOrder) {
+    private static Todo.TodoBuilder baseBacklogBuilder(Long userId, String content, Integer backlogOrder) {
         return Todo.builder()
                 .userId(userId)
                 .content(content)
                 .backlogOrder(backlogOrder)
-                .type(Type.BACKLOG)
-                .build();
+                .type(Type.BACKLOG);
+    }
+
+    public static Todo createBacklog(Long userId, String content, Integer backlogOrder) {
+        return baseBacklogBuilder(userId, content, backlogOrder).build();
     }
 
     public static Todo createBookmarkBacklog(Long userId, String content, int backlogOrder) {
-        return Todo.builder()
-                .userId(userId)
-                .content(content)
-                .backlogOrder(backlogOrder)
+        return baseBacklogBuilder(userId, content, backlogOrder)
                 .isBookmark(true)
-                .type(Type.BACKLOG)
                 .build();
     }
 
     public static Todo createCategoryBacklog(Long userId, Long categoryId, String content, int backlogOrder) {
-        return Todo.builder()
-                .userId(userId)
+        return baseBacklogBuilder(userId, content, backlogOrder)
                 .categoryId(categoryId)
-                .content(content)
-                .backlogOrder(backlogOrder)
-                .type(Type.BACKLOG)
                 .build();
     }
 
@@ -122,14 +117,10 @@ public class Todo extends BaseEntity {
                 .userId(userId)
                 .content(content)
                 .backlogOrder(backlogOrder)
-                .todayDate(LocalDate.now().minusDays(1))
                 .type(Type.YESTERDAY)
+                .todayDate(LocalDate.now().minusDays(1))
                 .todayStatus(TodayStatus.INCOMPLETE)
                 .build();
-    }
-
-    public void toggleBookmark() {
-        this.isBookmark = !this.isBookmark;
     }
 
     public void changeToToday(Integer maxTodayOrder) {
@@ -146,6 +137,10 @@ public class Todo extends BaseEntity {
         this.todayOrder = null;
         this.todayStatus = null;
         this.todayDate = null;
+    }
+
+    public void toggleBookmark() {
+        this.isBookmark = !this.isBookmark;
     }
 
     public void updateTime(LocalTime time) {
