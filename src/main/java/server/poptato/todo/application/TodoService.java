@@ -362,7 +362,7 @@ public class TodoService {
         if (TodayStatus.COMPLETED.equals(findTodo.getTodayStatus())) {
             // 미완료로 변경하며, 오늘의 최소 순서를 가져와 반영
             Integer minTodayOrder = todoRepository.findMinTodayOrderByUserIdOrZero(findTodo.getUserId());
-            findTodo.updateTodayToInComplete(minTodayOrder);
+            findTodo.updateTodayToIncomplete(minTodayOrder);
 
             // 기존 완료 기록이 존재하면 삭제, 없으면 예외 발생
             CompletedDateTime completedDateTime = completedDateTimeRepository.findByTodoIdAndDate(findTodo.getId(), findTodo.getTodayDate())
