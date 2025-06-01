@@ -280,8 +280,8 @@ public class TodoService {
     public void createRoutine(Long userId, Long todoId, RoutineUpdateRequestDto requestDto) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
-        findTodo.setIsRoutineTrue();
-        findTodo.setIsRepeatFalse();
+        findTodo.setRoutine(true);
+        findTodo.setRepeat(false);
 
         routineRepository.deleteByTodoId(todoId);
         List<String> newDays = requestDto.routineDays();
@@ -306,7 +306,7 @@ public class TodoService {
     public void deleteRoutine(Long userId, Long todoId) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
-        findTodo.setIsRoutineFalse();
+        findTodo.setRoutine(false);
         routineRepository.deleteByTodoId(todoId);
     }
 
@@ -562,7 +562,7 @@ public class TodoService {
     public void updateIsRepeat(Long userId, Long todoId) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
-        findTodo.updateIsRepeat();
+        findTodo.toggleRepeat();
     }
 
     /**
@@ -575,8 +575,8 @@ public class TodoService {
     public void createIsRepeat(Long userId, Long todoId) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
-        findTodo.setIsRepeatTrue();
-        findTodo.setIsRoutineFalse();
+        findTodo.setRepeat(true);
+        findTodo.setRoutine(false);
         routineRepository.deleteByTodoId(todoId);
     }
 
@@ -590,7 +590,7 @@ public class TodoService {
     public void deleteIsRepeat(Long userId, Long todoId) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
-        findTodo.setIsRepeatFalse();
+        findTodo.setRepeat(false);
     }
 
     /**

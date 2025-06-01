@@ -100,13 +100,13 @@ public class Todo extends BaseEntity {
         return baseBacklogBuilder(userId, content, backlogOrder).build();
     }
 
-    public static Todo createBookmarkBacklog(Long userId, String content, int backlogOrder) {
+    public static Todo createBookmarkBacklog(Long userId, String content, Integer backlogOrder) {
         return baseBacklogBuilder(userId, content, backlogOrder)
                 .isBookmark(true)
                 .build();
     }
 
-    public static Todo createCategoryBacklog(Long userId, Long categoryId, String content, int backlogOrder) {
+    public static Todo createCategoryBacklog(Long userId, Long categoryId, String content, Integer backlogOrder) {
         return baseBacklogBuilder(userId, content, backlogOrder)
                 .categoryId(categoryId)
                 .build();
@@ -155,7 +155,7 @@ public class Todo extends BaseEntity {
         this.content = content;
     }
 
-    public void updateTodayToIncomplete(int minTodayOrder) {
+    public void updateTodayToIncomplete(Integer minTodayOrder) {
         this.todayStatus = TodayStatus.INCOMPLETE;
         this.todayOrder = --minTodayOrder;
     }
@@ -174,24 +174,16 @@ public class Todo extends BaseEntity {
         this.categoryId = categoryId;
     }
 
-    public void updateIsRepeat() {
+    public void toggleRepeat() {
         this.isRepeat = !this.isRepeat;
     }
 
-    public void setIsRepeatTrue() {
-        this.isRepeat = true;
+    public void setRepeat(boolean isRepeat) {
+        this.isRepeat = isRepeat;
     }
 
-    public void setIsRepeatFalse() {
-        this.isRepeat = false;
-    }
-
-    public void setIsRoutineTrue() {
-        this.isRoutine = true;
-    }
-
-    public void setIsRoutineFalse() {
-        this.isRoutine = false;
+    public void setRoutine(boolean isRoutine) {
+        this.isRoutine = isRoutine;
     }
 
     public void updateTodayStatus(TodayStatus todayStatus) {
@@ -206,7 +198,7 @@ public class Todo extends BaseEntity {
         this.todayOrder = order;
     }
 
-    public void updateBacklogOrder(int order) {
+    public void updateBacklogOrder(Integer order) {
         this.backlogOrder = order;
     }
 }
