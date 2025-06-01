@@ -155,12 +155,12 @@ public class Todo extends BaseEntity {
         this.content = content;
     }
 
-    public void updateTodayToIncomplete(Integer minTodayOrder) {
+    public void incompleteTodayTodo(Integer minTodayOrder) {
         this.todayStatus = TodayStatus.INCOMPLETE;
-        this.todayOrder = --minTodayOrder;
+        this.todayOrder = minTodayOrder - 1;
     }
 
-    public void updateTodayToCompleted() {
+    public void completeTodayTodo() {
         this.todayStatus = TodayStatus.COMPLETED;
         this.todayOrder = null;
     }
