@@ -52,6 +52,9 @@ public class Todo extends BaseEntity {
     @Column(name = "is_routine", nullable = false)
     private boolean isRoutine;
 
+    @Column(name = "is_event", nullable = false)
+    private boolean isEvent;
+
     @Column(name = "today_date")
     private LocalDate todayDate;
 
@@ -71,7 +74,7 @@ public class Todo extends BaseEntity {
 
     @Builder
     public Todo(Long userId, Long categoryId, Type type, String content, LocalTime time, LocalDate deadline,
-                boolean isBookmark, boolean isRepeat, boolean isRoutine, LocalDate todayDate, TodayStatus todayStatus,
+                boolean isBookmark, boolean isRepeat, boolean isRoutine, boolean isEvent, LocalDate todayDate, TodayStatus todayStatus,
                 Integer todayOrder, Integer backlogOrder) {
         this.userId = userId;
         this.categoryId = categoryId;
@@ -82,6 +85,7 @@ public class Todo extends BaseEntity {
         this.isBookmark = isBookmark;
         this.isRepeat = isRepeat;
         this.isRoutine = isRoutine;
+        this.isEvent = isEvent;
         this.todayDate = todayDate;
         this.todayStatus = todayStatus;
         this.todayOrder = todayOrder;
@@ -120,6 +124,20 @@ public class Todo extends BaseEntity {
                 .type(Type.YESTERDAY)
                 .todayDate(LocalDate.now().minusDays(1))
                 .todayStatus(TodayStatus.INCOMPLETE)
+                .build();
+    }
+
+    public static Todo createTodayTodo(Long userId, String content, LocalTime time, boolean isBookmark, Integer todayOrder) {
+        return Todo.builder()
+                .userId(userId)
+                .content(content)
+                .time(time)
+                .isBookmark(isBookmark)
+                .isEvent(true)
+                .type(Type.TODAY)
+                .todayDate(LocalDate.now())
+                .todayStatus(TodayStatus.INCOMPLETE)
+                .todayOrder(todayOrder)
                 .build();
     }
 
