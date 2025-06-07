@@ -134,7 +134,7 @@ public class TodoBacklogControllerTest extends ControllerTestConfig {
         BacklogCreateResponseDto response = new BacklogCreateResponseDto(1L);
 
         Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(1L);
-        Mockito.when(todoBacklogService.generateBacklog(anyLong(), any(BacklogCreateRequestDto.class))).thenReturn(response);
+        Mockito.when(todoBacklogService.createBacklog(anyLong(), any(BacklogCreateRequestDto.class))).thenReturn(response);
 
         String requestContent = objectMapper.writeValueAsString(request);
 
