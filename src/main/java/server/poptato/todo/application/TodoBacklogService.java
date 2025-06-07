@@ -82,7 +82,7 @@ public class TodoBacklogService {
      * @param backlogCreateRequestDto 백로그 생성 요청 데이터
      * @return 생성된 백로그의 정보
      */
-    public BacklogCreateResponseDto generateBacklog(Long userId, BacklogCreateRequestDto backlogCreateRequestDto) {
+    public BacklogCreateResponseDto createBacklog(Long userId, BacklogCreateRequestDto backlogCreateRequestDto) {
         userValidator.checkIsExistUser(userId);
         categoryValidator.validateCategory(userId, backlogCreateRequestDto.categoryId());
         Integer maxBacklogOrder = todoRepository.findMaxBacklogOrderByUserIdOrZero(userId);

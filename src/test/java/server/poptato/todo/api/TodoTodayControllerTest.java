@@ -15,6 +15,7 @@ import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.web.servlet.ResultActions;
 import server.poptato.auth.application.service.JwtService;
 import server.poptato.configuration.ControllerTestConfig;
+import server.poptato.todo.api.request.EventCreateRequestDto;
 import server.poptato.todo.application.TodoTodayService;
 import server.poptato.todo.application.response.TodayListResponseDto;
 import server.poptato.todo.application.response.TodayResponseDto;
@@ -27,6 +28,7 @@ import java.util.List;
 
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.doNothing;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
@@ -121,6 +123,52 @@ public class TodoTodayControllerTest extends ControllerTestConfig {
                                                 fieldWithPath("result.totalPageCount").type(JsonFieldType.NUMBER).description("전체 페이지 수")
                                         )
                                         .responseSchema(Schema.schema("GetTodayListResponse"))
+                                        .build()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("이벤트를 생성한다.")
+    void createEventAndTodosIfNeeded() throws Exception {
+        // given
+        EventCreateRequestDto request = new EventCreateRequestDto(
+                "푸쉬알림 제목",
+                "푸쉬알림 내용",
+                true,
+                false,
+                "이벤트 할 일",
+                LocalTime.of(9, 0)
+        );
+        String requestBody = objectMapper.writeValueAsString(request);
+        doNothing().when(todoTodayService).createEventAndTodosIfNeeded(Mockito.any());
+
+        // when
+        ResultActions result = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.post("/todays/event")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .content(requestBody)
+        );
+
+        // then
+        result.andExpect(status().isCreated())
+                .andDo(MockMvcRestDocumentationWrapper.document("todo/create-event",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("Todo-Today API")
+                                        .description("이벤트를 생성한다.")
+                                        .requestFields(
+                                                fieldWithPath("pushAlarmTitle").type(JsonFieldType.STRING).description("푸쉬 알림 제목"),
+                                                fieldWithPath("pushAlarmContent").type(JsonFieldType.STRING).description("푸쉬 알림 내용"),
+                                                fieldWithPath("isCreateTodayTodo").type(JsonFieldType.BOOLEAN).description("오늘 할 일 생성 여부"),
+                                                fieldWithPath("isBookmarked").type(JsonFieldType.BOOLEAN).description("중요 표시 여부"),
+                                                fieldWithPath("todoContent").type(JsonFieldType.STRING).description("할 일 내용"),
+                                                fieldWithPath("todoTime").type(JsonFieldType.STRING).description("할 일 시간")
+                                        )
+                                        .responseSchema(Schema.schema("CommonSuccessResponse"))
                                         .build()
                         )
                 ));

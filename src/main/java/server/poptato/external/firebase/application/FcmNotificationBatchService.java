@@ -3,6 +3,7 @@ package server.poptato.external.firebase.application;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.MessagingErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FcmNotificationBatchService {
@@ -139,6 +141,7 @@ public class FcmNotificationBatchService {
     }
 
     /**
+     * 특정 유저의 시간 알림 목록에 대해 푸쉬알림을 전송한다.
      *
      * @param userId 유저 아이디
      * @param alarmList 알림을 보낼 목록
@@ -161,20 +164,49 @@ public class FcmNotificationBatchService {
     }
 
     /**
+     * 이벤트 푸쉬알림을 전체 유저에게 전송한다.
+     *
+     * @param pushAlarmTitle 알림 제목
+     * @param pushAlarmContent 알림 내용
+     */
+    @Async
+    public void sendEventNotifications(String pushAlarmTitle, String pushAlarmContent) {
+        List<User> users = userRepository.findByIsPushAlarmTrue();
+
+        BatchUtil.splitIntoBatches(users, batchSize).forEach(batch -> {
+            for (User user : batch) {
+                List<Mobile> mobiles = mobileRepository.findAllByUserId(user.getId());
+                if (mobiles.isEmpty()) continue;
+
+                for (Mobile mobile : mobiles) {
+                    sendPushOrDeleteToken(
+                            mobile.getClientId(),
+                            pushAlarmTitle,
+                            pushAlarmContent
+                    );
+                }
+            }
+        });
+    }
+
+    /**
      * FCM 푸쉬알림을 전송하거나, 유효하지 않은 토큰인 경우 삭제한다.
      *
      * @param clientId FCM 토큰 (디바이스 식별자)
-     * @param title    알림 제목
-     * @param body     알림 본문
+     * @param title 알림 제목
+     * @param body 알림 본문
      */
     private void sendPushOrDeleteToken(String clientId, String title, String body) {
         try {
             fcmService.sendPushNotification(clientId, title, body);
         } catch (FirebaseMessagingException e) {
-            if (e.getMessagingErrorCode() == MessagingErrorCode.INVALID_ARGUMENT ||
-                    e.getMessagingErrorCode() == MessagingErrorCode.UNREGISTERED) {
+            MessagingErrorCode code = e.getMessagingErrorCode();
+
+            if (code == MessagingErrorCode.INVALID_ARGUMENT || code == MessagingErrorCode.UNREGISTERED) {
+                log.warn("❌ 유효하지 않은 FCM 토큰 - clientId: {}, code: {}", clientId, code);
                 fcmTokenService.deleteInvalidToken(clientId);
             } else {
+                log.error("❌ FCM 전송 중 예외 발생 - clientId: {}, code: {}, message: {}", clientId, code, e.getMessage());
                 throw new RuntimeException(e);
             }
         }

@@ -373,7 +373,9 @@ public class TodoService {
     /**
      * 어제 한 일을 체크하고, 상태를 변경합니다.
      * - 체크된 할 일들은 `COMPLETED` 상태로 변경됩니다.
-     * - 체크되지 않은 할 일들은 `BACKLOG`로 이동합니다.
+     * - 체크되지 않은 할 일들은 아래에 따라 동작합니다
+     * 1) isEvent == true 라면 제거됩니다.
+     * 2) isEvent == false 라면 `BACKLOG`로 이동합니다.
      *
      * @param userId 사용자 ID
      * @param request 체크된 할 일 목록 DTO
@@ -390,14 +392,24 @@ public class TodoService {
                 .peek(this::updateYesterdayIsCompleted)
                 .toList();
 
-        // 2. 체크되지 않은 할 일들 (BACKLOG로 이동)
-        List<Todo> backloggedTodos = allYesterdays.stream()
-                .filter(todo -> !checkedTodoIds.contains(todo.getId()))
-                .peek(todo -> todo.updateType(Type.BACKLOG))
-                .toList();
+        // 2. 체크되지 않은 할 일들 분기 처리
+        List<Todo> backloggedTodos = new ArrayList<>();
+        List<Todo> toDelete = new ArrayList<>();
+
+        for (Todo todo : allYesterdays) {
+            if (!checkedTodoIds.contains(todo.getId())) {
+                if (todo.isEvent()) {
+                    toDelete.add(todo);
+                } else {
+                    todo.updateType(Type.BACKLOG);
+                    backloggedTodos.add(todo);
+                }
+            }
+        }
 
         completedTodos.forEach(todoRepository::save);
         backloggedTodos.forEach(todoRepository::save);
+        toDelete.forEach(todoRepository::delete);
         entityManager.flush();
         entityManager.clear();
 
