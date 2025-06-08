@@ -20,6 +20,7 @@ import server.poptato.user.validator.UserValidator;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -127,10 +128,11 @@ public class TodoTodayService {
      */
     private void createTodayTodosForAllUsers(EventCreateRequestDto request) {
         List<Long> userIds = userRepository.findAllUserIds();
+        Map<Long, Integer> maxTodayOrders = todoRepository.findMaxTodayOrdersByUserIdsOrZero(userIds);
 
-        userIds.stream()
+        List<Todo> todosToSave = userIds.stream()
                 .map(userId -> {
-                    int todayOrder = todoRepository.findMaxTodayOrderByUserIdOrZero(userId) + 1;
+                    int todayOrder = maxTodayOrders.get(userId) + 1;
                     return Todo.createTodayTodo(
                             userId,
                             request.todoContent(),
@@ -139,6 +141,8 @@ public class TodoTodayService {
                             todayOrder
                     );
                 })
-                .forEach(todoRepository::save);
+                .toList();
+
+        todoRepository.saveAll(todosToSave);
     }
 }
