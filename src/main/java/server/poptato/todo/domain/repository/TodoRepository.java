@@ -26,6 +26,8 @@ public interface TodoRepository {
 
     void delete(Todo todo);
 
+    void deleteAll(List<Todo> todos);
+
     Todo save(Todo todo);
 
     void saveAll(List<Todo> todo);

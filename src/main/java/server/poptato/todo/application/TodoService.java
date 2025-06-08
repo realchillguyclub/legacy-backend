@@ -384,7 +384,7 @@ public class TodoService {
     public void checkYesterdayTodos(Long userId, CheckYesterdayTodosRequestDto request) {
         userValidator.checkIsExistUser(userId);
         List<Todo> allYesterdays = todoRepository.findIncompleteYesterdays(userId);
-        List<Long> checkedTodoIds = request.todoIds();
+        Set<Long> checkedTodoIds = new HashSet<>(request.todoIds());
 
         // 1. 체크된 할 일들 (미완료 -> 완료)
         List<Todo> completedTodos = allYesterdays.stream()
@@ -407,9 +407,9 @@ public class TodoService {
             }
         }
 
-        completedTodos.forEach(todoRepository::save);
-        backloggedTodos.forEach(todoRepository::save);
-        toDelete.forEach(todoRepository::delete);
+        todoRepository.saveAll(completedTodos);
+        todoRepository.saveAll(backloggedTodos);
+        todoRepository.deleteAll(toDelete);
         entityManager.flush();
         entityManager.clear();
 

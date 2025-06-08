@@ -54,6 +54,11 @@ public class TodoRepositoryImpl implements TodoRepository {
     }
 
     @Override
+    public void deleteAll(List<Todo> todos) {
+        jpaTodoRepository.deleteAll(todos);
+    }
+
+    @Override
     public Todo save(Todo todo) {
         return jpaTodoRepository.save(todo);
     }
