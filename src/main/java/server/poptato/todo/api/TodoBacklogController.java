@@ -57,11 +57,11 @@ public class TodoBacklogController {
      * @return 생성된 백로그의 ID 및 관련 정보
      */
     @PostMapping("/backlog")
-    public ResponseEntity<ApiResponse<BacklogCreateResponseDto>> generateBacklog(
+    public ResponseEntity<ApiResponse<BacklogCreateResponseDto>> createBacklog(
             @RequestHeader("Authorization") String authorizationHeader,
             @Validated @RequestBody BacklogCreateRequestDto backlogCreateRequestDto
     ) {
-        BacklogCreateResponseDto response = todoBacklogService.generateBacklog(jwtService.extractUserIdFromToken(authorizationHeader), backlogCreateRequestDto);
+        BacklogCreateResponseDto response = todoBacklogService.createBacklog(jwtService.extractUserIdFromToken(authorizationHeader), backlogCreateRequestDto);
         return ApiResponse.onSuccess(SuccessStatus._OK, response);
     }
 

@@ -3,6 +3,8 @@ package server.poptato.todo.application;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import server.poptato.external.firebase.application.FcmNotificationBatchService;
+import server.poptato.todo.api.request.EventCreateRequestDto;
 import server.poptato.todo.application.response.TodayListResponseDto;
 import server.poptato.todo.application.response.TodayResponseDto;
 import server.poptato.todo.domain.entity.Routine;
@@ -11,12 +13,14 @@ import server.poptato.todo.domain.repository.RoutineRepository;
 import server.poptato.todo.domain.repository.TodoRepository;
 import server.poptato.todo.domain.value.TodayStatus;
 import server.poptato.todo.domain.value.Type;
+import server.poptato.user.domain.repository.UserRepository;
 import server.poptato.user.domain.value.MobileType;
 import server.poptato.user.validator.UserValidator;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -25,7 +29,9 @@ import java.util.stream.Collectors;
 public class TodoTodayService {
     private final TodoRepository todoRepository;
     private final RoutineRepository routineRepository;
+    private final UserRepository userRepository;
     private final UserValidator userValidator;
+    private final FcmNotificationBatchService fcmNotificationBatchService;
 
     /**
      * 오늘의 할 일 목록을 조회합니다.
@@ -94,5 +100,49 @@ public class TodoTodayService {
         todays.addAll(completedTodos);
 
         return todays;
+    }
+
+    /**
+     * 이벤트 생성 및 전체 사용자 대상 Today Todo 생성 처리.
+     *
+     * @param request 이벤트 생성 요청 데이터
+     */
+    @Transactional
+    public void createEventAndTodosIfNeeded(EventCreateRequestDto request) {
+        // 알림 수신 동의 유저에게 푸쉬 알림 전송
+        fcmNotificationBatchService.sendEventNotifications(
+                request.pushAlarmTitle(),
+                request.pushAlarmContent()
+        );
+
+        // 필요 시 전체 유저에게 Today Todo 생성
+        if (request.isCreateTodayTodo()) {
+            createTodayTodosForAllUsers(request);
+        }
+    }
+
+    /**
+     * 전체 사용자에게 Today Todo를 생성한다.
+     *
+     * @param request 이벤트 요청 데이터
+     */
+    private void createTodayTodosForAllUsers(EventCreateRequestDto request) {
+        List<Long> userIds = userRepository.findAllUserIds();
+        Map<Long, Integer> maxTodayOrders = todoRepository.findMaxTodayOrdersByUserIdsOrZero(userIds);
+
+        List<Todo> todosToSave = userIds.stream()
+                .map(userId -> {
+                    int todayOrder = maxTodayOrders.get(userId) + 1;
+                    return Todo.createTodayTodo(
+                            userId,
+                            request.todoContent(),
+                            request.todoTime(),
+                            request.isBookmarked(),
+                            todayOrder
+                    );
+                })
+                .toList();
+
+        todoRepository.saveAll(todosToSave);
     }
 }
