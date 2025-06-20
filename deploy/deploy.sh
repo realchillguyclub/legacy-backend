@@ -108,9 +108,9 @@ else
 
 fi
 
-echo ">>> 5. Docker 이미지 정리"
+echo ">>> 5. Docker 이미지 정리 🐳"
 sudo docker image prune -f
-echo ">>> 6. Docker 빌드 캐시 정리"
+echo ">>> 6. Docker 빌드 캐시 정리 🐳"
 sudo docker builder prune -f --filter "until=24h"
 
 send_discord_message "$MESSAGE_SUCCESS"
