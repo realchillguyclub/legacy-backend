@@ -66,13 +66,13 @@ jobs:
         env:
           FIREBASE_ADMIN: ${{ secrets.FIREBASE_ADMIN }}
         run: |
-          echo "$FIREBASE_ADMIN" > illdan-firebase-adminsdk-fbsvc-f2e4b78293.json
+          echo "$FIREBASE_ADMIN" > illdan-463508-93a560d318e1.json
 
       # 7. 필요한 파일 압축
       - name: 📦 배포 패키지 압축
         run: |
           mkdir temp_deploy_package
-          cp -r *.jar .env illdan-firebase-adminsdk-fbsvc-f2e4b78293.json Dockerfile docker-compose.yaml appspec.yml deploy/ temp_deploy_package/
+          cp -r *.jar .env illdan-463508-93a560d318e1.json Dockerfile docker-compose.yaml appspec.yml deploy/ temp_deploy_package/
           cd temp_deploy_package && zip -r ../build-${{ env.TIMESTAMP }}-${{ github.sha }}.zip . && cd ..
           rm -rf temp_deploy_package
 
