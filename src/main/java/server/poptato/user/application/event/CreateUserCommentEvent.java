@@ -7,8 +7,7 @@ public record CreateUserCommentEvent(
         Long userId,
         String userName,
         String content,
-        String contactInfo,
-        String createDate
+        String contactInfo
 ) {
     public static CreateUserCommentEvent from(Comment comment, String userName) {
         return new CreateUserCommentEvent(
@@ -16,8 +15,7 @@ public record CreateUserCommentEvent(
                 comment.getUserId(),
                 userName,
                 comment.getContent(),
-                comment.getContactInfo(),
-                comment.getCreateDate().toString()
+                comment.getContactInfo()
         );
     }
 }

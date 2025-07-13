@@ -36,7 +36,7 @@ public class DiscordMessageFormatter {
         return String.format(
                 CREATE_USER_MESSAGE_TEMPLATE,
                 event.userCount(),
-                event.createDate(),
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
                 event.userName(),
                 event.socialType()
         );
