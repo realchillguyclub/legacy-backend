@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import server.poptato.auth.application.service.JwtService;
 import server.poptato.configuration.ControllerTestConfig;
 import server.poptato.global.response.status.SuccessStatus;
+import server.poptato.user.api.request.UserCommentRequestDTO;
 import server.poptato.user.api.request.UserDeleteRequestDTO;
 import server.poptato.user.application.response.UserInfoResponseDto;
 import server.poptato.user.application.service.UserService;
@@ -151,6 +152,57 @@ public class UserControllerTest extends ControllerTestConfig {
                                                 fieldWithPath("result.imageUrl").type(JsonFieldType.STRING).description("사용자 프로필 이미지 URL")
                                         )
                                         .responseSchema(Schema.schema("UserInfoResponseSchema"))
+                                        .build()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("사용자가 일단에게 의견을 전송한다.")
+    public void createAndSendUserComment() throws Exception {
+        // given
+        Long userId = 1L;
+        UserCommentRequestDTO request = new UserCommentRequestDTO("일단 너무 좋아요!", "010-1234-5678");
+
+        String requestContent = objectMapper.writeValueAsString(request);
+        Mockito.when(jwtService.extractUserIdFromToken(token)).thenReturn(userId);
+        Mockito.doNothing().when(userService).createAndSendUserComment(userId, request);
+
+        // when
+        ResultActions resultActions = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.post("/user/comments")
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .content(requestContent)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        resultActions
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value(SuccessStatus._CREATED.getReasonHttpStatus().getCode()))
+                .andExpect(jsonPath("$.message").value(SuccessStatus._CREATED.getReasonHttpStatus().getMessage()))
+
+                // docs
+                .andDo(MockMvcRestDocumentationWrapper.document("user/create-user-comment",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        resource(
+                                ResourceSnippetParameters.builder()
+                                        .tag("User API")
+                                        .description("사용자가 일단에게 의견을 전송한다.")
+                                        .requestFields(
+                                                fieldWithPath("content").type(JsonFieldType.STRING).description("사용자 의견 내용"),
+                                                fieldWithPath("contactInfo").type(JsonFieldType.STRING).description("사용자 연락처").optional()
+                                        )
+                                        .responseFields(
+                                                fieldWithPath("isSuccess").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
+                                        )
+                                        .requestSchema(Schema.schema("UserCommentRequestSchema"))
+                                        .responseSchema(Schema.schema("SuccessResponseSchema"))
                                         .build()
                         )
                 ));
