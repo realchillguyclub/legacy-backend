@@ -18,4 +18,6 @@ public interface UserRepository {
     List<Long> findAllUserIds();
 
     List<User> findByIsPushAlarmTrue();
+
+    long count();
 }
