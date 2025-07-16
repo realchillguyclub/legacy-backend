@@ -22,7 +22,7 @@ public class DiscordMessageFormatter {
                     "- 소셜 플랫폼 : %s\n```";
 
     public static String formatCreateUserComment(CreateUserCommentEvent event) {
-        String contact = event.contactInfo () == null ? "없음" : event.contactInfo();
+        String contact = event.contactInfo() == null ? "없음" : event.contactInfo();
         return String.format(
                 CREATE_USER_COMMENT_MESSAGE_TEMPLATE,
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
