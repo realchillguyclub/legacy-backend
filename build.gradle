@@ -29,30 +29,30 @@ repositories {
 }
 
 dependencies {
-    //spring
+    // Spring
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
-    //lombok
+    // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
-    //jpa
+    // JPA
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
-    //validation
+    // Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
-    //database
+    // DB
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     runtimeOnly 'com.mysql:mysql-connector-j'
 
-    // redis
+    // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
-    // gson
+    // Gson
     implementation 'com.google.code.gson:gson:2.8.6'
 
-    //test
+    // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -63,17 +63,18 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:4.9.3'
     implementation 'com.google.code.gson:gson:2.9.0'
 
-    //JWT
+    // JWT
     implementation group: 'io.jsonwebtoken', name: 'jjwt-api', version: '0.11.2'
     implementation group: 'io.jsonwebtoken', name: 'jjwt-impl', version: '0.11.2'
     implementation group: 'io.jsonwebtoken', name: 'jjwt-jackson', version: '0.11.2'
 
+    // Feign
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:4.1.0'
 
     // S3 AWS
     implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-aws', version: '2.2.6.RELEASE'
 
-    //Firebase
+    // Firebase
     implementation 'com.google.firebase:firebase-admin:9.2.0'
 
     // Health-Check
@@ -84,6 +85,10 @@ dependencies {
     testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc:3.0.0'
     testImplementation 'com.squareup.okhttp3:mockwebserver'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
+
+    // Spring Retry
+    implementation 'org.springframework.retry:spring-retry'
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
 }
 
 // REST Docs & Swagger 설정

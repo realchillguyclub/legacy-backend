@@ -93,3 +93,12 @@ scheduling:
 
 batch:
   size: ${BATCH_SIZE}
+
+discord:
+  create-user-comment-webhook-url: ${DISCORD_CREATE_USER_COMMENT_WEBHOOK_URL}
+  create-user-webhook-url: ${DISCORD_CREATE_USER_WEBHOOK_URL}
+
+notion:
+  api-url: https://api.notion.com/v1
+  secret-key: ${NOTION_SECRET_KEY}
+  database-id: ${NOTION_DATABASE_ID}

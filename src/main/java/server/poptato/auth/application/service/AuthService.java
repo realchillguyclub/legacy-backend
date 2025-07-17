@@ -1,6 +1,7 @@
 package server.poptato.auth.application.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import server.poptato.auth.api.request.FCMTokenRequestDto;
@@ -13,6 +14,7 @@ import server.poptato.external.oauth.SocialServiceProvider;
 import server.poptato.external.oauth.SocialUserInfo;
 import server.poptato.global.dto.TokenPair;
 import server.poptato.global.exception.CustomException;
+import server.poptato.user.application.event.CreateUserEvent;
 import server.poptato.user.domain.entity.Mobile;
 import server.poptato.user.domain.entity.User;
 import server.poptato.user.domain.repository.MobileRepository;
@@ -21,7 +23,6 @@ import server.poptato.user.domain.value.SocialType;
 import server.poptato.user.status.MobileErrorStatus;
 import server.poptato.user.validator.UserValidator;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -29,8 +30,9 @@ import java.util.Optional;
 public class AuthService {
     private final JwtService jwtService;
     private final SocialServiceProvider socialServiceProvider;
-    private final UserRepository userRepository;
     private final UserValidator userValidator;
+    private final ApplicationEventPublisher eventPublisher;
+    private final UserRepository userRepository;
     private final MobileRepository mobileRepository;
 
     /**
@@ -49,6 +51,10 @@ public class AuthService {
         if (findUser.isEmpty()) {
             User newUser = saveNewData(request, userInfo);
             saveFcmToken(newUser.getId(), request);
+
+            long userCount = userRepository.count();
+            eventPublisher.publishEvent(CreateUserEvent.from(userCount ,newUser));
+
             return createLoginResponse(newUser.getId(), true);
         }
         updateImage(findUser.get(), userInfo);
@@ -69,7 +75,7 @@ public class AuthService {
             return;
         }
 
-        Mobile newMobile = Mobile.create(request, userId);
+        Mobile newMobile = Mobile.createMobile(request, userId);
         mobileRepository.save(newMobile);
     }
 
@@ -89,7 +95,7 @@ public class AuthService {
             throw new CustomException(AuthErrorStatus._HAS_NOT_NEW_APPLE_USER_NAME);
         }
         String imageUrl = getHttpsUrl(userInfo.imageUrl());
-        User user = User.create(request, userInfo, imageUrl);
+        User user = User.createUser(request, userInfo, imageUrl);
         return userRepository.save(user);
     }
 
