@@ -19,7 +19,7 @@ public class DiscordSender {
     private final DiscordCreateUserWebhookClient discordCreateUserWebhookClient;
 
     @Retryable(
-            value = { Exception.class },
+            retryFor = { Exception.class },
             maxAttempts = 3,
             backoff = @Backoff(delay = 2000)
     )
@@ -29,7 +29,7 @@ public class DiscordSender {
     }
 
     @Retryable(
-            value = { Exception.class },
+            retryFor = { Exception.class },
             maxAttempts = 3,
             backoff = @Backoff(delay = 2000)
     )
