@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import server.poptato.global.dao.BaseEntity;
+import server.poptato.user.api.request.UserCommentRequestDTO;
 
 @Getter
 @Entity
@@ -31,5 +32,13 @@ public class Comment extends BaseEntity {
         this.userId = userId;
         this.content = content;
         this.contactInfo = contactInfo;
+    }
+
+    public static Comment createComment(UserCommentRequestDTO requestDTO, Long userId) {
+        return Comment.builder()
+                .userId(userId)
+                .content(requestDTO.content())
+                .contactInfo(requestDTO.contactInfo())
+                .build();
     }
 }

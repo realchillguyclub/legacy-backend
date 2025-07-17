@@ -39,12 +39,12 @@ public class UserService {
      * 탈퇴 이유를 저장하고, 관련 데이터(할 일, 모바일 정보)를 삭제한 뒤 사용자를 삭제합니다.
      *
      * @param userId 사용자 ID
-     * @param userDeleteRequestDTO 탈퇴 요청 데이터
+     * @param requestDTO 탈퇴 요청 데이터
      */
     @Transactional
-    public void deleteUser(Long userId, UserDeleteRequestDTO userDeleteRequestDTO) {
+    public void deleteUser(Long userId, UserDeleteRequestDTO requestDTO) {
         User user = userValidator.checkIsExistAndReturnUser(userId);
-        saveDeleteReasons(userId, userDeleteRequestDTO.reasons(), userDeleteRequestDTO.userInputReason());
+        saveDeleteReasons(userId, requestDTO.reasons(), requestDTO.userInputReason());
         userRepository.delete(user);
         categoryRepository.deleteByUserId(userId);
         jwtService.deleteRefreshToken(String.valueOf(userId));
@@ -92,7 +92,7 @@ public class UserService {
     @Transactional
     public void createAndSendUserComment(Long userId, UserCommentRequestDTO requestDTO) {
         User user = userValidator.checkIsExistAndReturnUser(userId);
-        Comment comment = commentRepository.save(requestDTO.toEntity(user.getId()));
+        Comment comment = commentRepository.save(Comment.createComment(requestDTO, user.getId()));
 
         eventPublisher.publishEvent(CreateUserCommentEvent.from(comment, user.getName()));
     }
