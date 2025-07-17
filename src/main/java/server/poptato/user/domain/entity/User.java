@@ -53,7 +53,7 @@ public class User extends BaseEntity {
         this.imageUrl = imageUrl;
     }
 
-    public static User create(LoginRequestDto request, SocialUserInfo userInfo, String imageUrl) {
+    public static User createUser(LoginRequestDto request, SocialUserInfo userInfo, String imageUrl) {
         return User.builder()
                 .socialType(request.socialType())
                 .socialId(userInfo.socialId())

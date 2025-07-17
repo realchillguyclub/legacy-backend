@@ -75,7 +75,7 @@ public class AuthService {
             return;
         }
 
-        Mobile newMobile = Mobile.create(request, userId);
+        Mobile newMobile = Mobile.createMobile(request, userId);
         mobileRepository.save(newMobile);
     }
 
@@ -95,7 +95,7 @@ public class AuthService {
             throw new CustomException(AuthErrorStatus._HAS_NOT_NEW_APPLE_USER_NAME);
         }
         String imageUrl = getHttpsUrl(userInfo.imageUrl());
-        User user = User.create(request, userInfo, imageUrl);
+        User user = User.createUser(request, userInfo, imageUrl);
         return userRepository.save(user);
     }
 
