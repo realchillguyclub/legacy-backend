@@ -2,13 +2,12 @@ package server.poptato.todo.api;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 import server.poptato.auth.application.service.JwtService;
 import server.poptato.global.response.ApiResponse;
 import server.poptato.global.response.status.SuccessStatus;
+import server.poptato.todo.api.request.EventCreateRequestDto;
 import server.poptato.todo.application.TodoTodayService;
 import server.poptato.todo.application.response.TodayListResponseDto;
 import server.poptato.user.domain.value.MobileType;
@@ -51,5 +50,21 @@ public class TodoTodayController {
                 todayDate
         );
         return ApiResponse.onSuccess(SuccessStatus._OK, response);
+    }
+
+    /**
+     * 이벤트 생성 API.
+     *
+     * 전체 사용자에게 푸쉬 알림을 전송하고, 필요 시 Today Todo를 생성합니다.
+     *
+     * @param eventCreateRequestDto 이벤트 생성 요청 데이터 (푸쉬 알림 제목/내용, 할 일 생성 여부 포함)
+     * @return 성공 상태 응답
+     */
+    @PostMapping("/todays/event")
+    public ResponseEntity<ApiResponse<SuccessStatus>> createEvent(
+            @Validated @RequestBody EventCreateRequestDto eventCreateRequestDto
+    ) {
+        todoTodayService.createEventAndTodosIfNeeded(eventCreateRequestDto);
+        return ApiResponse.onSuccess(SuccessStatus._CREATED);
     }
 }

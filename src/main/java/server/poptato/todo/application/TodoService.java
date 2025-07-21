@@ -280,8 +280,8 @@ public class TodoService {
     public void createRoutine(Long userId, Long todoId, RoutineUpdateRequestDto requestDto) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
-        findTodo.setIsRoutineTrue();
-        findTodo.setIsRepeatFalse();
+        findTodo.setRoutine(true);
+        findTodo.setRepeat(false);
 
         routineRepository.deleteByTodoId(todoId);
         List<String> newDays = requestDto.routineDays();
@@ -306,7 +306,7 @@ public class TodoService {
     public void deleteRoutine(Long userId, Long todoId) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
-        findTodo.setIsRoutineFalse();
+        findTodo.setRoutine(false);
         routineRepository.deleteByTodoId(todoId);
     }
 
@@ -338,34 +338,33 @@ public class TodoService {
     }
 
     /**
-     * 특정 할 일의 오늘 완료 상태를 업데이트합니다.
-     * - 할 일이 미완료(INCOMPLETE) 상태라면, 오늘 완료(COMPLETED) 상태로 변경하고
-     *   완료 시간을 현재 시간(now)으로 저장합니다.
-     * - 할 일이 완료(COMPLETED) 상태라면, 다시 미완료(INCOMPLETE) 상태로 변경하고
-     *   오늘의 최소 순서를 고려하여 업데이트합니다.
-     * - 완료된 날짜 기록(CompletedDateTime)이 존재하지 않으면 예외를 발생시킵니다.
+     * 오늘 할 일의 완료 상태를 토글합니다.
+     * - 미완료(INCOMPLETE) → 완료(COMPLETED)로 변경하고 완료 시간을 기록합니다.
+     * - 완료(COMPLETED) → 미완료(INCOMPLETE)로 변경하고 기존 완료 기록을 삭제합니다.
      *
-     * @param findTodo 업데이트할 할 일 객체
+     * @param findTodo 상태를 변경할 할 일 객체
      */
     private void updateTodayIsCompleted(Todo findTodo) {
-        if (TodayStatus.INCOMPLETE.equals(findTodo.getTodayStatus())) {
+        TodayStatus status = findTodo.getTodayStatus();
+
+        if (TodayStatus.INCOMPLETE.equals(status)) {
             // 오늘 완료 상태로 변경하고 현재 시간을 완료 시간으로 저장
-            findTodo.updateTodayToCompleted();
+            findTodo.completeTodayTodo();
             completedDateTimeRepository.save(
                     CompletedDateTime.builder()
                             .todoId(findTodo.getId())
                             .dateTime(LocalDateTime.now())
                             .build()
             );
-            return;
-        }
-        if (TodayStatus.COMPLETED.equals(findTodo.getTodayStatus())) {
+
+        } else if (TodayStatus.COMPLETED.equals(status)) {
             // 미완료로 변경하며, 오늘의 최소 순서를 가져와 반영
             Integer minTodayOrder = todoRepository.findMinTodayOrderByUserIdOrZero(findTodo.getUserId());
-            findTodo.updateTodayToInComplete(minTodayOrder);
+            findTodo.incompleteTodayTodo(minTodayOrder);
 
             // 기존 완료 기록이 존재하면 삭제, 없으면 예외 발생
-            CompletedDateTime completedDateTime = completedDateTimeRepository.findByTodoIdAndDate(findTodo.getId(), findTodo.getTodayDate())
+            CompletedDateTime completedDateTime = completedDateTimeRepository
+                    .findByTodoIdAndDate(findTodo.getId(), findTodo.getTodayDate())
                     .orElseThrow(() -> new CustomException(TodoErrorStatus._COMPLETED_DATETIME_NOT_EXIST));
             completedDateTimeRepository.delete(completedDateTime);
         }
@@ -374,7 +373,9 @@ public class TodoService {
     /**
      * 어제 한 일을 체크하고, 상태를 변경합니다.
      * - 체크된 할 일들은 `COMPLETED` 상태로 변경됩니다.
-     * - 체크되지 않은 할 일들은 `BACKLOG`로 이동합니다.
+     * - 체크되지 않은 할 일들은 아래에 따라 동작합니다
+     * 1) isEvent == true 라면 제거됩니다.
+     * 2) isEvent == false 라면 `BACKLOG`로 이동합니다.
      *
      * @param userId 사용자 ID
      * @param request 체크된 할 일 목록 DTO
@@ -383,7 +384,7 @@ public class TodoService {
     public void checkYesterdayTodos(Long userId, CheckYesterdayTodosRequestDto request) {
         userValidator.checkIsExistUser(userId);
         List<Todo> allYesterdays = todoRepository.findIncompleteYesterdays(userId);
-        List<Long> checkedTodoIds = request.todoIds();
+        Set<Long> checkedTodoIds = new HashSet<>(request.todoIds());
 
         // 1. 체크된 할 일들 (미완료 -> 완료)
         List<Todo> completedTodos = allYesterdays.stream()
@@ -391,14 +392,24 @@ public class TodoService {
                 .peek(this::updateYesterdayIsCompleted)
                 .toList();
 
-        // 2. 체크되지 않은 할 일들 (BACKLOG로 이동)
-        List<Todo> backloggedTodos = allYesterdays.stream()
-                .filter(todo -> !checkedTodoIds.contains(todo.getId()))
-                .peek(todo -> todo.updateType(Type.BACKLOG))
-                .toList();
+        // 2. 체크되지 않은 할 일들 분기 처리
+        List<Todo> backloggedTodos = new ArrayList<>();
+        List<Todo> toDelete = new ArrayList<>();
 
-        completedTodos.forEach(todoRepository::save);
-        backloggedTodos.forEach(todoRepository::save);
+        for (Todo todo : allYesterdays) {
+            if (!checkedTodoIds.contains(todo.getId())) {
+                if (todo.isEvent()) {
+                    toDelete.add(todo);
+                } else {
+                    todo.updateType(Type.BACKLOG);
+                    backloggedTodos.add(todo);
+                }
+            }
+        }
+
+        todoRepository.saveAll(completedTodos);
+        todoRepository.saveAll(backloggedTodos);
+        todoRepository.deleteAll(toDelete);
         entityManager.flush();
         entityManager.clear();
 
@@ -562,7 +573,7 @@ public class TodoService {
     public void updateIsRepeat(Long userId, Long todoId) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
-        findTodo.updateIsRepeat();
+        findTodo.toggleRepeat();
     }
 
     /**
@@ -575,8 +586,8 @@ public class TodoService {
     public void createIsRepeat(Long userId, Long todoId) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
-        findTodo.setIsRepeatTrue();
-        findTodo.setIsRoutineFalse();
+        findTodo.setRepeat(true);
+        findTodo.setRoutine(false);
         routineRepository.deleteByTodoId(todoId);
     }
 
@@ -590,7 +601,7 @@ public class TodoService {
     public void deleteIsRepeat(Long userId, Long todoId) {
         userValidator.checkIsExistUser(userId);
         Todo findTodo = validateAndReturnTodo(userId, todoId);
-        findTodo.setIsRepeatFalse();
+        findTodo.setRepeat(false);
     }
 
     /**

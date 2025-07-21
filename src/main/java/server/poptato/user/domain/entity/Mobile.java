@@ -9,8 +9,6 @@ import server.poptato.auth.api.request.LoginRequestDto;
 import server.poptato.global.dao.BaseEntity;
 import server.poptato.user.domain.value.MobileType;
 
-import java.time.LocalDateTime;
-
 @Getter
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -43,7 +41,7 @@ public class Mobile extends BaseEntity {
         this.clientId = clientId;
     }
 
-    public static Mobile create(LoginRequestDto requestDto, Long userId) {
+    public static Mobile createMobile(LoginRequestDto requestDto, Long userId) {
         return Mobile.builder()
                 .userId(userId)
                 .type(requestDto.mobileType())

@@ -18,6 +18,7 @@ public interface JpaTimeAlarmRepository extends TimeAlarmRepository, JpaReposito
         JOIN User u ON ta.userId = u.id
         WHERE t.type = 'TODAY'
           AND t.time BETWEEN :from AND :to
+          AND t.todayStatus = 'INCOMPLETE'
           AND ta.notified = false
           AND u.isPushAlarm = true
     """)
