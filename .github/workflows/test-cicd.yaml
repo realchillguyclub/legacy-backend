@@ -15,12 +15,27 @@ jobs:
       - name: ✅ 브랜치 체크아웃
         uses: actions/checkout@v3
 
-      # 2. Gradle로 프로젝트 빌드
+      # 2. Gradle 캐싱
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # 3. Gradle 권한 변경
+      - name: Grant execute permission for Gradle
+        run: chmod +x gradlew
+
+      # 4. Gradle로 프로젝트 빌드
       - name: 📦 프로젝트 빌드
-        run: ./gradlew clean build
+        run: ./gradlew build
 
 
-      # 3. 빌드 결과를 아티팩트로 저장
+      # 5. 빌드 결과를 아티팩트로 저장
       - name: 📦 빌드 결과 저장
         uses: actions/upload-artifact@v4
         with:
