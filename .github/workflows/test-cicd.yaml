@@ -32,7 +32,7 @@ jobs:
 
       # 4. Gradle로 프로젝트 빌드
       - name: 📦 프로젝트 빌드
-        run: ./gradlew build -x test
+        run: ./gradlew build
 
 
       # 5. 빌드 결과를 아티팩트로 저장
