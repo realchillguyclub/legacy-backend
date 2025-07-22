@@ -52,6 +52,6 @@ jobs:
 
       # 5. SonarCloud 분석 (커버리지 연동)
       - name: Build, Test, and Analyze (SonarCloud)
-        run: ./gradlew build jacocoTestReport sonarqube
+        run: ./gradlew build jacocoTestReport sonar
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
