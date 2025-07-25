@@ -22,10 +22,9 @@ public class NotionSender {
 
     @Retryable(
             retryFor = { Exception.class },
-            maxAttempts = 3,
             backoff = @Backoff(delay = 2000)
     )
-    public void sendCreateUserComment(CreateUserCommentEvent event) {
+    public void sendCreateUserCommentMessage(CreateUserCommentEvent event) {
         Map<String, Object> payload = NotionPayloadFormatter.formatCreateUserCommentPayload(event, databaseId);
         notionCreateUserCommentClient.sendUserComment(payload);
     }

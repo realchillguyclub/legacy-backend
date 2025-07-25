@@ -20,21 +20,19 @@ public class DiscordSender {
 
     @Retryable(
             retryFor = { Exception.class },
-            maxAttempts = 3,
             backoff = @Backoff(delay = 2000)
     )
-    public void sendCreateUserComment(CreateUserCommentEvent event) {
-        String message = DiscordMessageFormatter.formatCreateUserComment(event);
+    public void sendCreateUserCommentMessage(CreateUserCommentEvent event) {
+        String message = DiscordMessageFormatter.formatCreateUserCommentMessage(event);
         discordCreateUserCommentWebhookClient.sendMessage(DiscordMessage.of(message));
     }
 
     @Retryable(
             retryFor = { Exception.class },
-            maxAttempts = 3,
             backoff = @Backoff(delay = 2000)
     )
-    public void sendCreateUser(CreateUserEvent event) {
-        String message = DiscordMessageFormatter.formatCreateUser(event);
+    public void sendCreateUserMessage(CreateUserEvent event) {
+        String message = DiscordMessageFormatter.formatCreateUserMessage(event);
         discordCreateUserWebhookClient.sendMessage(DiscordMessage.of(message));
     }
 }

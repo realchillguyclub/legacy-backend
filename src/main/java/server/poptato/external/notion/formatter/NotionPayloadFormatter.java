@@ -19,6 +19,10 @@ public class NotionPayloadFormatter {
                 "date", Map.of("start", LocalDate.now().toString())
         ));
 
+        properties.put("Device", Map.of(
+                "select", Map.of("name", event.mobileType())
+        ));
+
         properties.put("Name", Map.of(
                 "title", new Object[] {
                     Map.of("text", Map.of("content", event.userName()))

@@ -1,18 +1,20 @@
 package server.poptato.user.application.event;
 
 import server.poptato.user.domain.entity.User;
-import server.poptato.user.domain.value.SocialType;
 
 public record CreateUserEvent(
         long userCount,
         String userName,
-        SocialType socialType
+        String socialType,
+        String mobileType
+
 ) {
-    public static CreateUserEvent from(long userCount, User user) {
+    public static CreateUserEvent from(long userCount, User user, String mobileType) {
         return new CreateUserEvent(
                 userCount,
                 user.getName(),
-                user.getSocialType()
+                user.getSocialType().toString(),
+                mobileType
         );
     }
 }

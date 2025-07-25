@@ -20,13 +20,13 @@ public class UserEventListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleCreateUserComment(CreateUserCommentEvent event) {
-        discordSender.sendCreateUserComment(event);
-        notionSender.sendCreateUserComment(event);
+        discordSender.sendCreateUserCommentMessage(event);
+        notionSender.sendCreateUserCommentMessage(event);
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleCreateUser(CreateUserEvent event) {
-        discordSender.sendCreateUser(event);
+        discordSender.sendCreateUserMessage(event);
     }
 }

@@ -6,17 +6,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import server.poptato.auth.application.service.JwtService;
 import server.poptato.category.domain.repository.CategoryRepository;
+import server.poptato.global.exception.CustomException;
 import server.poptato.user.api.request.UserCommentRequestDTO;
+import server.poptato.user.api.request.UserDeleteRequestDTO;
 import server.poptato.user.application.event.CreateUserCommentEvent;
+import server.poptato.user.application.response.UserInfoResponseDto;
 import server.poptato.user.domain.entity.Comment;
 import server.poptato.user.domain.entity.DeleteReason;
+import server.poptato.user.domain.entity.Mobile;
+import server.poptato.user.domain.entity.User;
 import server.poptato.user.domain.repository.CommentRepository;
 import server.poptato.user.domain.repository.DeleteReasonRepository;
-import server.poptato.user.domain.value.Reason;
-import server.poptato.user.api.request.UserDeleteRequestDTO;
-import server.poptato.user.application.response.UserInfoResponseDto;
-import server.poptato.user.domain.entity.User;
+import server.poptato.user.domain.repository.MobileRepository;
 import server.poptato.user.domain.repository.UserRepository;
+import server.poptato.user.domain.value.Reason;
+import server.poptato.user.status.MobileErrorStatus;
 import server.poptato.user.validator.UserValidator;
 
 import java.util.List;
@@ -31,6 +35,7 @@ public class UserService {
     private final DeleteReasonRepository deleteReasonRepository;
     private final CategoryRepository categoryRepository;
     private final CommentRepository commentRepository;
+    private final MobileRepository mobileRepository;
 
     /**
      * 사용자 탈퇴 처리 메서드.
@@ -93,7 +98,9 @@ public class UserService {
     public void createAndSendUserComment(Long userId, UserCommentRequestDTO requestDTO) {
         User user = userValidator.checkIsExistAndReturnUser(userId);
         Comment comment = commentRepository.save(Comment.createComment(requestDTO, user.getId()));
+        Mobile mobile = mobileRepository.findTopByUserIdOrderByModifyDateDesc(user.getId())
+                .orElseThrow(() -> new CustomException(MobileErrorStatus._NOT_FOUND_FCM_TOKEN_BY_USER_ID));
 
-        eventPublisher.publishEvent(CreateUserCommentEvent.from(comment, user.getName()));
+        eventPublisher.publishEvent(CreateUserCommentEvent.from(comment, user.getName(), mobile.getType().toString()));
     }
 }
