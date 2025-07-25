@@ -53,7 +53,7 @@ public class UserService {
 
         Mobile mobile = mobileRepository.findTopByUserIdOrderByModifyDateDesc(user.getId())
                 .orElseThrow(() -> new CustomException(MobileErrorStatus._NOT_FOUND_FCM_TOKEN_BY_USER_ID));
-        eventPublisher.publishEvent(DeleteUserEvent.from(user, mobile, requestDTO.reasons()));
+        eventPublisher.publishEvent(DeleteUserEvent.from(user, mobile, requestDTO.reasons(), requestDTO.userInputReason()));
 
         saveDeleteReasons(userId, requestDTO.reasons(), requestDTO.userInputReason());
         userRepository.delete(user);

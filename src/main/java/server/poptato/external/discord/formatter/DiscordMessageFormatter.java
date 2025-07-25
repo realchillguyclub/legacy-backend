@@ -62,7 +62,7 @@ public class DiscordMessageFormatter {
 
         return String.format(
                 DELETE_USER_MESSAGE_TEMPLATE,
-                event.createDate(),
+                event.createDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
                 event.userName(),
                 event.mobileType(),
