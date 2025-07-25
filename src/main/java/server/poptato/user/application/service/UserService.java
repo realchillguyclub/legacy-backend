@@ -10,6 +10,7 @@ import server.poptato.global.exception.CustomException;
 import server.poptato.user.api.request.UserCommentRequestDTO;
 import server.poptato.user.api.request.UserDeleteRequestDTO;
 import server.poptato.user.application.event.CreateUserCommentEvent;
+import server.poptato.user.application.event.DeleteUserEvent;
 import server.poptato.user.application.response.UserInfoResponseDto;
 import server.poptato.user.domain.entity.Comment;
 import server.poptato.user.domain.entity.DeleteReason;
@@ -49,6 +50,11 @@ public class UserService {
     @Transactional
     public void deleteUser(Long userId, UserDeleteRequestDTO requestDTO) {
         User user = userValidator.checkIsExistAndReturnUser(userId);
+
+        Mobile mobile = mobileRepository.findTopByUserIdOrderByModifyDateDesc(user.getId())
+                .orElseThrow(() -> new CustomException(MobileErrorStatus._NOT_FOUND_FCM_TOKEN_BY_USER_ID));
+        eventPublisher.publishEvent(DeleteUserEvent.from(user, mobile, requestDTO.reasons()));
+
         saveDeleteReasons(userId, requestDTO.reasons(), requestDTO.userInputReason());
         userRepository.delete(user);
         categoryRepository.deleteByUserId(userId);
@@ -98,9 +104,9 @@ public class UserService {
     public void createAndSendUserComment(Long userId, UserCommentRequestDTO requestDTO) {
         User user = userValidator.checkIsExistAndReturnUser(userId);
         Comment comment = commentRepository.save(Comment.createComment(requestDTO, user.getId()));
+
         Mobile mobile = mobileRepository.findTopByUserIdOrderByModifyDateDesc(user.getId())
                 .orElseThrow(() -> new CustomException(MobileErrorStatus._NOT_FOUND_FCM_TOKEN_BY_USER_ID));
-
         eventPublisher.publishEvent(CreateUserCommentEvent.from(comment, user.getName(), mobile.getType().toString()));
     }
 }

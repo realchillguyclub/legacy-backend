@@ -9,6 +9,7 @@ import server.poptato.external.discord.sender.DiscordSender;
 import server.poptato.external.notion.sender.NotionSender;
 import server.poptato.user.application.event.CreateUserCommentEvent;
 import server.poptato.user.application.event.CreateUserEvent;
+import server.poptato.user.application.event.DeleteUserEvent;
 
 @Component
 @RequiredArgsConstructor
@@ -28,5 +29,11 @@ public class UserEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleCreateUser(CreateUserEvent event) {
         discordSender.sendCreateUserMessage(event);
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleDeleteUser(DeleteUserEvent event) {
+        discordSender.sendDeleteUserMessage(event);
     }
 }
