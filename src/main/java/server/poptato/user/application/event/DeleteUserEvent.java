@@ -26,8 +26,8 @@ public record DeleteUserEvent(
 
         return new DeleteUserEvent(
                 user.getName(),
-                user.getSocialType().toString(),
                 mobile.getType().toString(),
+                user.getSocialType().toString(),
                 user.getCreateDate(),
                 reasonValues
         );
