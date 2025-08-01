@@ -53,7 +53,7 @@ public class AuthService {
             saveFcmToken(newUser.getId(), request);
 
             long userCount = userRepository.count();
-            eventPublisher.publishEvent(CreateUserEvent.from(userCount ,newUser));
+            eventPublisher.publishEvent(CreateUserEvent.from(userCount, newUser, request.mobileType().toString()));
 
             return createLoginResponse(newUser.getId(), true);
         }

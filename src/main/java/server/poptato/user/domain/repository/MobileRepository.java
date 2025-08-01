@@ -17,4 +17,6 @@ public interface MobileRepository {
     Optional<Mobile> findByClientId(String clientId);
 
     void deleteOldTokens(LocalDateTime localDateTime);
+
+    Optional<Mobile> findTopByUserIdOrderByModifyDateDesc(Long userId);
 }
