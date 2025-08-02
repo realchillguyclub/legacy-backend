@@ -7,15 +7,17 @@ public record CreateUserCommentEvent(
         Long userId,
         String userName,
         String content,
-        String contactInfo
+        String contactInfo,
+        String mobileType
 ) {
-    public static CreateUserCommentEvent from(Comment comment, String userName) {
+    public static CreateUserCommentEvent from(Comment comment, String userName, String mobileType) {
         return new CreateUserCommentEvent(
                 comment.getId(),
                 comment.getUserId(),
                 userName,
                 comment.getContent(),
-                comment.getContactInfo()
+                comment.getContactInfo(),
+                mobileType
         );
     }
 }
