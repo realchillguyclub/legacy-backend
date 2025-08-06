@@ -14,6 +14,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
+import server.poptato.auth.api.request.FCMTokenRequestDto;
 import server.poptato.auth.api.request.LoginRequestDto;
 import server.poptato.auth.application.response.LoginResponseDto;
 import server.poptato.auth.application.service.AuthService;
@@ -31,6 +32,7 @@ import server.poptato.user.domain.repository.MobileRepository;
 import server.poptato.user.domain.repository.UserRepository;
 import server.poptato.user.domain.value.MobileType;
 import server.poptato.user.domain.value.SocialType;
+import server.poptato.user.validator.UserValidator;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -40,7 +42,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("[SCN-AUTH-001] 회원가입 및 로그인 시  신규 유저 생성, 유저 정보를 업데이트 한다")
 public class AuthServiceTest {
 
     @Mock
@@ -56,6 +57,9 @@ public class AuthServiceTest {
     MobileRepository mobileRepository;
 
     @Mock
+    UserValidator userValidator;
+
+    @Mock
     JwtService jwtService;
 
     @Mock
@@ -66,7 +70,7 @@ public class AuthServiceTest {
 
     @ParameterizedTest
     @MethodSource("소셜_종류별")
-    @DisplayName("[TC-LOGIN-001] 신규 유저 소셜 로그인 시, 유저가 생성되어 저장되고 응답에 isNew=true 가 포함된다")
+    @DisplayName("[SCN-AUTH-001][TC-LOGIN-001] 신규 유저 소셜 로그인 시, 유저가 생성되어 저장되고 응답에 isNew=true 가 포함된다")
     void login_새로운_유저_로그인_성공(LoginRequestDto requestDto, SocialUserInfo userInfo) {
         //given
         Long userId = 1L;
@@ -121,7 +125,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("[TC-LOGIN-002] 신규 유저 애플 로그인 시, name이 null 인 경우 AuthErrorStatus._HAS_NOT_NEW_APPLE_USER_NAME 예외가 발생한다")
+    @DisplayName("[SCN-AUTH-001][TC-LOGIN-002] 신규 유저 애플 로그인 시, name이 null 인 경우 AuthErrorStatus._HAS_NOT_NEW_APPLE_USER_NAME 예외가 발생한다")
     void login_새로운_APPLE_유저_로그인_실패() {
         //given
         LoginRequestDto requestDto = new LoginRequestDto(SocialType.APPLE, "access-token", MobileType.IOS, "client-id", null, "test@test.com");
@@ -139,7 +143,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("[TC-LOGIN-003] 기존 유저 소셜 로그인 시, 유저의 정보(이미지url, fcm토큰)가 업데이트 되고 응답에 isNew=false가 포함된다")
+    @DisplayName("[SCN-AUTH-001][TC-LOGIN-003] 기존 유저 소셜 로그인 시, 유저의 정보(이미지url, fcm토큰)가 업데이트 되고 응답에 isNew=false가 포함된다")
     void login_존재하는_유저_로그인_성공() {
         //given
         LoginRequestDto requestDto = new LoginRequestDto(SocialType.KAKAO, "access-token", MobileType.ANDROID, "client-id", null, null);
@@ -170,5 +174,28 @@ public class AuthServiceTest {
         Mockito.verify(mobileRepository).findByClientId("client-id");
         Mockito.verify(userRepository, Mockito.never()).save(existingUser); // image 안 바뀌면 저장 안 함
     }
+
+    @Test
+    @DisplayName("[SCN-AUTH-002][TC-LOGOUT-001] 로그아웃시 정상적으로 로그아웃된다")
+    void logout_로그아웃_성공() {
+        //given
+        Long userId = 1L;
+        FCMTokenRequestDto requestDto = new FCMTokenRequestDto("client-id");
+
+        Mockito.doNothing().when(userValidator).checkIsExistUser(userId);
+        Mockito.doNothing().when(mobileRepository).deleteByClientId(requestDto.clientId());
+        Mockito.doNothing().when(jwtService).deleteRefreshToken(String.valueOf(userId));
+
+        //when
+        authService.logout(userId, requestDto);
+
+        //then
+        Mockito.verify(userValidator).checkIsExistUser(userId);
+        Mockito.verify(mobileRepository).deleteByClientId(requestDto.clientId());
+        Mockito.verify(jwtService).deleteRefreshToken(String.valueOf(userId));
+    }
+
+
+
 
 }
