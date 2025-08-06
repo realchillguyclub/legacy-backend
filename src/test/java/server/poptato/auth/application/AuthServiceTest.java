@@ -1,5 +1,7 @@
 package server.poptato.auth.application;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 import server.poptato.auth.api.request.FCMTokenRequestDto;
 import server.poptato.auth.api.request.LoginRequestDto;
+import server.poptato.auth.api.request.ReissueTokenRequestDto;
 import server.poptato.auth.application.response.LoginResponseDto;
 import server.poptato.auth.application.service.AuthService;
 import server.poptato.auth.application.service.JwtService;
@@ -195,7 +198,37 @@ public class AuthServiceTest {
         Mockito.verify(jwtService).deleteRefreshToken(String.valueOf(userId));
     }
 
+    @Test
+    @DisplayName("[SCN-AUTH-003][TC-JWT-001] 유효한 리프레시 토큰을 기반으로 새로운 토큰 페어를 생성하여 반환한다")
+    void refresh_jwt_토큰_갱신() {
+        //given
+        Long userId = 1L;
+        ReissueTokenRequestDto requestDto = new ReissueTokenRequestDto("access-token", "refresh-token", "client-id");
+        TokenPair tokenPair = new TokenPair("access-token", "refresh-token");
 
+        Mockito.doNothing().when(jwtService).verifyRefreshToken(requestDto.refreshToken());
+        Mockito.when(jwtService.getUserIdInToken(requestDto.refreshToken())).thenReturn(String.valueOf(userId));
+        Mockito.doNothing().when(jwtService).compareRefreshToken(String.valueOf(userId), requestDto.refreshToken());
+
+        Mockito.doNothing().when(userValidator).checkIsExistUser(userId);
+
+        Mockito.when(jwtService.generateTokenPair(String.valueOf(userId))).thenReturn(tokenPair);
+        Mockito.doNothing().when(jwtService).saveRefreshToken(String.valueOf(userId), tokenPair.refreshToken());
+
+        //when
+        TokenPair result = authService.refresh(requestDto);
+
+        // then
+        assertEquals(tokenPair.accessToken(), result.accessToken());
+        assertEquals(tokenPair.refreshToken(), result.refreshToken());
+
+        Mockito.verify(jwtService).verifyRefreshToken(requestDto.refreshToken());
+        Mockito.verify(jwtService).getUserIdInToken(requestDto.refreshToken());
+        Mockito.verify(jwtService).compareRefreshToken(String.valueOf(userId), requestDto.refreshToken());
+        Mockito.verify(userValidator).checkIsExistUser(userId);
+        Mockito.verify(jwtService).generateTokenPair(String.valueOf(userId));
+        Mockito.verify(jwtService).saveRefreshToken(String.valueOf(userId), tokenPair.refreshToken());
+    }
 
 
 }
