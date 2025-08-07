@@ -21,6 +21,7 @@ import server.poptato.auth.application.response.LoginResponseDto;
 import server.poptato.auth.application.service.AuthService;
 import server.poptato.auth.application.service.JwtService;
 import server.poptato.auth.status.AuthErrorStatus;
+import server.poptato.configuration.ServiceTestConfig;
 import server.poptato.external.oauth.SocialService;
 import server.poptato.external.oauth.SocialServiceProvider;
 import server.poptato.external.oauth.SocialUserInfo;
@@ -43,8 +44,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 
-@ExtendWith(MockitoExtension.class)
-public class AuthServiceTest {
+public class AuthServiceTest extends ServiceTestConfig {
 
     @Mock
     SocialServiceProvider socialServiceProvider;
