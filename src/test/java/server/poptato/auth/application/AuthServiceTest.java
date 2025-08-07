@@ -16,6 +16,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.annotation.Transactional;
 import server.poptato.auth.api.request.FCMTokenRequestDto;
 import server.poptato.auth.api.request.LoginRequestDto;
 import server.poptato.auth.api.request.ReissueTokenRequestDto;
@@ -35,6 +36,7 @@ import server.poptato.user.domain.repository.MobileRepository;
 import server.poptato.user.domain.repository.UserRepository;
 import server.poptato.user.domain.value.MobileType;
 import server.poptato.user.domain.value.SocialType;
+import server.poptato.user.status.MobileErrorStatus;
 import server.poptato.user.validator.UserValidator;
 
 import java.util.Optional;
@@ -230,5 +232,36 @@ public class AuthServiceTest {
         Mockito.verify(jwtService).saveRefreshToken(String.valueOf(userId), tokenPair.refreshToken());
     }
 
+    @Test
+    @DisplayName("[SCN-AUTH-004][TC-FCM-001] 존재하는 fcm토큰일 경우 접속한 날짜로 수정일을 변경한다")
+    void refreshFCMToken_존재하는_fcm토큰_정상_실행(){
+        // given
+        String clientId = "client-id";
+        Mobile mockMobile = Mockito.mock(Mobile.class);
+        Mockito.when(mobileRepository.findByClientId(clientId)).thenReturn(Optional.of(mockMobile));
+        Mockito.doNothing().when(mockMobile).updateModifiedTime();
 
+        // when
+        authService.refreshFCMToken(clientId);
+
+        // then
+        Mockito.verify(mobileRepository).findByClientId(clientId);
+        Mockito.verify(mockMobile).updateModifiedTime();
+    }
+
+    @Test
+    @DisplayName("[SCN-AUTH-004][TC-FCM-002] 존재하지 않는 fcm토큰일 경우 예외가 발생한다")
+    void refreshFCMToken_존재하지_않는_fcm토큰_예외발생(){
+        // given
+        String clientId = "client-id";
+        Mockito.when(mobileRepository.findByClientId(clientId)).thenReturn(Optional.empty());
+
+        // when & then
+        CustomException exception = assertThrows(CustomException.class, () ->
+                authService.refreshFCMToken(clientId));
+
+        assertEquals(MobileErrorStatus._NOT_EXIST_FCM_TOKEN, exception.getErrorCode());
+
+        Mockito.verify(mobileRepository).findByClientId(clientId);
+    }
 }
