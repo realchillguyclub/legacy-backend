@@ -1,7 +1,5 @@
 package server.poptato.auth.application;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,7 +14,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.transaction.annotation.Transactional;
 import server.poptato.auth.api.request.FCMTokenRequestDto;
 import server.poptato.auth.api.request.LoginRequestDto;
 import server.poptato.auth.api.request.ReissueTokenRequestDto;
@@ -56,6 +53,9 @@ public class AuthServiceTest {
     SocialService socialService;
 
     @Mock
+    JwtService jwtService;
+
+    @Mock
     UserRepository userRepository;
 
     @Mock
@@ -63,9 +63,6 @@ public class AuthServiceTest {
 
     @Mock
     UserValidator userValidator;
-
-    @Mock
-    JwtService jwtService;
 
     @Mock
     ApplicationEventPublisher eventPublisher;
@@ -79,40 +76,54 @@ public class AuthServiceTest {
     void login_새로운_유저_로그인_성공(LoginRequestDto requestDto, SocialUserInfo userInfo) {
         //given
         Long userId = 1L;
+
+        // 1. 소셜 서비스 모킹
         Mockito.when(socialServiceProvider.getSocialService(requestDto.socialType())).thenReturn(socialService);
         Mockito.when(socialService.getUserData(requestDto)).thenReturn(userInfo);
+        // 2. 기존 유저 아님
         Mockito.when(userRepository.findBySocialId(userInfo.socialId())).thenReturn(Optional.empty());
 
+        // 3. 새로운 유저 저장
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         Mockito.when(userRepository.save(any(User.class)))
                 .thenAnswer(invocation -> {
-                    User newUser = invocation.getArgument(0);
-                    ReflectionTestUtils.setField(newUser, "id", userId);
-                    return newUser;
+                    User user = invocation.getArgument(0);
+                    ReflectionTestUtils.setField(user, "id", userId); // ID 주입
+                    return user;
                 });
 
-        long userCount = 1L;
-        Mockito.when(userRepository.count()).thenReturn(userCount);
+        // 4. 유저 수 조회
+        Mockito.when(userRepository.count()).thenReturn(1L);
 
-        ArgumentCaptor<CreateUserEvent> createUserEventCaptor = ArgumentCaptor.forClass(CreateUserEvent.class);
-        Mockito.doNothing().when(eventPublisher).publishEvent(createUserEventCaptor.capture());
+        // 5. FCM 저장 관련
+        Mockito.when(mobileRepository.findByClientId(requestDto.clientId())).thenReturn(Optional.empty());
+
+        // 6. 이벤트 발행
+        Mockito.doNothing().when(eventPublisher).publishEvent(any(CreateUserEvent.class));
+
+        // 7. 토큰 생성
+        TokenPair tokenPair = new TokenPair("access-token", "refresh-token");
+        Mockito.when(jwtService.generateTokenPair(String.valueOf(userId))).thenReturn(tokenPair);
 
         // when
-        TokenPair tokenPair = new TokenPair("mockAccessToken", "mockRefreshToken");
-        Mockito.when(jwtService.generateTokenPair(String.valueOf(userId)))
-                .thenReturn(tokenPair);
         LoginResponseDto responseDto = authService.login(requestDto);
 
         // then
+        Assertions.assertThat(responseDto).isNotNull();
+        Assertions.assertThat(responseDto.accessToken()).isEqualTo("access-token");
+        Assertions.assertThat(responseDto.refreshToken()).isEqualTo("refresh-token");
+        Assertions.assertThat(responseDto.userId()).isEqualTo(userId);
+        Assertions.assertThat(responseDto.isNewUser()).isTrue();
+
+        // 유저 저장 검증
         Mockito.verify(userRepository).save(userCaptor.capture());
         User savedUser = userCaptor.getValue();
-
-        Assertions.assertThat(responseDto.isNewUser()).isTrue();
-        Assertions.assertThat(responseDto.userId()).isEqualTo(savedUser.getId());
-
-        Mockito.verify(socialServiceProvider).getSocialService(requestDto.socialType());
-        Mockito.verify(socialService).getUserData(requestDto);
-        Mockito.verify(userRepository).findBySocialId(userInfo.socialId());
+        Assertions.assertThat(savedUser.getId()).isEqualTo(userId);
+        Assertions.assertThat(savedUser.getEmail()).isEqualTo(userInfo.email());
+        // 이벤트 발행 검증
+        Mockito.verify(eventPublisher).publishEvent(any(CreateUserEvent.class));
+        // FCM 저장 검증
+        Mockito.verify(mobileRepository).save(any(Mobile.class));
     }
 
 
