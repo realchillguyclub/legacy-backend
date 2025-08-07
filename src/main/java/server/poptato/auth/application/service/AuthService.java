@@ -205,7 +205,7 @@ public class AuthService {
         Optional<Mobile> existingMobile = mobileRepository.findByClientId(clientId);
         if (existingMobile.isPresent()) {
             Mobile mobile = existingMobile.get();
-            mobile.updateClientId(mobile.getClientId());
+            mobile.updateModifiedTime();
             return;
         }
         throw new CustomException(MobileErrorStatus._NOT_EXIST_FCM_TOKEN);
