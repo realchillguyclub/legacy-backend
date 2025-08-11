@@ -3,7 +3,6 @@ package server.poptato.auth.application;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -11,7 +10,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 import server.poptato.auth.api.request.FCMTokenRequestDto;
@@ -146,7 +144,6 @@ public class AuthServiceTest extends ServiceTestConfig {
         //given
         LoginRequestDto requestDto = new LoginRequestDto(SocialType.APPLE, "access-token", MobileType.IOS, "client-id", null, "test@test.com");
         SocialUserInfo userInfo = new SocialUserInfo("social-id", "테스터", "test@test.com", "https://image.com");
-        Long userId = 1L;
         Mockito.when(socialServiceProvider.getSocialService(requestDto.socialType())).thenReturn(socialService);
         Mockito.when(socialService.getUserData(requestDto)).thenReturn(userInfo);
         Mockito.when(userRepository.findBySocialId(userInfo.socialId())).thenReturn(Optional.empty());
