@@ -552,11 +552,9 @@ public class TodoService {
 	 * 히스토리 캘린더 데이터를 조회합니다 (v2 - New).
 	 *
 	 * 날짜별 값 산정 규칙:
-	 * - 백로그 마감(backlog) 개수와 요일 반복(루틴) 개수의 합이 1 이상인 경우: 합계를 사용합니다.
-	 * - 합계가 0이면서 완료 히스토리(CompletedDateTime)가 존재하는 경우: -1을 사용합니다.
-	 * - 합계가 0이고 히스토리도 없는 경우: 해당 날짜는 결과에서 제외됩니다.
-	 *
-	 * 즉, 히스토리 날짜는 기본적으로 -1이지만, 같은 날짜에 백로그/루틴 카운트가 있으면 합계 값으로 대체됩니다.
+	 * - 완료 히스토리(CompletedDateTime)가 존재하는 경우: 무조건 -1을 사용합니다. (백로그/루틴 합계가 있어도 -1 우선)
+	 * - 완료 히스토리가 없고, 백로그 마감(backlog) 개수와 요일 반복(루틴) 개수의 합이 1 이상인 경우: 합계를 사용합니다.
+	 * - 완료 히스토리도 없고, 합계가 0인 경우: 해당 날짜는 결과에서 제외됩니다.
 	 *
 	 * @param userId 사용자 ID
 	 * @param year 조회할 연도 (예: "2025")
@@ -574,7 +572,7 @@ public class TodoService {
 		// 3) 해당 월의 각 날짜에 대해 (백로그 + 루틴) 합계를 계산
 		Map<LocalDate, Integer> resultByDate = fillCountsFromBacklogAndRoutine(backlogCounts, routineCountByDay, year, month);
 
-		// 4) 히스토리 날짜는 count가 없는 날에만 -1을 채움 (합계가 있는 날은 합계를 유지)
+		// 4) 히스토리 날짜는 합계가 있어도 -1로 덮어씁니다.
 		Set<LocalDate> historyDates = loadHistoryDateSet(userId, year, month);
 		applyMinusOneOnlyIfEmpty(resultByDate, historyDates);
 
@@ -625,8 +623,8 @@ public class TodoService {
 
 	private void applyMinusOneOnlyIfEmpty(Map<LocalDate, Integer> resultByDate, Set<LocalDate> historyDates) {
 		for (LocalDate date : historyDates) {
-			// 합계가 이미 있는 날짜는 그대로 두고, 없는 날짜만 -1로 표기
-			resultByDate.putIfAbsent(date, -1);
+			// 완료 히스토리가 존재하는 날짜는 합계가 있어도 -1을 우선합니다.
+			resultByDate.put(date, -1);
 		}
 	}
 
