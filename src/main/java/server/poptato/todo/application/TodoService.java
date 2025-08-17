@@ -463,11 +463,49 @@ public class TodoService {
             Page<Todo> historiesPage = getTodayTodos(userId, page, size);
             return PaginatedHistoryResponseDto.from(historiesPage);
         }
-        Page<Todo> historiesPage = todoRepository.findDeadlineBacklogs(userId, localDate, PageRequest.of(page, size));
-        return PaginatedHistoryResponseDto.of(historiesPage, false);
-    }
+		// 미래 날짜: 마감 백로그 + 요일 반복(루틴) 백로그를 합쳐서 페이징 처리
+		Page<Todo> historiesPage = getFuturePlanTodosIncludingRoutines(userId, localDate, page, size);
+		return PaginatedHistoryResponseDto.of(historiesPage, false);
+	}
 
-    /**
+	/**
+	 * 미래 날짜의 히스토리 조회를 위해,
+	 * - 해당 날짜가 마감인 BACKLOG
+	 * - 해당 날짜의 요일이 매칭되는 루틴 BACKLOG
+	 * 을 합친 뒤 페이징하여 반환합니다.
+	 */
+	private Page<Todo> getFuturePlanTodosIncludingRoutines(Long userId, LocalDate targetDate, int page, int size) {
+		// 1) 해당 날짜 마감 백로그 수집
+		List<Todo> deadlineMatchedTodos = todoRepository.findTodosByDeadLine(userId, targetDate);
+
+		// 2) 해당 날짜 요일에 매칭되는 루틴 백로그 수집
+		String dayName = targetDate.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN);
+		List<Todo> routineMatchedTodos = todoRepository.findRoutineTodosByDay(userId, dayName);
+
+		// 3) 합치고 중복 제거 (같은 todo가 양쪽 쿼리에 걸칠 여지를 방지)
+		Map<Long, Todo> merged = new LinkedHashMap<>();
+		for (Todo t : deadlineMatchedTodos) {
+			merged.put(t.getId(), t);
+		}
+		for (Todo t : routineMatchedTodos) {
+			merged.putIfAbsent(t.getId(), t);
+		}
+		List<Todo> combined = new ArrayList<>(merged.values());
+
+		// 4) 필요 시 정렬 기준을 부여
+		// 현재는 id 순 정렬 -> TODO. 추후 time이 노출된다면 time을 기준으로 오름차순 정렬
+		combined.sort(Comparator.comparing(Todo::getId));
+
+		// 5) 수동 페이징
+		PageRequest pageRequest = PageRequest.of(page, size);
+		int start = (int) pageRequest.getOffset();
+		int end = Math.min(start + pageRequest.getPageSize(), combined.size());
+		List<Todo> pageContent = (start >= combined.size()) ? Collections.emptyList() : combined.subList(start, end);
+
+		return new PageImpl<>(pageContent, pageRequest, combined.size());
+	}
+
+	/**
      * 오늘(TODAY)의 할 일 목록을 조회합니다.
      * 오늘 날짜 기준으로 다음의 할 일들을 조회하여 반환합니다:
      * - 미완료 상태(INCOMPLETE)의 할 일
