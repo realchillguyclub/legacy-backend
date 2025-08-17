@@ -510,42 +510,89 @@ public class TodoService {
                 .toList();
     }
 
-    /**
-     * 히스토리 캘린더 데이터를 조회합니다 (v2 - New).
-     * 다음의 정보를 날짜별로 통합하여 반환합니다:
-     * - 완료된 할 일이 존재하는 날짜 (히스토리)
-     * - 마감기한이 설정된 백로그가 존재하는 날짜
-     * 날짜별로 해당 날짜의 백로그 개수가 함께 포함되며,
-     * 히스토리 날짜는 기본적으로 count -1로 표시됩니다.
-     *
-     * @param userId 사용자 ID
-     * @param year 조회할 연도 (예: "2025")
-     * @param month 조회할 월 (1~12)
-     * @return 날짜별 히스토리/백로그 정보 DTO
-     */
-    @Transactional(readOnly = true)
-    public HistoryCalendarListResponseDto getHistoriesCalendar(Long userId, String year, int month) {
-        Map<LocalDate, Integer> historyCountByDate =
-                completedDateTimeRepository.findHistoryExistingDates(userId, year, month).stream()
-                        .map(LocalDateTime::toLocalDate)
-                        .distinct()
-                        .collect(Collectors.toMap(
-                                Function.identity(),
-                                date -> -1
-                        ));
+	/**
+	 * 히스토리 캘린더 데이터를 조회합니다 (v2 - New).
+	 *
+	 * 날짜별 값 산정 규칙:
+	 * - 백로그 마감(backlog) 개수와 요일 반복(루틴) 개수의 합이 1 이상인 경우: 합계를 사용합니다.
+	 * - 합계가 0이면서 완료 히스토리(CompletedDateTime)가 존재하는 경우: -1을 사용합니다.
+	 * - 합계가 0이고 히스토리도 없는 경우: 해당 날짜는 결과에서 제외됩니다.
+	 *
+	 * 즉, 히스토리 날짜는 기본적으로 -1이지만, 같은 날짜에 백로그/루틴 카운트가 있으면 합계 값으로 대체됩니다.
+	 *
+	 * @param userId 사용자 ID
+	 * @param year 조회할 연도 (예: "2025")
+	 * @param month 조회할 월 (1~12)
+	 * @return 날짜별 히스토리/백로그/루틴 정보 DTO
+	 */
+	@Transactional(readOnly = true)
+	public HistoryCalendarListResponseDto getHistoriesCalendar(Long userId, String year, int month) {
+		// 1) 백로그 일자별 카운트
+		Map<LocalDate, Integer> backlogCounts = loadBacklogCountMap(userId, year, month);
 
-        Map<LocalDate, Integer> backlogCountByDate = todoRepository.findDatesWithBacklogCount(userId, year, month).stream()
-                .collect(Collectors.toMap(
-                        t -> ((Date)t.get("date")).toLocalDate(),
-                        t -> ((Number) t.get("count")).intValue()
-                ));
+		// 2) 요일별 루틴 카운트
+		Map<String, Integer> routineCountByDay = loadRoutineCountByDay(userId);
 
-        historyCountByDate.putAll(backlogCountByDate);
+		// 3) 해당 월의 각 날짜에 대해 (백로그 + 루틴) 합계를 계산
+		Map<LocalDate, Integer> resultByDate = fillCountsFromBacklogAndRoutine(backlogCounts, routineCountByDay, year, month);
 
-        return HistoryCalendarListResponseDto.from(historyCountByDate);
-    }
+		// 4) 히스토리 날짜는 count가 없는 날에만 -1을 채움 (합계가 있는 날은 합계를 유지)
+		Set<LocalDate> historyDates = loadHistoryDateSet(userId, year, month);
+		applyMinusOneOnlyIfEmpty(resultByDate, historyDates);
 
-    /**
+		return HistoryCalendarListResponseDto.from(resultByDate);
+	}
+
+	private Map<LocalDate, Integer> loadBacklogCountMap(Long userId, String year, int month) {
+		return todoRepository.findDatesWithBacklogCount(userId, year, month).stream()
+			.collect(Collectors.toMap(
+				t -> ((Date) t.get("date")).toLocalDate(),
+				t -> ((Number) t.get("count")).intValue()
+			));
+	}
+
+	private Map<String, Integer> loadRoutineCountByDay(Long userId) {
+		return routineRepository.countRoutinesByDay(userId).stream()
+			.collect(Collectors.toMap(
+				m -> (String) m.get("day"),
+				m -> ((Number) m.get("cnt")).intValue()
+			));
+	}
+
+	private Map<LocalDate, Integer> fillCountsFromBacklogAndRoutine(Map<LocalDate, Integer> backlogCounts,
+		Map<String, Integer> routineCountByDay,
+		String year, int month) {
+		Map<LocalDate, Integer> result = new HashMap<>();
+		LocalDate firstDay = LocalDate.of(Integer.parseInt(year), month, 1);
+		LocalDate lastDay = firstDay.withDayOfMonth(firstDay.lengthOfMonth());
+
+		for (LocalDate d = firstDay; !d.isAfter(lastDay); d = d.plusDays(1)) {
+			int backlog = backlogCounts.getOrDefault(d, 0);
+			int routine = routineCountByDay.getOrDefault(
+				d.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN), 0
+			);
+			int sum = backlog + routine;
+			if (sum > 0) {
+				result.put(d, sum);
+			}
+		}
+		return result;
+	}
+
+	private Set<LocalDate> loadHistoryDateSet(Long userId, String year, int month) {
+		return completedDateTimeRepository.findHistoryExistingDates(userId, year, month).stream()
+			.map(LocalDateTime::toLocalDate)
+			.collect(Collectors.toCollection(LinkedHashSet::new));
+	}
+
+	private void applyMinusOneOnlyIfEmpty(Map<LocalDate, Integer> resultByDate, Set<LocalDate> historyDates) {
+		for (LocalDate date : historyDates) {
+			// 합계가 이미 있는 날짜는 그대로 두고, 없는 날짜만 -1로 표기
+			resultByDate.putIfAbsent(date, -1);
+		}
+	}
+
+	/**
      * 특정 할 일의 카테고리를 업데이트합니다.
      *
      * @param userId 사용자 ID

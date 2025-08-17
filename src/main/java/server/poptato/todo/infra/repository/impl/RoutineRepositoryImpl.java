@@ -7,6 +7,7 @@ import server.poptato.todo.domain.repository.RoutineRepository;
 import server.poptato.todo.infra.repository.JpaRoutineRepository;
 
 import java.util.List;
+import java.util.Map;
 
 @Repository
 @RequiredArgsConstructor
@@ -28,4 +29,9 @@ public class RoutineRepositoryImpl implements RoutineRepository {
     public List<Routine> findAllByTodoId(Long todoId) {
         return jpaRoutineRepository.findAllByTodoId(todoId);
     }
+
+	@Override
+	public List<Map<String, Object>> countRoutinesByDay(Long userId) {
+		return jpaRoutineRepository.countRoutinesByDay(userId);
+	}
 }
