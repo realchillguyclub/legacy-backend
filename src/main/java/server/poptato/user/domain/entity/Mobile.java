@@ -40,7 +40,7 @@ public class Mobile extends BaseEntity {
         this.clientId = clientId;
     }
 
-    public void updateModifiedTime() {
+    public void updateModifiedDate() {
         this.dirtyFlag = !this.dirtyFlag;
     }
 

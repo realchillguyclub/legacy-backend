@@ -247,14 +247,14 @@ class AuthServiceTest extends ServiceTestConfig {
         String clientId = "client-id";
         Mobile mockMobile = Mockito.mock(Mobile.class);
         Mockito.when(mobileRepository.findByClientId(clientId)).thenReturn(Optional.of(mockMobile));
-        Mockito.doNothing().when(mockMobile).updateModifiedTime();
+        Mockito.doNothing().when(mockMobile).updateModifiedDate();
 
         // when
         authService.refreshFCMToken(clientId);
 
         // then
         Mockito.verify(mobileRepository).findByClientId(clientId);
-        Mockito.verify(mockMobile).updateModifiedTime();
+        Mockito.verify(mockMobile).updateModifiedDate();
     }
 
     @Test
