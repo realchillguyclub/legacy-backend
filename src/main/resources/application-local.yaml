@@ -87,7 +87,7 @@ scheduling:
   fcmCleanupCron: ${FCM_CLEANUP_CRON}  # 비활성 FCM 토큰 삭제 스케줄러
   startNotificationCron: ${START_NOTIFICATION_CRON}  # 하루 시작 알림 스케줄러
   endOfDayNotificationCron: ${END_OF_DAY_NOTIFICATION_CRON}  # 일과 정리 알림 스케줄러
-  deadlineNotificationCron: ${DEADLINE_NOTIFICATION_CRON}  # 마감일 알림 스케줄러
+  todayTodosNotificationCron: ${TODAY_TODOS_NOTIFICATION_CRON}  # 오늘 할 일 알림 스케줄러
   timeDeadlineNotificationCron: ${TIME_DEADLINE_NOTIFICATION_CRON} # 시간 설정 할 일 알림 스케줄러
 
 batch:
