@@ -1,12 +1,9 @@
 package server.poptato.todo.domain.repository;
 
-import feign.Param;
-import server.poptato.todo.domain.entity.Routine;
-
 import java.util.List;
-import java.util.Map;
 
-import org.springframework.data.jpa.repository.Query;
+import server.poptato.todo.application.response.RoutineCountDto;
+import server.poptato.todo.domain.entity.Routine;
 
 public interface RoutineRepository {
 
@@ -16,5 +13,5 @@ public interface RoutineRepository {
 
     List<Routine> findAllByTodoId(Long todoId);
 
-	List<Map<String, Object>> countRoutinesByDay(@Param("userId") Long userId);
+	List<RoutineCountDto> countRoutinesByDay(Long userId);
 }

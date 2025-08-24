@@ -18,6 +18,7 @@ import server.poptato.global.util.FileUtil;
 import server.poptato.todo.api.request.*;
 import server.poptato.todo.application.response.HistoryCalendarListResponseDto;
 import server.poptato.todo.application.response.PaginatedHistoryResponseDto;
+import server.poptato.todo.application.response.RoutineCountDto;
 import server.poptato.todo.application.response.TodoDetailResponseDto;
 import server.poptato.todo.domain.entity.CompletedDateTime;
 import server.poptato.todo.domain.entity.Routine;
@@ -574,7 +575,7 @@ public class TodoService {
 
 		// 4) 히스토리 날짜는 합계가 있어도 -1로 덮어씁니다.
 		Set<LocalDate> historyDates = loadHistoryDateSet(userId, year, month);
-		applyMinusOneOnlyIfEmpty(resultByDate, historyDates);
+		markHistoryDatesWithMinusOne(resultByDate, historyDates);
 
 		return HistoryCalendarListResponseDto.from(resultByDate);
 	}
@@ -590,8 +591,8 @@ public class TodoService {
 	private Map<String, Integer> loadRoutineCountByDay(Long userId) {
 		return routineRepository.countRoutinesByDay(userId).stream()
 			.collect(Collectors.toMap(
-				m -> (String) m.get("day"),
-				m -> ((Number) m.get("cnt")).intValue()
+				RoutineCountDto::day,
+				RoutineCountDto::count
 			));
 	}
 
@@ -621,7 +622,7 @@ public class TodoService {
 			.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
-	private void applyMinusOneOnlyIfEmpty(Map<LocalDate, Integer> resultByDate, Set<LocalDate> historyDates) {
+	private void markHistoryDatesWithMinusOne(Map<LocalDate, Integer> resultByDate, Set<LocalDate> historyDates) {
 		for (LocalDate date : historyDates) {
 			// 완료 히스토리가 존재하는 날짜는 합계가 있어도 -1을 우선합니다.
 			resultByDate.put(date, -1);
