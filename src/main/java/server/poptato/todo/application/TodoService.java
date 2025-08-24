@@ -592,7 +592,7 @@ public class TodoService {
 		return routineRepository.countRoutinesByDay(userId).stream()
 			.collect(Collectors.toMap(
 				RoutineCountDto::day,
-				RoutineCountDto::count
+				dto -> dto.count().intValue()
 			));
 	}
 

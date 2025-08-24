@@ -1,4 +1,4 @@
 package server.poptato.todo.application.response;
 
-public record RoutineCountDto(String day, int count) {
+public record RoutineCountDto(String day, Long count) {
 }
