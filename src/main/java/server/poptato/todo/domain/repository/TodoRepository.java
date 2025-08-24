@@ -1,16 +1,17 @@
 package server.poptato.todo.domain.repository;
 
-import jakarta.persistence.Tuple;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import server.poptato.todo.domain.entity.Todo;
-import server.poptato.todo.domain.value.TodayStatus;
-import server.poptato.todo.domain.value.Type;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import jakarta.persistence.Tuple;
+import server.poptato.todo.domain.entity.Todo;
+import server.poptato.todo.domain.value.TodayStatus;
+import server.poptato.todo.domain.value.Type;
 
 public interface TodoRepository {
 
@@ -54,7 +55,7 @@ public interface TodoRepository {
 
     void deleteAllByCategoryId(Long categoryId);
 
-    List<Todo> findTodosDueToday(Long userId, LocalDate deadline, TodayStatus todayStatus);
+    List<Todo> findIncompleteTodayTodos(Long userId, TodayStatus todayStatus);
 
     List<Todo> findTodosByDeadLine(Long userId, LocalDate deadline);
 

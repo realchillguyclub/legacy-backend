@@ -1,21 +1,22 @@
 package server.poptato.todo.infra.repository.impl;
 
-import jakarta.persistence.Tuple;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Repository;
-import server.poptato.todo.domain.entity.Todo;
-import server.poptato.todo.domain.repository.TodoRepository;
-import server.poptato.todo.domain.value.TodayStatus;
-import server.poptato.todo.domain.value.Type;
-import server.poptato.todo.infra.repository.JpaTodoRepository;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Repository;
+
+import jakarta.persistence.Tuple;
+import lombok.RequiredArgsConstructor;
+import server.poptato.todo.domain.entity.Todo;
+import server.poptato.todo.domain.repository.TodoRepository;
+import server.poptato.todo.domain.value.TodayStatus;
+import server.poptato.todo.domain.value.Type;
+import server.poptato.todo.infra.repository.JpaTodoRepository;
 
 @Repository
 @RequiredArgsConstructor
@@ -124,8 +125,8 @@ public class TodoRepositoryImpl implements TodoRepository {
     }
 
     @Override
-    public List<Todo> findTodosDueToday(Long userId, LocalDate deadline, TodayStatus todayStatus) {
-        return jpaTodoRepository.findTodosDueToday(userId, deadline, todayStatus);
+    public List<Todo> findIncompleteTodayTodos(Long userId, TodayStatus todayStatus) {
+        return jpaTodoRepository.findIncompleteTodayTodos(userId, todayStatus);
     }
 
     @Override
