@@ -1,12 +1,19 @@
 package server.poptato.external.firebase.application;
 
-import com.google.firebase.messaging.FirebaseMessagingException;
-import com.google.firebase.messaging.MessagingErrorCode;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.LocalTime;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import com.google.firebase.messaging.FirebaseMessagingException;
+import com.google.firebase.messaging.MessagingErrorCode;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import server.poptato.external.firebase.template.FcmNotificationTemplate;
 import server.poptato.global.util.BatchUtil;
 import server.poptato.todo.domain.entity.TimeAlarm;
@@ -19,12 +26,6 @@ import server.poptato.user.domain.entity.Mobile;
 import server.poptato.user.domain.entity.User;
 import server.poptato.user.domain.repository.MobileRepository;
 import server.poptato.user.domain.repository.UserRepository;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -41,62 +42,66 @@ public class FcmNotificationBatchService {
     private int batchSize;
 
     /**
-     * 마감기한 푸쉬알림을 전체 유저에게 전송한다.
+     * '오늘 할 일' 푸쉬알림을 전체 유저에게 전송한다.
      */
     @Async
-    public void sendDeadlineNotifications() {
+    public void sendTodayTodosNotifications() {
         List<User> users = userRepository.findByIsPushAlarmTrue();
         BatchUtil.splitIntoBatches(users, batchSize).forEach(batch -> {
             for (User user : batch) {
-                sendUserDeadlineNotification(user);
+                sendUserTodayTodosNotification(user);
             }
         });
     }
 
     /**
-     * 특정 유저에게 마감기한 푸쉬알림을 전송한다.
+     * 유저에게 '오늘 할 일' 푸쉬알림을 전송한다.
      *
      * @param user 알림을 보낼 대상 유저
      */
-    private void sendUserDeadlineNotification(User user) {
-        List<Todo> todosDueToday = todoRepository.findTodosDueToday(user.getId(), LocalDate.now(), TodayStatus.INCOMPLETE);
-        if (!todosDueToday.isEmpty()) {
-            List<Mobile> mobiles = mobileRepository.findAllByUserId(user.getId());
-            for (Mobile mobile : mobiles) {
-                for (Todo todo : todosDueToday) {
-                    String body = String.format(FcmNotificationTemplate.DEADLINE.getBody(), todo.getContent());
-                    sendPushOrDeleteToken(
-                            mobile.getClientId(),
-                            FcmNotificationTemplate.DEADLINE.getTitle(),
-                            body
-                    );
-                }
-            }
-        }
+    private void sendUserTodayTodosNotification(User user) {
+		List<Todo> incompleteTodayTodos = todoRepository.findIncompleteTodayTodos(user.getId(), TodayStatus.INCOMPLETE);
+		if (!incompleteTodayTodos.isEmpty()) {
+			List<Mobile> mobiles = mobileRepository.findAllByUserId(user.getId());
+			for (Mobile mobile : mobiles) {
+				for (Todo todo : incompleteTodayTodos) {
+					String body = String.format(FcmNotificationTemplate.TODAY_TODOS.getBody(), todo.getContent());
+					sendPushOrDeleteToken(
+						mobile.getClientId(),
+						FcmNotificationTemplate.TODAY_TODOS.getTitle(),
+						body
+					);
+				}
+			}
+		}
     }
 
     /**
-     * 하루 시작 푸쉬알림을 전체 유저에게 전송한다.
+     * 하루 시작 푸쉬알림을, 아직 할 일이 없는 유저에게 전송한다.
      */
     @Async
     public void sendStartNotifications() {
         List<User> users = userRepository.findByIsPushAlarmTrue();
         BatchUtil.splitIntoBatches(users, batchSize).forEach(batch -> {
             for (User user : batch) {
-                List<Mobile> mobiles = mobileRepository.findAllByUserId(user.getId());
-                for (Mobile mobile : mobiles) {
-                    sendPushOrDeleteToken(
-                            mobile.getClientId(),
-                            FcmNotificationTemplate.START_OF_DAY.getTitle(),
-                            FcmNotificationTemplate.START_OF_DAY.getBody()
-                    );
-                }
+				boolean hasIncompleteTodayTodos =
+					todoRepository.existsByUserIdAndTypeAndTodayStatus(user.getId(), Type.TODAY, TodayStatus.INCOMPLETE);
+				if (!hasIncompleteTodayTodos) {
+					List<Mobile> mobiles = mobileRepository.findAllByUserId(user.getId());
+					for (Mobile mobile : mobiles) {
+						sendPushOrDeleteToken(
+							mobile.getClientId(),
+							FcmNotificationTemplate.START_OF_DAY.getTitle(),
+							FcmNotificationTemplate.START_OF_DAY.getBody()
+						);
+					}
+				}
             }
         });
     }
 
     /**
-     * 일과 정리 푸쉬알림을 전체 유저에게 전송한다.
+     * 일과 정리 푸쉬알림을, 아직 할 일이 남은 유저에게 전송한다.
      */
     @Async
     public void sendEndOfDayNotifications() {
