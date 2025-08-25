@@ -26,7 +26,7 @@ MESSAGE_FAILURE="🚨 '일단!' 배포 과정에서 오류가 발생했습니다
 
 send_discord_message() {
   local message=$1
-  curl -H "Content-Type: application/json" -d "{\"content\": \"$message\"}" $DISCORD_WEBHOOK_URL
+  curl -H "Content-Type: application/json" -d "{\"content\": \"$message\"}" $DISCORD_DEPLOY_RESULT_WEBHOOK_URL
 }
 
 # 💚 blue가 실행중이라면 green을 up합니다.
