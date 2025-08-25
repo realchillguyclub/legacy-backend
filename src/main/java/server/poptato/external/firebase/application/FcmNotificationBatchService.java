@@ -77,27 +77,31 @@ public class FcmNotificationBatchService {
     }
 
     /**
-     * 하루 시작 푸쉬알림을 전체 유저에게 전송한다.
+     * 하루 시작 푸쉬알림을, 아직 할 일이 없는 유저에게 전송한다.
      */
     @Async
     public void sendStartNotifications() {
         List<User> users = userRepository.findByIsPushAlarmTrue();
         BatchUtil.splitIntoBatches(users, batchSize).forEach(batch -> {
             for (User user : batch) {
-                List<Mobile> mobiles = mobileRepository.findAllByUserId(user.getId());
-                for (Mobile mobile : mobiles) {
-                    sendPushOrDeleteToken(
-                            mobile.getClientId(),
-                            FcmNotificationTemplate.START_OF_DAY.getTitle(),
-                            FcmNotificationTemplate.START_OF_DAY.getBody()
-                    );
-                }
+				boolean hasIncompleteTodayTodos =
+					todoRepository.existsByUserIdAndTypeAndTodayStatus(user.getId(), Type.TODAY, TodayStatus.INCOMPLETE);
+				if (!hasIncompleteTodayTodos) {
+					List<Mobile> mobiles = mobileRepository.findAllByUserId(user.getId());
+					for (Mobile mobile : mobiles) {
+						sendPushOrDeleteToken(
+							mobile.getClientId(),
+							FcmNotificationTemplate.START_OF_DAY.getTitle(),
+							FcmNotificationTemplate.START_OF_DAY.getBody()
+						);
+					}
+				}
             }
         });
     }
 
     /**
-     * 일과 정리 푸쉬알림을 전체 유저에게 전송한다.
+     * 일과 정리 푸쉬알림을, 아직 할 일이 남은 유저에게 전송한다.
      */
     @Async
     public void sendEndOfDayNotifications() {
