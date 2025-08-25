@@ -1,20 +1,19 @@
 package server.poptato.external.discord.application.service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import server.poptato.external.discord.dto.DailyStats;
-import server.poptato.todo.domain.value.TodayStatus;
 import server.poptato.todo.domain.value.Type;
 import server.poptato.user.domain.value.MobileType;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 
 @Service
 @RequiredArgsConstructor
@@ -38,9 +37,6 @@ public class DailyStatsService {
 		long todayCompleted = countTodayCompletedByCompletionLogs(date, start, end);
 		double todayCompletedRate = rate(todayCompleted, todayTotal);
 
-		long newUsersWhoCompleted = countNewUsersWhoCompleted(date, start, end);
-		double newUsersWhoCompletedRate = rate(newUsersWhoCompleted, signupsTotal);
-
 		return DailyStats.of(
 			date.toString(),
 			signupsTotal,
@@ -49,9 +45,7 @@ public class DailyStatsService {
 			todosCreated,
 			todayTotal,
 			todayCompleted,
-			todayCompletedRate,
-			newUsersWhoCompleted,
-			newUsersWhoCompletedRate
+			todayCompletedRate
 		);
 	}
 
@@ -133,29 +127,6 @@ public class DailyStatsService {
                 """;
 		TypedQuery<Long> query = em.createQuery(q, Long.class);
 		query.setParameter("date", date);
-		query.setParameter("start", start);
-		query.setParameter("end", end);
-		return query.getSingleResult();
-	}
-
-	// 오늘 신규 가입자 중, 할 일을 완료한 명수 집계
-	private long countNewUsersWhoCompleted(LocalDate date, LocalDateTime start, LocalDateTime end) {
-		String q = """
-                select count(distinct t.userId)
-                from Todo t
-                where t.type = :type
-                  and t.todayDate = :date
-                  and t.todayStatus = :status
-                  and t.userId in (
-                      select u.id
-                      from User u
-                      where u.createDate between :start and :end
-                  )
-                """;
-		TypedQuery<Long> query = em.createQuery(q, Long.class);
-		query.setParameter("type", Type.TODAY);
-		query.setParameter("date", date);
-		query.setParameter("status", TodayStatus.COMPLETED);
 		query.setParameter("start", start);
 		query.setParameter("end", end);
 		return query.getSingleResult();
