@@ -7,8 +7,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import server.poptato.todo.application.response.RoutineCountDto;
 import server.poptato.todo.domain.entity.Routine;
+import server.poptato.todo.domain.projection.RoutineCountProjection;
 
 public interface JpaRoutineRepository extends JpaRepository<Routine, Long> {
 
@@ -19,16 +19,17 @@ public interface JpaRoutineRepository extends JpaRepository<Routine, Long> {
 	List<Routine> findAllByTodoId(Long todoId);
 
 	@Query("""
-        SELECT new server.poptato.todo.application.response.RoutineCountDto(r.day, COUNT(r))
-        FROM Routine r
-        WHERE r.todoId IN (
-            SELECT t.id
-            FROM Todo t
-            WHERE t.userId = :userId
-              AND t.isRoutine = true
-              AND t.type = 'BACKLOG'
-        )
-        GROUP BY r.day
-        """)
-	List<RoutineCountDto> countRoutinesByDay(@Param("userId") Long userId);
+       SELECT r.day AS day, COUNT(r) AS count
+       FROM Routine r
+       WHERE r.todoId IN (
+           SELECT t.id
+           FROM Todo t
+           WHERE t.userId = :userId
+             AND t.isRoutine = true
+             AND t.type = 'BACKLOG'
+       )
+       AND r.day IS NOT NULL
+       GROUP BY r.day
+       """)
+	List<RoutineCountProjection> countRoutinesByDay(@Param("userId") Long userId);
 }

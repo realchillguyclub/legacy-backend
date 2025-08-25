@@ -1,13 +1,34 @@
 package server.poptato.todo.application;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import lombok.RequiredArgsConstructor;
+import java.sql.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.TextStyle;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import lombok.RequiredArgsConstructor;
 import server.poptato.category.domain.entity.Category;
 import server.poptato.category.domain.repository.CategoryRepository;
 import server.poptato.category.validator.CategoryValidator;
@@ -15,15 +36,22 @@ import server.poptato.emoji.domain.entity.Emoji;
 import server.poptato.emoji.domain.repository.EmojiRepository;
 import server.poptato.global.exception.CustomException;
 import server.poptato.global.util.FileUtil;
-import server.poptato.todo.api.request.*;
+import server.poptato.todo.api.request.CheckYesterdayTodosRequestDto;
+import server.poptato.todo.api.request.ContentUpdateRequestDto;
+import server.poptato.todo.api.request.DeadlineUpdateRequestDto;
+import server.poptato.todo.api.request.RoutineUpdateRequestDto;
+import server.poptato.todo.api.request.SwipeRequestDto;
+import server.poptato.todo.api.request.TimeUpdateRequestDto;
+import server.poptato.todo.api.request.TodoCategoryUpdateRequestDto;
+import server.poptato.todo.api.request.TodoDragAndDropRequestDto;
 import server.poptato.todo.application.response.HistoryCalendarListResponseDto;
 import server.poptato.todo.application.response.PaginatedHistoryResponseDto;
-import server.poptato.todo.application.response.RoutineCountDto;
 import server.poptato.todo.application.response.TodoDetailResponseDto;
 import server.poptato.todo.domain.entity.CompletedDateTime;
 import server.poptato.todo.domain.entity.Routine;
 import server.poptato.todo.domain.entity.TimeAlarm;
 import server.poptato.todo.domain.entity.Todo;
+import server.poptato.todo.domain.projection.RoutineCountProjection;
 import server.poptato.todo.domain.repository.CompletedDateTimeRepository;
 import server.poptato.todo.domain.repository.RoutineRepository;
 import server.poptato.todo.domain.repository.TimeAlarmRepository;
@@ -33,15 +61,6 @@ import server.poptato.todo.domain.value.Type;
 import server.poptato.todo.status.TodoErrorStatus;
 import server.poptato.user.domain.value.MobileType;
 import server.poptato.user.validator.UserValidator;
-
-import java.sql.Date;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.TextStyle;
-import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -589,10 +608,12 @@ public class TodoService {
 	}
 
 	private Map<String, Integer> loadRoutineCountByDay(Long userId) {
-		return routineRepository.countRoutinesByDay(userId).stream()
+		List<RoutineCountProjection> projections = routineRepository.countRoutinesByDay(userId);
+
+		return projections.stream()
 			.collect(Collectors.toMap(
-				RoutineCountDto::day,
-				dto -> dto.count().intValue()
+				RoutineCountProjection::getDay,
+				p -> p.getCount().intValue()
 			));
 	}
 

@@ -5,8 +5,8 @@ import java.util.List;
 import org.springframework.stereotype.Repository;
 
 import lombok.RequiredArgsConstructor;
-import server.poptato.todo.application.response.RoutineCountDto;
 import server.poptato.todo.domain.entity.Routine;
+import server.poptato.todo.domain.projection.RoutineCountProjection;
 import server.poptato.todo.domain.repository.RoutineRepository;
 import server.poptato.todo.infra.repository.JpaRoutineRepository;
 
@@ -32,7 +32,7 @@ public class RoutineRepositoryImpl implements RoutineRepository {
     }
 
 	@Override
-	public List<RoutineCountDto> countRoutinesByDay(Long userId) {
+	public List<RoutineCountProjection> countRoutinesByDay(Long userId) {
 		return jpaRoutineRepository.countRoutinesByDay(userId);
 	}
 }

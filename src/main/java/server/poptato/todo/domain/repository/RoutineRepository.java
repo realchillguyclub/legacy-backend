@@ -2,8 +2,8 @@ package server.poptato.todo.domain.repository;
 
 import java.util.List;
 
-import server.poptato.todo.application.response.RoutineCountDto;
 import server.poptato.todo.domain.entity.Routine;
+import server.poptato.todo.domain.projection.RoutineCountProjection;
 
 public interface RoutineRepository {
 
@@ -13,5 +13,5 @@ public interface RoutineRepository {
 
     List<Routine> findAllByTodoId(Long todoId);
 
-	List<RoutineCountDto> countRoutinesByDay(Long userId);
+	List<RoutineCountProjection> countRoutinesByDay(Long userId);
 }
