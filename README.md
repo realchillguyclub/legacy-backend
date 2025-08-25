@@ -1,33 +1,45 @@
 # ILLDAN Backend 🚀
 
-## 📄 API Documentation
-
-[📝 REST Docs + Swagger](https://prev-illdan.store/swagger-ui/index.html)
-
 ## 🔒 Rules
 
 ### Branch
 
-- 이슈 기반 브랜치 생성
-    - `ex) feature/#4/login`
-- `main branch`
+> Jira 이슈 기반으로 브랜치를 생성합니다.
+
+- **브랜치 형식**
+
+    - `[타입]/[지라-이슈번호]/[기능-요약]`
+    - `ex) feature/ILLDAN-123/user-profile`
+
+- **main branch**
+
     - 현재 서비스 중인 브랜치
     - release 브랜치에서 검수가 완료된 소스 코드 병합
     - PR이 병합된 경우 prod-cicd.yml 스크립트 실행
-- `release branch`
+
+- **release branch**
+
     - 검수 중인 브랜치로 Staging 환경 역할
     - `release/v*` 형식의 브랜치 이름 사용
     - 검수 완료 후 main 브랜치로 병합, 이후 브랜치 제거
-- `develop branch`
+
+- **develop branch**
+
     - 개발 중인 기능 병합 브랜치
     - 배포 단위 기능 모두 병합 시 release 브랜치로 분기
     - PR 병합 또는 코드 푸시 시 test-cicd.yml 스크립트 실행
-- `hotfix 브랜치`
+
+- **hotfix 브랜치**
+
     - 배포 후 긴급 수정 시 사용
 
 ### **Commit Message**
 
-- 이슈 번호 붙여서 커밋 `Ex) #4 [feat] : 로그인 기능을 추가한다`
+> 커밋 메시지 최상단에 Jira 이슈 번호를 포함합니다.
+
+- **커밋 형식**
+    - `[지라-이슈번호] [[태그]] : [작업 내용 요약]`
+    - `ex) ILLDAN-123 [feat] : 로그인 기능을 추가한다`
 - Body는 추가 설명 필요하면 사용
 
 | ***작업태그*** | ***내용*** |
@@ -41,6 +53,22 @@
 | **rename** | 패키지 혹은 폴더명, 클래스명 수정 (단독으로 시행하였을 시) |
 | **remove** | 패키지 혹은 폴더, 클래스를 삭제하였을 때 (단독으로 시행하였을 시) |
 
+### Pull Request (PR)
+
+> PR 제목에 Jira 이슈 번호를 포함하여 어떤 작업인지 명확히 합니다.
+
+- **PR 제목 형식**
+
+    - `[지라-이슈번호] [[대표 태그]] : [PR의 전체 기능 요약]`
+    - `ex) ILLDAN-123 [feat] : 사용자 프로필 조회 기능 구현`
+
+- **PR 본문 (Body) 추천 내용**
+
+    - `작업 내용`: 이 PR이 어떤 작업을 했는지 요약
+    - `관련 이슈`: Jira 이슈 티켓 링크 (ex: `close #ILLDAN-123`)
+    - `중점 리뷰 포인트`: 리뷰어가 집중해서 봐야 할 부분
+    - `테스트 결과`: 테스트 방법 및 결과, 스크린샷 등
+
 ### Naming
 
 - **패키지명** : 한 단어 소문자 사용 `Ex) service`
@@ -50,21 +78,4 @@
 - **상수명** : 대문자 사용 `Ex) EXPIRATION_TIME`
 - **컬럼명** : 스네이크 케이스 사용 `Ex) user_id`
 
-
-### API Response
-
-```json
-{
-  "code": "GLOBAL-200",
-  "message": "요청 응답에 성공했습니다.",
-  "payload": {
-    "todoId": 1
-  },
-  "isSuccess": true
-}
-```
-
-- `code` : 성공 코드, HTTP 상태 코드와 동일
-- `message` : 성공 메세지
-- `payload` : 데이터가 들어가는 곳
-- `isSuccess` : 성공 여부
+---
