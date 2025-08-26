@@ -1,13 +1,34 @@
 package server.poptato.todo.application;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import lombok.RequiredArgsConstructor;
+import java.sql.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.TextStyle;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import lombok.RequiredArgsConstructor;
 import server.poptato.category.domain.entity.Category;
 import server.poptato.category.domain.repository.CategoryRepository;
 import server.poptato.category.validator.CategoryValidator;
@@ -15,7 +36,14 @@ import server.poptato.emoji.domain.entity.Emoji;
 import server.poptato.emoji.domain.repository.EmojiRepository;
 import server.poptato.global.exception.CustomException;
 import server.poptato.global.util.FileUtil;
-import server.poptato.todo.api.request.*;
+import server.poptato.todo.api.request.CheckYesterdayTodosRequestDto;
+import server.poptato.todo.api.request.ContentUpdateRequestDto;
+import server.poptato.todo.api.request.DeadlineUpdateRequestDto;
+import server.poptato.todo.api.request.RoutineUpdateRequestDto;
+import server.poptato.todo.api.request.SwipeRequestDto;
+import server.poptato.todo.api.request.TimeUpdateRequestDto;
+import server.poptato.todo.api.request.TodoCategoryUpdateRequestDto;
+import server.poptato.todo.api.request.TodoDragAndDropRequestDto;
 import server.poptato.todo.application.response.HistoryCalendarListResponseDto;
 import server.poptato.todo.application.response.PaginatedHistoryResponseDto;
 import server.poptato.todo.application.response.TodoDetailResponseDto;
@@ -23,6 +51,7 @@ import server.poptato.todo.domain.entity.CompletedDateTime;
 import server.poptato.todo.domain.entity.Routine;
 import server.poptato.todo.domain.entity.TimeAlarm;
 import server.poptato.todo.domain.entity.Todo;
+import server.poptato.todo.domain.projection.RoutineCountProjection;
 import server.poptato.todo.domain.repository.CompletedDateTimeRepository;
 import server.poptato.todo.domain.repository.RoutineRepository;
 import server.poptato.todo.domain.repository.TimeAlarmRepository;
@@ -32,15 +61,6 @@ import server.poptato.todo.domain.value.Type;
 import server.poptato.todo.status.TodoErrorStatus;
 import server.poptato.user.domain.value.MobileType;
 import server.poptato.user.validator.UserValidator;
-
-import java.sql.Date;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.TextStyle;
-import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -463,11 +483,49 @@ public class TodoService {
             Page<Todo> historiesPage = getTodayTodos(userId, page, size);
             return PaginatedHistoryResponseDto.from(historiesPage);
         }
-        Page<Todo> historiesPage = todoRepository.findDeadlineBacklogs(userId, localDate, PageRequest.of(page, size));
-        return PaginatedHistoryResponseDto.of(historiesPage, false);
-    }
+		// 미래 날짜: 마감 백로그 + 요일 반복(루틴) 백로그를 합쳐서 페이징 처리
+		Page<Todo> historiesPage = getFuturePlanTodosIncludingRoutines(userId, localDate, page, size);
+		return PaginatedHistoryResponseDto.of(historiesPage, false);
+	}
 
-    /**
+	/**
+	 * 미래 날짜의 히스토리 조회를 위해,
+	 * - 해당 날짜가 마감인 BACKLOG
+	 * - 해당 날짜의 요일이 매칭되는 루틴 BACKLOG
+	 * 을 합친 뒤 페이징하여 반환합니다.
+	 */
+	private Page<Todo> getFuturePlanTodosIncludingRoutines(Long userId, LocalDate targetDate, int page, int size) {
+		// 1) 해당 날짜 마감 백로그 수집
+		List<Todo> deadlineMatchedTodos = todoRepository.findTodosByDeadLine(userId, targetDate);
+
+		// 2) 해당 날짜 요일에 매칭되는 루틴 백로그 수집
+		String dayName = targetDate.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN);
+		List<Todo> routineMatchedTodos = todoRepository.findRoutineTodosByDay(userId, dayName);
+
+		// 3) 합치고 중복 제거 (같은 todo가 양쪽 쿼리에 걸칠 여지를 방지)
+		Map<Long, Todo> merged = new LinkedHashMap<>();
+		for (Todo t : deadlineMatchedTodos) {
+			merged.put(t.getId(), t);
+		}
+		for (Todo t : routineMatchedTodos) {
+			merged.putIfAbsent(t.getId(), t);
+		}
+		List<Todo> combined = new ArrayList<>(merged.values());
+
+		// 4) 필요 시 정렬 기준을 부여
+		// 현재는 id 순 정렬 -> TODO. 추후 time이 노출된다면 time을 기준으로 오름차순 정렬
+		combined.sort(Comparator.comparing(Todo::getId));
+
+		// 5) 수동 페이징
+		PageRequest pageRequest = PageRequest.of(page, size);
+		int start = (int) pageRequest.getOffset();
+		int end = Math.min(start + pageRequest.getPageSize(), combined.size());
+		List<Todo> pageContent = (start >= combined.size()) ? Collections.emptyList() : combined.subList(start, end);
+
+		return new PageImpl<>(pageContent, pageRequest, combined.size());
+	}
+
+	/**
      * 오늘(TODAY)의 할 일 목록을 조회합니다.
      * 오늘 날짜 기준으로 다음의 할 일들을 조회하여 반환합니다:
      * - 미완료 상태(INCOMPLETE)의 할 일
@@ -510,42 +568,89 @@ public class TodoService {
                 .toList();
     }
 
-    /**
-     * 히스토리 캘린더 데이터를 조회합니다 (v2 - New).
-     * 다음의 정보를 날짜별로 통합하여 반환합니다:
-     * - 완료된 할 일이 존재하는 날짜 (히스토리)
-     * - 마감기한이 설정된 백로그가 존재하는 날짜
-     * 날짜별로 해당 날짜의 백로그 개수가 함께 포함되며,
-     * 히스토리 날짜는 기본적으로 count -1로 표시됩니다.
-     *
-     * @param userId 사용자 ID
-     * @param year 조회할 연도 (예: "2025")
-     * @param month 조회할 월 (1~12)
-     * @return 날짜별 히스토리/백로그 정보 DTO
-     */
-    @Transactional(readOnly = true)
-    public HistoryCalendarListResponseDto getHistoriesCalendar(Long userId, String year, int month) {
-        Map<LocalDate, Integer> historyCountByDate =
-                completedDateTimeRepository.findHistoryExistingDates(userId, year, month).stream()
-                        .map(LocalDateTime::toLocalDate)
-                        .distinct()
-                        .collect(Collectors.toMap(
-                                Function.identity(),
-                                date -> -1
-                        ));
+	/**
+	 * 히스토리 캘린더 데이터를 조회합니다 (v2 - New).
+	 *
+	 * 날짜별 값 산정 규칙:
+	 * - 완료 히스토리(CompletedDateTime)가 존재하는 경우: 무조건 -1을 사용합니다. (백로그/루틴 합계가 있어도 -1 우선)
+	 * - 완료 히스토리가 없고, 백로그 마감(backlog) 개수와 요일 반복(루틴) 개수의 합이 1 이상인 경우: 합계를 사용합니다.
+	 * - 완료 히스토리도 없고, 합계가 0인 경우: 해당 날짜는 결과에서 제외됩니다.
+	 *
+	 * @param userId 사용자 ID
+	 * @param year 조회할 연도 (예: "2025")
+	 * @param month 조회할 월 (1~12)
+	 * @return 날짜별 히스토리/백로그/루틴 정보 DTO
+	 */
+	@Transactional(readOnly = true)
+	public HistoryCalendarListResponseDto getHistoriesCalendar(Long userId, String year, int month) {
+		// 1) 백로그 일자별 카운트
+		Map<LocalDate, Integer> backlogCounts = loadBacklogCountMap(userId, year, month);
 
-        Map<LocalDate, Integer> backlogCountByDate = todoRepository.findDatesWithBacklogCount(userId, year, month).stream()
-                .collect(Collectors.toMap(
-                        t -> ((Date)t.get("date")).toLocalDate(),
-                        t -> ((Number) t.get("count")).intValue()
-                ));
+		// 2) 요일별 루틴 카운트
+		Map<String, Integer> routineCountByDay = loadRoutineCountByDay(userId);
 
-        historyCountByDate.putAll(backlogCountByDate);
+		// 3) 해당 월의 각 날짜에 대해 (백로그 + 루틴) 합계를 계산
+		Map<LocalDate, Integer> resultByDate = fillCountsFromBacklogAndRoutine(backlogCounts, routineCountByDay, year, month);
 
-        return HistoryCalendarListResponseDto.from(historyCountByDate);
-    }
+		// 4) 히스토리 날짜는 합계가 있어도 -1로 덮어씁니다.
+		Set<LocalDate> historyDates = loadHistoryDateSet(userId, year, month);
+		markHistoryDatesWithMinusOne(resultByDate, historyDates);
 
-    /**
+		return HistoryCalendarListResponseDto.from(resultByDate);
+	}
+
+	private Map<LocalDate, Integer> loadBacklogCountMap(Long userId, String year, int month) {
+		return todoRepository.findDatesWithBacklogCount(userId, year, month).stream()
+			.collect(Collectors.toMap(
+				t -> ((Date) t.get("date")).toLocalDate(),
+				t -> ((Number) t.get("count")).intValue()
+			));
+	}
+
+	private Map<String, Integer> loadRoutineCountByDay(Long userId) {
+		List<RoutineCountProjection> projections = routineRepository.countRoutinesByDay(userId);
+
+		return projections.stream()
+			.collect(Collectors.toMap(
+				RoutineCountProjection::getDay,
+				p -> p.getCount().intValue()
+			));
+	}
+
+	private Map<LocalDate, Integer> fillCountsFromBacklogAndRoutine(Map<LocalDate, Integer> backlogCounts,
+		Map<String, Integer> routineCountByDay,
+		String year, int month) {
+		Map<LocalDate, Integer> result = new HashMap<>();
+		LocalDate firstDay = LocalDate.of(Integer.parseInt(year), month, 1);
+		LocalDate lastDay = firstDay.withDayOfMonth(firstDay.lengthOfMonth());
+
+		for (LocalDate d = firstDay; !d.isAfter(lastDay); d = d.plusDays(1)) {
+			int backlog = backlogCounts.getOrDefault(d, 0);
+			int routine = routineCountByDay.getOrDefault(
+				d.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN), 0
+			);
+			int sum = backlog + routine;
+			if (sum > 0) {
+				result.put(d, sum);
+			}
+		}
+		return result;
+	}
+
+	private Set<LocalDate> loadHistoryDateSet(Long userId, String year, int month) {
+		return completedDateTimeRepository.findHistoryExistingDates(userId, year, month).stream()
+			.map(LocalDateTime::toLocalDate)
+			.collect(Collectors.toCollection(LinkedHashSet::new));
+	}
+
+	private void markHistoryDatesWithMinusOne(Map<LocalDate, Integer> resultByDate, Set<LocalDate> historyDates) {
+		for (LocalDate date : historyDates) {
+			// 완료 히스토리가 존재하는 날짜는 합계가 있어도 -1을 우선합니다.
+			resultByDate.put(date, -1);
+		}
+	}
+
+	/**
      * 특정 할 일의 카테고리를 업데이트합니다.
      *
      * @param userId 사용자 ID
