@@ -27,7 +27,7 @@ class JpaEmojiRepositoryTest extends RepositoryTestConfig {
 
     @Test
     @DisplayName("[SCN-EMOJI-001][TC-REP-EMOJI-001] emoji id별로 imageUrl을 조회할 수 있다.")
-    void findImageUrlById_returnsUrlOrNull() {
+    void findImageUrlById_Url또는null_반환() {
         //given
         Emoji saved = persist("https://test/test.png", GroupName.데일리);
 
