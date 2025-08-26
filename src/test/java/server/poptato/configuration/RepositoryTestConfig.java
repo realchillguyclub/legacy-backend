@@ -1,10 +1,11 @@
 package server.poptato.configuration;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -17,26 +18,23 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  */
 @DataJpaTest
 @Testcontainers
-@ActiveProfiles("test")
+@ActiveProfiles("unittest")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public abstract class RepositoryTestConfig {
 
+    @Autowired
+    protected TestEntityManager tem;
+
     @Container
+    @ServiceConnection // ← 이 한 줄로 spring.datasource.* 바인딩 자동화
     protected static final MySQLContainer<?> MYSQL =
             new MySQLContainer<>("mysql:8.0.36")
                     .withDatabaseName("testdb")
                     .withUsername("test")
                     .withPassword("test")
+                    .withEnv("TZ", "Asia/Seoul")
+                    .withCommand("--character-set-server=utf8mb4", "--collation-server=utf8mb4_general_ci")
                     .withReuse(true);
-
-    @DynamicPropertySource
-    static void registerProps(DynamicPropertyRegistry r) {
-        r.add("spring.datasource.url", MYSQL::getJdbcUrl);
-        r.add("spring.datasource.username", MYSQL::getUsername);
-        r.add("spring.datasource.password", MYSQL::getPassword);
-        r.add("spring.jpa.hibernate.ddl-auto", () -> "update");
-        r.add("spring.jpa.properties.hibernate.dialect", () -> "org.hibernate.dialect.MySQL8Dialect");
-    }
 
     // 공통 유틸 필요시 protected 헬퍼 메서드 추가
 }
