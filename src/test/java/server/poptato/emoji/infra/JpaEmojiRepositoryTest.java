@@ -1,43 +1,59 @@
 package server.poptato.emoji.infra;
 
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import server.poptato.configuration.RepositoryTestConfig;
 import server.poptato.emoji.domain.entity.Emoji;
 import server.poptato.emoji.domain.value.GroupName;
 
+import java.util.List;
+import java.util.stream.IntStream;
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class JpaEmojiRepositoryTest extends RepositoryTestConfig {
 
     @Autowired
     private JpaEmojiRepository jpaEmojiRepository;
 
-    private Emoji persist(String url, GroupName group) {
-        Emoji emoji = Emoji.builder()
-                .imageUrl(url)
-                .groupName(group)
-                .build();
-        tem.persistAndFlush(emoji);
+    /**
+     * 테스트 트랜잭션 안에서 persist → flush 로 즉시 INSERT 하고 1차 캐시를 비워
+     * 쿼리 결과 검증 시 영속성 컨텍스트 영향(동일성 보장 등)을 최소화함
+     */
+    private List<Emoji> persistEmojis(int count) {
+        List<Emoji> saved = IntStream.rangeClosed(1, count)
+                .mapToObj(i -> Emoji.builder()
+                        .imageUrl("https://test/" + i + ".png")
+                        .groupName(GroupName.운동)
+                        .build())
+                .map(tem::persist)
+                .toList();
+        tem.flush();
         tem.clear();
-        return emoji;
+        return saved;
     }
 
     @Test
     @DisplayName("[SCN-EMOJI-001][TC-REP-EMOJI-001] emoji id별로 imageUrl을 조회할 수 있다.")
-    void findImageUrlById_Url또는null_반환() {
-        //given
-        Emoji saved = persist("https://test/test.png", GroupName.데일리);
+    void findImageUrlById_projection() {
+        // given
+        List<Emoji> saved = persistEmojis(1);
+        Long id = saved.get(0).getId();
 
-        //when
-        String url = jpaEmojiRepository.findImageUrlById(saved.getId());
-        String none = jpaEmojiRepository.findImageUrlById(999_999L);
+        // when
+        String found = jpaEmojiRepository.findImageUrlById(id);
+        String notFound = jpaEmojiRepository.findImageUrlById(Long.MAX_VALUE);
 
-        //then
-        Assertions.assertThat(url).isEqualTo("https://test/test.png");
-        Assertions.assertThat(none).isNull();
+        // then
+        Assertions.assertThat(found).isEqualTo("https://test/" + id + ".png");
+        Assertions.assertThat(notFound).isNull();
     }
 
 }
