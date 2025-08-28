@@ -1,15 +1,12 @@
 package server.poptato.emoji.infra;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 import server.poptato.configuration.RepositoryTestConfig;
 import server.poptato.emoji.domain.entity.Emoji;
 import server.poptato.emoji.domain.value.GroupName;
