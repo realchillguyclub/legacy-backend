@@ -29,12 +29,7 @@ public abstract class RepositoryTestConfig {
     @ServiceConnection // ← 이 한 줄로 spring.datasource.* 바인딩 자동화
     protected static final MySQLContainer<?> MYSQL =
             new MySQLContainer<>("mysql:8.0.36")
-                    .withDatabaseName("testdb")
-                    .withUsername("test")
-                    .withPassword("test")
-                    .withEnv("TZ", "Asia/Seoul")
-                    .withCommand("--character-set-server=utf8mb4", "--collation-server=utf8mb4_general_ci")
-                    .withReuse(true);
+                    .withCommand("--default-time-zone=+09:00");
 
     // 공통 유틸 필요시 protected 헬퍼 메서드 추가
 }
