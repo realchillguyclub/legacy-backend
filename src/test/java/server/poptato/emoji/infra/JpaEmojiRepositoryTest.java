@@ -64,7 +64,7 @@ class JpaEmojiRepositoryTest extends RepositoryTestConfig {
 
         // then
         Assertions.assertThat(page.getSize()).isEqualTo(5);
-        Assertions.assertThat(page.getNumber()).isEqualTo(0);
+        Assertions.assertThat(page.getNumber()).isZero();
         Assertions.assertThat(page.getContent().size()).isBetween(0, 5);
 
         Assertions.assertThat(page.getContent())
