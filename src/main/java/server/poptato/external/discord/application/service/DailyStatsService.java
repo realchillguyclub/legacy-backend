@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import lombok.RequiredArgsConstructor;
 import server.poptato.external.discord.dto.DailyStats;
@@ -19,7 +18,6 @@ import server.poptato.user.domain.value.MobileType;
 @RequiredArgsConstructor
 public class DailyStatsService {
 
-	@PersistenceContext
 	private final EntityManager em;
 
 	@Transactional(readOnly = true)
