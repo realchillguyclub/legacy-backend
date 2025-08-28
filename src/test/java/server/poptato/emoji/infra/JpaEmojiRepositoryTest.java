@@ -56,4 +56,26 @@ class JpaEmojiRepositoryTest extends RepositoryTestConfig {
         Assertions.assertThat(notFound).isNull();
     }
 
+    @Test
+    @DisplayName("[SCN-EMOJI-002][TC-REP-EMOJI-002] id가 3이상인 모든 이모지를 조회한다.")
+    void findAllEmojis_id가_3이상인_emoji_조회() {
+        // given
+        persistEmojis(6);
+        Pageable pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.ASC, "id"));
+
+        // when
+        Page<Emoji> page = jpaEmojiRepository.findAllEmojis(pageable);
+
+        // then
+        Assertions.assertThat(page.getSize()).isEqualTo(5);
+        Assertions.assertThat(page.getNumber()).isEqualTo(0);
+        Assertions.assertThat(page.getContent().size()).isBetween(0, 5);
+
+        Assertions.assertThat(page.getContent())
+                .allSatisfy(e -> Assertions.assertThat(e.getId()).isGreaterThanOrEqualTo(3L));
+
+        List<Long> ids = page.getContent().stream().map(Emoji::getId).toList();
+        Assertions.assertThat(ids).isSorted();
+    }
+
 }
