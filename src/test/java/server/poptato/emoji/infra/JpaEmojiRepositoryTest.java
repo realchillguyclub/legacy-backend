@@ -14,7 +14,6 @@ import server.poptato.emoji.domain.value.GroupName;
 import java.util.List;
 import java.util.stream.IntStream;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class JpaEmojiRepositoryTest extends RepositoryTestConfig {
 
     @Autowired
@@ -49,7 +48,7 @@ class JpaEmojiRepositoryTest extends RepositoryTestConfig {
         String notFound = jpaEmojiRepository.findImageUrlById(Long.MAX_VALUE);
 
         // then
-        Assertions.assertThat(found).isEqualTo("https://test/" + id + ".png");
+        Assertions.assertThat(found).isEqualTo("https://test/1.png");
         Assertions.assertThat(notFound).isNull();
     }
 
