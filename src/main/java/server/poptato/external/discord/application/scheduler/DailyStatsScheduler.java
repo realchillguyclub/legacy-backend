@@ -25,7 +25,7 @@ public class DailyStatsScheduler {
 	 * 일일 통계를 집계하고 디스코드로 전송한다.
 	 */
 	@Scheduled(cron = "${scheduling.dailyStatsCron}")
-    public void sendYesterdayStats() {
+    public void sendDailyStats() {
         LocalDate target = LocalDate.now(ZoneId.of("Asia/Seoul"));
         DailyStats stats = dailyStatsService.buildStatsFor(target);
         discordSender.sendDailyStatsMessage(stats);
