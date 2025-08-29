@@ -1,9 +1,10 @@
 package server.poptato.external.firebase.application;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -41,13 +42,13 @@ public class FcmNotificationScheduler {
     }
 
     /**
-     * 마감기한 푸쉬알림을 전송한다.
-     * - 대상: 오늘 마감인 할 일을 보유한 유저
+     * '오늘 할 일' 푸쉬알림을 전송한다.
+     * - 대상: 오늘 할 일을 보유한 유저
      */
-    @Scheduled(cron = "${scheduling.deadlineNotificationCron}")
+    @Scheduled(cron = "${scheduling.todayTodosNotificationCron}")
     @Async
-    public void sendDeadlineNotifications() {
-        fcmNotificationBatchService.sendDeadlineNotifications();
+    public void sendTodayTodosNotifications() {
+        fcmNotificationBatchService.sendTodayTodosNotifications();
     }
 
     /**

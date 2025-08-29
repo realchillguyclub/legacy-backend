@@ -30,6 +30,9 @@ public class Mobile extends BaseEntity {
     @Column(name = "client_id", columnDefinition = "LONGTEXT", nullable = false)
     private String clientId;
 
+    @Transient
+    private boolean dirtyFlag = false;
+
     @Builder
     public Mobile(Long userId, MobileType type, String clientId) {
         this.userId = userId;
@@ -37,8 +40,8 @@ public class Mobile extends BaseEntity {
         this.clientId = clientId;
     }
 
-    public void updateClientId(String clientId) {
-        this.clientId = clientId;
+    public void updateModifiedDate() {
+        this.dirtyFlag = !this.dirtyFlag;
     }
 
     public static Mobile createMobile(LoginRequestDto requestDto, Long userId) {

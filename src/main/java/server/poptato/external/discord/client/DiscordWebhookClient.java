@@ -5,12 +5,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import server.poptato.external.discord.dto.DiscordMessage;
 
+import java.net.URI;
+
 @FeignClient(
-        name = "discordDeleteUserWebhookClient",
-        url = "${discord.delete-user-webhook-url}"
+	name = "discordWebhookClient",
+	url = "https://temp-url"
 )
-public interface DiscordDeleteUserWebhookClient {
+public interface DiscordWebhookClient {
 
     @PostMapping
-    void sendMessage(@RequestBody DiscordMessage message);
+    void sendMessage(URI url, @RequestBody DiscordMessage message);
 }

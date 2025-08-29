@@ -1,12 +1,14 @@
 package server.poptato.todo.infra.repository.impl;
 
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.stereotype.Repository;
+
+import lombok.RequiredArgsConstructor;
 import server.poptato.todo.domain.entity.Routine;
+import server.poptato.todo.domain.projection.RoutineCountProjection;
 import server.poptato.todo.domain.repository.RoutineRepository;
 import server.poptato.todo.infra.repository.JpaRoutineRepository;
-
-import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
@@ -28,4 +30,9 @@ public class RoutineRepositoryImpl implements RoutineRepository {
     public List<Routine> findAllByTodoId(Long todoId) {
         return jpaRoutineRepository.findAllByTodoId(todoId);
     }
+
+	@Override
+	public List<RoutineCountProjection> countRoutinesByDay(Long userId) {
+		return jpaRoutineRepository.countRoutinesByDay(userId);
+	}
 }
