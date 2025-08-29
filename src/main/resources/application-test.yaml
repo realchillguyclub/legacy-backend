@@ -90,6 +90,7 @@ scheduling:
   endOfDayNotificationCron: ${END_OF_DAY_NOTIFICATION_CRON}  # 일과 정리 알림 스케줄러
   todayTodosNotificationCron: ${TODAY_TODOS_NOTIFICATION_CRON}  # 오늘 할 일 알림 스케줄러
   timeDeadlineNotificationCron: ${TIME_DEADLINE_NOTIFICATION_CRON} # 시간 설정 할 일 알림 스케줄러
+  dailyStatsCron: ${DAILY_STATS_CRON} # 일일 통계 집계 스케줄러
 
 batch:
   size: ${BATCH_SIZE}
@@ -98,6 +99,7 @@ discord:
   create-user-comment-webhook-url: ${DISCORD_CREATE_USER_COMMENT_WEBHOOK_URL}
   create-user-webhook-url: ${DISCORD_CREATE_USER_WEBHOOK_URL}
   delete-user-webhook-url: ${DISCORD_DELETE_USER_WEBHOOK_URL}
+  daily-stats-webhook-url: ${DISCORD_DAILY_STATS_WEBHOOK_URL}
 
 notion:
   api-url: https://api.notion.com/v1
