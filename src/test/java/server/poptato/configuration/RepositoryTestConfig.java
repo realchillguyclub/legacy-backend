@@ -26,7 +26,7 @@ public abstract class RepositoryTestConfig {
     protected TestEntityManager tem;
 
     @Container
-    @ServiceConnection // ← 이 한 줄로 spring.datasource.* 바인딩 자동화
+    @ServiceConnection
     protected static final MySQLContainer<?> MYSQL =
             new MySQLContainer<>("mysql:8.0.36")
                     .withCommand("--default-time-zone=+09:00");
