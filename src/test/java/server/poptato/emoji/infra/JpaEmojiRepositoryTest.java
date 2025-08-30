@@ -37,7 +37,7 @@ class JpaEmojiRepositoryTest extends RepositoryTestConfig {
     }
 
     @Test
-    @DisplayName("[SCN-EMOJI-001][TC-REP-EMOJI-001] emoji id별로 imageUrl을 조회할 수 있다.")
+    @DisplayName("[SCN-REP-EMOJI-001][TC-REP-EMOJI-001] emoji id별로 imageUrl을 조회할 수 있다.")
     void findImageUrlById_projection() {
         // given
         List<Emoji> saved = persistEmojis(1);
@@ -53,7 +53,7 @@ class JpaEmojiRepositoryTest extends RepositoryTestConfig {
     }
 
     @Test
-    @DisplayName("[SCN-EMOJI-002][TC-REP-EMOJI-002] id가 3이상인 모든 이모지를 조회한다.")
+    @DisplayName("[SCN-REP-EMOJI-002][TC-REP-EMOJI-001] id가 3이상인 모든 이모지를 조회한다.")
     void findAllEmojis_id가_3이상인_emoji_조회() {
         // given
         persistEmojis(6);
@@ -73,5 +73,4 @@ class JpaEmojiRepositoryTest extends RepositoryTestConfig {
         List<Long> ids = page.getContent().stream().map(Emoji::getId).toList();
         Assertions.assertThat(ids).isSorted();
     }
-
 }
