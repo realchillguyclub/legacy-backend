@@ -70,7 +70,7 @@ class AuthServiceTest extends ServiceTestConfig {
 
     @ParameterizedTest
     @MethodSource("소셜_종류별")
-    @DisplayName("[SCN-AUTH-001][TC-LOGIN-001] 신규 유저 소셜 로그인 시, 유저가 생성되어 저장되고 응답에 isNew=true 가 포함된다")
+    @DisplayName("[SCN-SVC-AUTH-001][TC-SVC-LOGIN-001] 신규 유저 소셜 로그인 시, 유저가 생성되어 저장되고 응답에 isNew=true 가 포함된다")
     void login_새로운_유저_로그인_성공(LoginRequestDto requestDto, SocialUserInfo userInfo) {
         //given
         Long userId = 1L;
@@ -139,7 +139,7 @@ class AuthServiceTest extends ServiceTestConfig {
     }
 
     @Test
-    @DisplayName("[SCN-AUTH-001][TC-LOGIN-002] 신규 유저 애플 로그인 시, name이 null 인 경우 AuthErrorStatus._HAS_NOT_NEW_APPLE_USER_NAME 예외가 발생한다")
+    @DisplayName("[SCN-SVC-AUTH-001][TC-SVC-LOGIN-002] 신규 유저 애플 로그인 시, name이 null 인 경우 AuthErrorStatus._HAS_NOT_NEW_APPLE_USER_NAME 예외가 발생한다")
     void login_새로운_APPLE_유저_로그인_실패() {
         //given
         LoginRequestDto requestDto = new LoginRequestDto(SocialType.APPLE, "access-token", MobileType.IOS, "client-id", null, "test@test.com");
@@ -156,7 +156,7 @@ class AuthServiceTest extends ServiceTestConfig {
     }
 
     @Test
-    @DisplayName("[SCN-AUTH-001][TC-LOGIN-003] 기존 유저 소셜 로그인 시, 유저의 정보(이미지url, fcm토큰)가 업데이트 되고 응답에 isNew=false가 포함된다")
+    @DisplayName("[SCN-SVC-AUTH-001][TC-SVC-LOGIN-003] 기존 유저 소셜 로그인 시, 유저의 정보(이미지url, fcm토큰)가 업데이트 되고 응답에 isNew=false가 포함된다")
     void login_존재하는_유저_로그인_성공() {
         //given
         LoginRequestDto requestDto = new LoginRequestDto(SocialType.KAKAO, "access-token", MobileType.ANDROID, "client-id", null, null);
@@ -189,7 +189,7 @@ class AuthServiceTest extends ServiceTestConfig {
     }
 
     @Test
-    @DisplayName("[SCN-AUTH-002][TC-LOGOUT-001] 로그아웃시 정상적으로 로그아웃된다")
+    @DisplayName("[SCN-SVC-AUTH-002][TC-SVC-LOGOUT-001] 로그아웃시 정상적으로 로그아웃된다")
     void logout_로그아웃_성공() {
         //given
         Long userId = 1L;
@@ -209,7 +209,7 @@ class AuthServiceTest extends ServiceTestConfig {
     }
 
     @Test
-    @DisplayName("[SCN-AUTH-003][TC-JWT-001] 유효한 리프레시 토큰을 기반으로 새로운 토큰 페어를 생성하여 반환한다")
+    @DisplayName("[SCN-SVC-AUTH-003][TC-SVC-JWT-001] 유효한 리프레시 토큰을 기반으로 새로운 토큰 페어를 생성하여 반환한다")
     void refresh_jwt_토큰_갱신() {
         //given
         Long userId = 1L;
@@ -241,7 +241,7 @@ class AuthServiceTest extends ServiceTestConfig {
     }
 
     @Test
-    @DisplayName("[SCN-AUTH-004][TC-FCM-001] 존재하는 fcm토큰일 경우 접속한 날짜로 수정일을 변경한다")
+    @DisplayName("[SCN-SVC-AUTH-004][TC-SVC-FCM-001] 존재하는 fcm토큰일 경우 접속한 날짜로 수정일을 변경한다")
     void refreshFCMToken_존재하는_fcm토큰_정상_실행(){
         // given
         String clientId = "client-id";
@@ -258,7 +258,7 @@ class AuthServiceTest extends ServiceTestConfig {
     }
 
     @Test
-    @DisplayName("[SCN-AUTH-004][TC-FCM-002] 존재하지 않는 fcm토큰일 경우 예외가 발생한다")
+    @DisplayName("[SCN-SVC-AUTH-004][TC-SVC-FCM-002] 존재하지 않는 fcm토큰일 경우 예외가 발생한다")
     void refreshFCMToken_존재하지_않는_fcm토큰_예외발생(){
         // given
         String clientId = "client-id";

@@ -18,7 +18,7 @@ public class PolicyServiceTest {
     PolicyService policyService;
 
     @Test
-    @DisplayName("[SCN-POLICY-001][TC-POLICY-001] 일단의 개인정보 처리방침을 반환한다")
+    @DisplayName("[SCN-SVC-POLICY-001][TC-SVC-POLICY-001] 일단의 개인정보 처리방침을 반환한다")
     void getPrivacyPolicy_일단의_개인정보_처리방침_반환() {
         // when
         PolicyResponseDto responseDto = policyService.getPrivacyPolicy();
