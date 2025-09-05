@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import server.poptato.auth.api.request.LoginRequestDto;
-import server.poptato.external.oauth.SocialUserInfo;
+import server.poptato.infra.oauth.SocialUserInfo;
 import server.poptato.global.dao.BaseEntity;
 import server.poptato.user.domain.value.SocialType;
 
