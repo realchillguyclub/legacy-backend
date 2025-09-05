@@ -94,33 +94,40 @@ class LettuceLockRepositoryTest extends RedisTestConfig {
 
         int threads = 32;
         ExecutorService pool = Executors.newFixedThreadPool(threads);
-        CountDownLatch start = new CountDownLatch(1);
-        List<Future<String>> futures = new ArrayList<>();
+        CyclicBarrier barrier = new CyclicBarrier(threads);
 
         // when
+        List<Callable<String>> tasks = new ArrayList<>(threads);
         for (int i = 0; i < threads; i++) {
-            futures.add(pool.submit(() -> {
-                start.await();
+            tasks.add(() -> {
+                barrier.await(2, TimeUnit.SECONDS);
                 return lockRepository.lock(key, ttl);
-            }));
+            });
         }
 
-        start.countDown();
+        List<Future<String>> futures = pool.invokeAll(tasks, 10, TimeUnit.SECONDS);
 
         int success = 0;
         int fail = 0;
-        for (Future<String> f : futures) {
-            String token = f.get(3, TimeUnit.SECONDS);
-            if (token != null && !token.isBlank()) success++;
-            else fail++;
+        for (Future<String> future : futures) {
+            try {
+                String token = future.get(0, TimeUnit.SECONDS);
+                if (token != null && !token.isBlank()) success++;
+                else fail++;
+            } catch (ExecutionException | TimeoutException | CancellationException e) {
+                fail++;
+            }
         }
-        pool.shutdownNow();
 
         // then
+        pool.shutdown();
+        assertThat(pool.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
+
         assertThat(success).isEqualTo(1);
         assertThat(fail).isEqualTo(threads - 1);
 
         String stored = stringRedisTemplate.opsForValue().get(ns(key));
         assertThat(stored).isNotBlank();
     }
+
 }
