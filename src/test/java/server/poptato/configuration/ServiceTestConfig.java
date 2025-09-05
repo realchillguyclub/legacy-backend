@@ -6,5 +6,5 @@ import org.springframework.test.context.ActiveProfiles;
 
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("unittest")
-public class ServiceTestConfig {
+public abstract class ServiceTestConfig {
 }
