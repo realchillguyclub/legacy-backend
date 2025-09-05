@@ -7,14 +7,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import server.poptato.configuration.RepositoryTestConfig;
+import server.poptato.configuration.DatabaseTestConfig;
 import server.poptato.emoji.domain.entity.Emoji;
 import server.poptato.emoji.domain.value.GroupName;
 
 import java.util.List;
 import java.util.stream.IntStream;
 
-class JpaEmojiRepositoryTest extends RepositoryTestConfig {
+class JpaEmojiRepositoryTest extends DatabaseTestConfig {
 
     @Autowired
     private JpaEmojiRepository jpaEmojiRepository;
