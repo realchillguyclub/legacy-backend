@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.*;
@@ -102,8 +103,8 @@ class DistributedLockFacadeTest {
     }
 
     @Test
-    @DisplayName("[SCN-LOCK-001][TC-LOCK-UNIT-004] 동시 경합: 동일 키에서 1개만 성공, 나머지는 CustomException")
-    void executeWithLock_동시에_락을_획득_시도_키_1개만_성공() throws Exception {
+    @DisplayName("[SCN-LOCK-UNIT-004][TC-LOCK-UNIT-004] 동시 경합: 동일 키에서 1개만 성공, 나머지는 CustomException")
+    void executeWithLock_concurrentOnlyOneWins() throws Exception {
         // given
         final String key = "key-concurrent";
         final String token = "token-concurrent";
@@ -119,29 +120,39 @@ class DistributedLockFacadeTest {
 
         // when
         final int threads = 24;
-        final CyclicBarrier barrier = new CyclicBarrier(threads);
+        CountDownLatch start = new CountDownLatch(1);
         ExecutorService pool = Executors.newFixedThreadPool(threads);
 
-        // "OK" 반환을 통해 critical section 진입 - 멀티 쓰레드 환경에서 하나의 쓰레드만 락을 획득하도록
-        Supplier<String> task = () -> "OK";
+        AtomicInteger taskEntered = new AtomicInteger(0);
+        Supplier<String> task = () -> {
+            int n = taskEntered.incrementAndGet();
+            try {
+                Thread.sleep(120);
+                return "OK-" + n;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            } finally {
+                taskEntered.decrementAndGet();
+            }
+        };
 
-        List<Callable<String>> tasks = new ArrayList<>();
+        List<Future<String>> futures = new ArrayList<>();
         for (int i = 0; i < threads; i++) {
-            tasks.add(() -> {
-                // ★ 여기서 모두가 동시에 출발
-                barrier.await(2, TimeUnit.SECONDS);
+            futures.add(pool.submit(() -> {
+                start.await();
                 return distributedLockFacade.executeWithLock(key, task);
-            });
+            }));
         }
 
-        List<Future<String>> futures = pool.invokeAll(tasks, 10, TimeUnit.SECONDS);
+        start.countDown();
 
         int success = 0;
         int failed = 0;
-        for (Future<String> future : futures) {
+        for (Future<String> f : futures) {
             try {
-                String r = future.get(0, TimeUnit.SECONDS);
-                assertThat(r).isEqualTo("OK");
+                String r = f.get(5, TimeUnit.SECONDS);
+                assertThat(r).startsWith("OK-");
                 success++;
             } catch (ExecutionException e) {
                 assertThat(e.getCause()).isInstanceOf(CustomException.class);
@@ -149,15 +160,14 @@ class DistributedLockFacadeTest {
             }
         }
 
-        pool.shutdown();
+        pool.shutdownNow();
 
         // then
-        assertThat(pool.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
-
         assertThat(success).isEqualTo(1);
         assertThat(failed).isEqualTo(threads - 1);
 
         verify(lettuceLockRepository, times(1)).unlock(key, token);
     }
+
 
 }
