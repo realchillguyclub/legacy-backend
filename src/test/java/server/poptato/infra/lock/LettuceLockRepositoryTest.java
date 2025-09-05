@@ -22,6 +22,13 @@ class LettuceLockRepositoryTest extends RedisTestConfig {
     @Autowired
     StringRedisTemplate stringRedisTemplate;
 
+
+    @BeforeEach
+    void cleanRedis() {
+        Assertions.assertNotNull(stringRedisTemplate.getConnectionFactory());
+        stringRedisTemplate.getConnectionFactory().getConnection().serverCommands().flushAll();
+    }
+
     private String ns(String raw) { return "lock:" + raw; }
 
     @BeforeEach

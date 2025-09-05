@@ -91,6 +91,11 @@ class AuthServiceLockTest extends RedisTestConfig {
         );
     }
 
+    @BeforeEach
+    void cleanRedis() {
+        org.junit.jupiter.api.Assertions.assertNotNull(stringRedisTemplate.getConnectionFactory());
+        stringRedisTemplate.getConnectionFactory().getConnection().serverCommands().flushAll();
+    }
 
     @Test
     @DisplayName("[SCN-SVC-AUTH-001][TC-SVC-LOGIN-005] 신규 유저에 대해 동시에 여러번 요청 시 유저 등록은 한 번만 성공한다")
