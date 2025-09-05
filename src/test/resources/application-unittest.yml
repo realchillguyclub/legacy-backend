@@ -9,5 +9,9 @@ spring:
 
 logging:
   level:
+    org.springframework: WARN
+    org.springframework.test.context.cache: DEBUG
     org.hibernate.SQL: warn
     org.hibernate.orm.jdbc.bind: trace
+    io.lettuce.core: WARN
+    io.lettuce.core.protocol.ConnectionWatchdog: ERROR
