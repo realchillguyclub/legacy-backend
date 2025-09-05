@@ -9,11 +9,13 @@ import server.poptato.auth.api.request.LoginRequestDto;
 import server.poptato.auth.api.request.ReissueTokenRequestDto;
 import server.poptato.auth.application.response.LoginResponseDto;
 import server.poptato.auth.status.AuthErrorStatus;
-import server.poptato.external.oauth.SocialService;
-import server.poptato.external.oauth.SocialServiceProvider;
-import server.poptato.external.oauth.SocialUserInfo;
+import server.poptato.infra.lock.DistributedLockFacade;
+import server.poptato.infra.oauth.SocialService;
+import server.poptato.infra.oauth.SocialServiceProvider;
+import server.poptato.infra.oauth.SocialUserInfo;
 import server.poptato.global.dto.TokenPair;
 import server.poptato.global.exception.CustomException;
+import server.poptato.infra.lock.status.LockErrorStatus;
 import server.poptato.user.application.event.CreateUserEvent;
 import server.poptato.user.domain.entity.Mobile;
 import server.poptato.user.domain.entity.User;
@@ -34,6 +36,7 @@ public class AuthService {
     private final ApplicationEventPublisher eventPublisher;
     private final UserRepository userRepository;
     private final MobileRepository mobileRepository;
+    private final DistributedLockFacade distributedLockFacade;
 
     /**
      * 소셜 로그인 처리 메서드.
@@ -47,19 +50,29 @@ public class AuthService {
     public LoginResponseDto login(final LoginRequestDto request) {
         SocialService socialService = socialServiceProvider.getSocialService(request.socialType());
         SocialUserInfo userInfo = socialService.getUserData(request);
-        Optional<User> findUser = userRepository.findBySocialId(userInfo.socialId());
-        if (findUser.isEmpty()) {
-            User newUser = saveNewData(request, userInfo);
-            saveFcmToken(newUser.getId(), request);
 
-            long userCount = userRepository.count();
-            eventPublisher.publishEvent(CreateUserEvent.from(userCount, newUser, request.mobileType().toString()));
+        try {
+            return distributedLockFacade.executeWithLock(userInfo.socialId(), () -> {
+                Optional<User> findUser = userRepository.findBySocialId(userInfo.socialId());
+                if (findUser.isEmpty()) {
+                    User newUser = saveNewData(request, userInfo);
+                    saveFcmToken(newUser.getId(), request);
 
-            return createLoginResponse(newUser.getId(), true);
+                    long userCount = userRepository.count();
+                    eventPublisher.publishEvent(CreateUserEvent.from(userCount, newUser, request.mobileType().toString()));
+
+                    return createLoginResponse(newUser.getId(), true);
+                }
+                updateImage(findUser.get(), userInfo);
+                saveFcmToken(findUser.get().getId(), request);
+                return createLoginResponse(findUser.get().getId(), false);
+            });
+        } catch (CustomException e) {
+            if (e.getErrorCode().equals(LockErrorStatus._LOCK_ACQUISITION_FAILED)) {
+                throw new CustomException(AuthErrorStatus._SIGNUP_IN_PROGRESS);
+            }
+            throw e;
         }
-        updateImage(findUser.get(), userInfo);
-        saveFcmToken(findUser.get().getId(), request);
-        return createLoginResponse(findUser.get().getId(), false);
     }
 
     /**
