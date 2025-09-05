@@ -20,9 +20,10 @@ import server.poptato.auth.application.service.AuthService;
 import server.poptato.auth.application.service.JwtService;
 import server.poptato.auth.status.AuthErrorStatus;
 import server.poptato.configuration.ServiceTestConfig;
-import server.poptato.external.oauth.SocialService;
-import server.poptato.external.oauth.SocialServiceProvider;
-import server.poptato.external.oauth.SocialUserInfo;
+import server.poptato.infra.lock.DistributedLockFacade;
+import server.poptato.infra.oauth.SocialService;
+import server.poptato.infra.oauth.SocialServiceProvider;
+import server.poptato.infra.oauth.SocialUserInfo;
 import server.poptato.global.dto.TokenPair;
 import server.poptato.global.exception.CustomException;
 import server.poptato.user.application.event.CreateUserEvent;
@@ -36,11 +37,13 @@ import server.poptato.user.status.MobileErrorStatus;
 import server.poptato.user.validator.UserValidator;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AuthServiceTest extends ServiceTestConfig {
 
@@ -58,6 +61,9 @@ class AuthServiceTest extends ServiceTestConfig {
 
     @Mock
     MobileRepository mobileRepository;
+
+    @Mock
+    DistributedLockFacade distributedLockFacade;
 
     @Mock
     UserValidator userValidator;
@@ -78,10 +84,18 @@ class AuthServiceTest extends ServiceTestConfig {
         // 1. 소셜 서비스 모킹
         Mockito.when(socialServiceProvider.getSocialService(requestDto.socialType())).thenReturn(socialService);
         Mockito.when(socialService.getUserData(requestDto)).thenReturn(userInfo);
-        // 2. 기존 유저 아님
+
+        // 2. 분산 락 모킹
+        Mockito.when(distributedLockFacade.executeWithLock(eq(userInfo.socialId()), any()))
+            .thenAnswer(invocation -> {
+                Supplier<LoginResponseDto> supplier = invocation.getArgument(1);
+                return supplier.get();
+            });
+
+        // 3. 기존 유저 아님
         Mockito.when(userRepository.findBySocialId(userInfo.socialId())).thenReturn(Optional.empty());
 
-        // 3. 새로운 유저 저장
+        // 4. 새로운 유저 저장
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         Mockito.when(userRepository.save(any(User.class)))
                 .thenAnswer(invocation -> {
@@ -90,16 +104,16 @@ class AuthServiceTest extends ServiceTestConfig {
                     return user;
                 });
 
-        // 4. 유저 수 조회
+        // 5. 유저 수 조회
         Mockito.when(userRepository.count()).thenReturn(1L);
 
-        // 5. FCM 저장 관련
+        // 6. FCM 저장 관련
         Mockito.when(mobileRepository.findByClientId(requestDto.clientId())).thenReturn(Optional.empty());
 
-        // 6. 이벤트 발행
+        // 7. 이벤트 발행
         Mockito.doNothing().when(eventPublisher).publishEvent(any(CreateUserEvent.class));
 
-        // 7. 토큰 생성
+        // 8. 토큰 생성
         TokenPair tokenPair = new TokenPair("access-token", "refresh-token");
         Mockito.when(jwtService.generateTokenPair(String.valueOf(userId))).thenReturn(tokenPair);
 
@@ -146,6 +160,13 @@ class AuthServiceTest extends ServiceTestConfig {
         SocialUserInfo userInfo = new SocialUserInfo("social-id", "테스터", "test@test.com", "https://image.com");
         Mockito.when(socialServiceProvider.getSocialService(requestDto.socialType())).thenReturn(socialService);
         Mockito.when(socialService.getUserData(requestDto)).thenReturn(userInfo);
+
+        Mockito.when(distributedLockFacade.executeWithLock(eq(userInfo.socialId()), any()))
+            .thenAnswer(invocation -> {
+                Supplier<LoginResponseDto> supplier = invocation.getArgument(1);
+                return supplier.get();
+            });
+
         Mockito.when(userRepository.findBySocialId(userInfo.socialId())).thenReturn(Optional.empty());
 
         // when
@@ -168,6 +189,13 @@ class AuthServiceTest extends ServiceTestConfig {
 
         Mockito.when(socialServiceProvider.getSocialService(requestDto.socialType())).thenReturn(socialService);
         Mockito.when(socialService.getUserData(requestDto)).thenReturn(userInfo);
+
+        Mockito.when(distributedLockFacade.executeWithLock(eq(userInfo.socialId()), any()))
+            .thenAnswer(invocation -> {
+                Supplier<LoginResponseDto> supplier = invocation.getArgument(1);
+                return supplier.get();
+            });
+
         Mockito.when(userRepository.findBySocialId(userInfo.socialId())).thenReturn(Optional.of(existingUser));
         Mockito.when(mobileRepository.findByClientId("client-id")).thenReturn(Optional.of(mock(Mobile.class))); // 중복
         Mockito.when(jwtService.generateTokenPair(String.valueOf(userId)))
