@@ -5,9 +5,8 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.junit.jupiter.Container;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
@@ -20,16 +19,15 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers
 @ActiveProfiles("unittest")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-public abstract class RepositoryTestConfig {
+public abstract class DatabaseTestConfig {
 
     @Autowired
     protected TestEntityManager tem;
 
-    @Container
-    @ServiceConnection
-    protected static final MySQLContainer<?> MYSQL =
-            new MySQLContainer<>("mysql:8.0.36")
-                    .withCommand("--default-time-zone=+09:00");
-
-    // 공통 유틸 필요시 protected 헬퍼 메서드 추가
+    @DynamicPropertySource
+    static void mysqlProps(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", DatabaseTestContainer.INSTANCE::getJdbcUrl);
+        registry.add("spring.datasource.username", DatabaseTestContainer.INSTANCE::getUsername);
+        registry.add("spring.datasource.password", DatabaseTestContainer.INSTANCE::getPassword);
+    }
 }
