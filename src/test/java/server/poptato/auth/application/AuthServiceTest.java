@@ -21,6 +21,7 @@ import server.poptato.auth.application.service.JwtService;
 import server.poptato.auth.status.AuthErrorStatus;
 import server.poptato.configuration.ServiceTestConfig;
 import server.poptato.infra.lock.DistributedLockFacade;
+import server.poptato.infra.lock.status.LockErrorStatus;
 import server.poptato.infra.oauth.SocialService;
 import server.poptato.infra.oauth.SocialServiceProvider;
 import server.poptato.infra.oauth.SocialUserInfo;
@@ -214,6 +215,27 @@ class AuthServiceTest extends ServiceTestConfig {
         Mockito.verify(jwtService).generateTokenPair(String.valueOf(userId));
         Mockito.verify(mobileRepository).findByClientId("client-id");
         Mockito.verify(userRepository, Mockito.never()).save(existingUser); // image 안 바뀌면 저장 안 함
+    }
+
+    @Test
+    @DisplayName("[SCN-SVC-AUTH-001][TC-SVC-LOGIN-004] 로그인 시 락 획득에 실패하면 AuthErrorStatus._SIGNUP_IN_PROGRESS 예외가 발생한다")
+    void login_락_획득_실패_시_SIGNUP_IN_PROGRESS_예외_발생() {
+        // given
+        LoginRequestDto requestDto = new LoginRequestDto(SocialType.KAKAO, "access-token", MobileType.ANDROID, "client-id", null, null);
+        SocialUserInfo userInfo = new SocialUserInfo("social-id", "테스터", "test@test.com", "https://image.com");
+
+        when(socialServiceProvider.getSocialService(requestDto.socialType())).thenReturn(socialService);
+        when(socialService.getUserData(requestDto)).thenReturn(userInfo);
+
+        // 분산 락 획득 실패 모킹
+        when(distributedLockFacade.executeWithLock(eq(userInfo.socialId()), any()))
+                .thenThrow(new CustomException(LockErrorStatus._LOCK_ACQUISITION_FAILED));
+
+        // when
+        CustomException exception = assertThrows(CustomException.class, () -> authService.login(requestDto));
+
+        // then
+        Assertions.assertThat(exception.getErrorCode()).isEqualTo(AuthErrorStatus._SIGNUP_IN_PROGRESS);
     }
 
     @Test
