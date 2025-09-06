@@ -18,8 +18,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class S3Service {
 
-    private final static int IMAGE_URL_PREFIX_LENGTH = 41;
-    private final static int EXPIRED_TIME = 3;
+    private static final int IMAGE_URL_PREFIX_LENGTH = 41;
+    private static final int EXPIRED_TIME = 3;
     private final AmazonS3 amazonS3;
 
     @Value("${cloud.aws.s3.bucket}")
