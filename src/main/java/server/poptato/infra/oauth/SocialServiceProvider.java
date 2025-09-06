@@ -7,14 +7,14 @@ import server.poptato.infra.oauth.apple.AppleSocialService;
 import server.poptato.infra.oauth.kakao.KakaoSocialService;
 import server.poptato.user.domain.value.SocialType;
 
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
 public class SocialServiceProvider {
 
-    private static final Map<SocialType, SocialService> socialServiceMap = new HashMap<>();
+    private static final Map<SocialType, SocialService> socialServiceMap = new EnumMap<>(SocialType.class);
     private final KakaoSocialService kakaoSocialService;
     private final AppleSocialService appleSocialService;
 
