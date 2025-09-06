@@ -116,7 +116,7 @@ class DistributedLockFacadeTest {
         doAnswer(inv -> {
             acquired.set(false);
             return null;
-        }).when(lettuceLockRepository).unlock(eq(key), eq(token));
+        }).when(lettuceLockRepository).unlock(key, token);
 
         // when
         final int threads = 24;
