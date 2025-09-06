@@ -12,6 +12,8 @@ spring:
 
 logging:
   level:
+    org.springframework: WARN
+    org.springframework.test.context.cache: DEBUG
     org.hibernate.SQL: debug
     org.hibernate.orm.jdbc.bind: trace
     io.lettuce.core: WARN
