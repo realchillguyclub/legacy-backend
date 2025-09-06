@@ -8,6 +8,9 @@ import java.util.Map;
 
 public class NotionPayloadFormatter {
 
+    private NotionPayloadFormatter(){
+    }
+
     public static Map<String, Object> formatCreateUserCommentPayload(CreateUserCommentEvent event, String databaseId) {
         Map<String, Object> payload = new HashMap<>();
 
