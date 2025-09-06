@@ -42,11 +42,16 @@ public class DiscordMessageFormatter {
 			"- 오늘 생성된 할 일: %d개\n" +
 			"- 오늘 할 일 완료 비율(전체): %d/%d (%.2f%%)\n```";
 
+    private static final String FORMATTED_DATE_TIME = "yyyy-MM-dd HH:mm";
+
+    private DiscordMessageFormatter() {
+    }
+
 	public static String formatCreateUserCommentMessage(CreateUserCommentEvent event) {
         String contact = event.contactInfo() == null ? "없음" : event.contactInfo();
         return String.format(
                 CREATE_USER_COMMENT_MESSAGE_TEMPLATE,
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern(FORMATTED_DATE_TIME)),
                 event.userName(),
                 contact,
                 event.mobileType(),
@@ -58,7 +63,7 @@ public class DiscordMessageFormatter {
         return String.format(
                 CREATE_USER_MESSAGE_TEMPLATE,
                 event.userCount(),
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern(FORMATTED_DATE_TIME)),
                 event.userName(),
                 event.mobileType(),
                 event.socialType()
@@ -70,8 +75,8 @@ public class DiscordMessageFormatter {
 
         return String.format(
                 DELETE_USER_MESSAGE_TEMPLATE,
-                event.createDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                event.createDate().format(DateTimeFormatter.ofPattern(FORMATTED_DATE_TIME)),
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern(FORMATTED_DATE_TIME)),
                 event.userName(),
                 event.mobileType(),
                 event.socialType(),
