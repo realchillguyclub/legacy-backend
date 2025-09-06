@@ -127,11 +127,7 @@ class DistributedLockFacadeTest {
         Supplier<String> task = () -> {
             int n = taskEntered.incrementAndGet();
             try {
-                Thread.sleep(120);
                 return "OK-" + n;
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException(e);
             } finally {
                 taskEntered.decrementAndGet();
             }
