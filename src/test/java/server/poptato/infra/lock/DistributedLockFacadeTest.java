@@ -110,27 +110,29 @@ class DistributedLockFacadeTest {
         final String token = "token-concurrent";
 
         AtomicBoolean acquired = new AtomicBoolean(false);
-        when(lettuceLockRepository.lock(eq(key), any(Duration.class))).thenAnswer(inv -> {
-            return acquired.compareAndSet(false, true) ? token : null;
-        });
-        doAnswer(inv -> {
-            acquired.set(false);
-            return null;
-        }).when(lettuceLockRepository).unlock(key, token);
+        when(lettuceLockRepository.lock(eq(key), any(Duration.class))).thenAnswer(inv ->
+                acquired.compareAndSet(false, true) ? token : null
+        );
+        doAnswer(inv -> { acquired.set(false); return null; })
+                .when(lettuceLockRepository).unlock(eq(key), eq(token));
 
         // when
         final int threads = 24;
-        CountDownLatch start = new CountDownLatch(1);
         ExecutorService pool = Executors.newFixedThreadPool(threads);
 
-        AtomicInteger taskEntered = new AtomicInteger(0);
+        CountDownLatch start = new CountDownLatch(1);
+        CountDownLatch firstEntered = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+
         Supplier<String> task = () -> {
-            int n = taskEntered.incrementAndGet();
+            firstEntered.countDown();
             try {
-                return "OK-" + n;
-            } finally {
-                taskEntered.decrementAndGet();
+                release.await(2, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
             }
+            return "OK-LOCK-HOLDER";
         };
 
         List<Future<String>> futures = new ArrayList<>();
@@ -142,6 +144,10 @@ class DistributedLockFacadeTest {
         }
 
         start.countDown();
+
+        assertThat(firstEntered.await(1, TimeUnit.SECONDS))
+                .as("첫 번째 작업이 임계구역에 진입해야 합니다.")
+                .isTrue();
 
         int success = 0;
         int failed = 0;
@@ -156,14 +162,13 @@ class DistributedLockFacadeTest {
             }
         }
 
+        // 검증을 마쳤으니 임계구역 해제
+        release.countDown();
         pool.shutdownNow();
 
         // then
         assertThat(success).isEqualTo(1);
         assertThat(failed).isEqualTo(threads - 1);
-
         verify(lettuceLockRepository, times(1)).unlock(key, token);
     }
-
-
 }
