@@ -1,33 +1,37 @@
 package server.poptato.configuration;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-/**
- * 모든 레포지토리 테스트가 상속하는 베이스.
- * - Testcontainers MySQL을 클래스 단위로 1회만 띄움(static)
- * - @DataJpaTest 슬라이스 환경
- * - 내장 DB 대체 방지(실제 MySQL 사용)
- */
 @DataJpaTest
 @Testcontainers
 @ActiveProfiles("unittest")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public abstract class DatabaseTestConfig {
 
+    private static final Logger log = LoggerFactory.getLogger(DatabaseTestConfig.class);
+    private static final String MYSQL_IMAGE = "mysql:8.0.36";
+
     @Autowired
     protected TestEntityManager tem;
 
-    @DynamicPropertySource
-    static void mysqlProps(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", DatabaseTestContainer.INSTANCE::getJdbcUrl);
-        registry.add("spring.datasource.username", DatabaseTestContainer.INSTANCE::getUsername);
-        registry.add("spring.datasource.password", DatabaseTestContainer.INSTANCE::getPassword);
-    }
+
+    @Container
+    @ServiceConnection
+    private static final MySQLContainer<?> MYSQL_CONTAINER =
+            new MySQLContainer<>(MYSQL_IMAGE)
+                    .withCommand("--default-time-zone=+09:00")
+                    .withLogConsumer(new Slf4jLogConsumer(log))
+                    .withReuse(true);
+
 }
