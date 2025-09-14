@@ -617,14 +617,17 @@ public class TodoService {
 			));
 	}
 
-	private Map<LocalDate, Integer> fillCountsFromBacklogAndRoutine(Map<LocalDate, Integer> backlogCounts,
+	private Map<LocalDate, Integer> fillCountsFromBacklogAndRoutine(
+		Map<LocalDate, Integer> backlogCounts,
 		Map<String, Integer> routineCountByDay,
-		String year, int month) {
+		String year, int month
+	) {
+
 		Map<LocalDate, Integer> result = new HashMap<>();
 		LocalDate firstDay = LocalDate.of(Integer.parseInt(year), month, 1);
 		LocalDate lastDay = firstDay.withDayOfMonth(firstDay.lengthOfMonth());
 
-		for (LocalDate d = firstDay; !d.isAfter(lastDay); d = d.plusDays(1)) {
+		for (LocalDate d = LocalDate.now().plusDays(1); !d.isAfter(lastDay); d = d.plusDays(1)) {
 			int backlog = backlogCounts.getOrDefault(d, 0);
 			int routine = routineCountByDay.getOrDefault(
 				d.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN), 0
