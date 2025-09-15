@@ -3,7 +3,7 @@ package server.poptato.todo.application;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import server.poptato.external.firebase.application.FcmNotificationBatchService;
+import server.poptato.infra.firebase.application.FcmNotificationBatchService;
 import server.poptato.todo.api.request.EventCreateRequestDto;
 import server.poptato.todo.application.response.TodayListResponseDto;
 import server.poptato.todo.application.response.TodayResponseDto;

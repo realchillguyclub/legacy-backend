@@ -8,7 +8,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.RedisConnectionFailureException;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import server.poptato.auth.status.AuthErrorStatus;
 import server.poptato.global.dto.TokenPair;
@@ -36,7 +36,7 @@ public class JwtService {
     public static final int ACCESS_TOKEN_EXPIRATION_MINUTE = 20;
     public static final int REFRESH_TOKEN_EXPIRATION_DAYS = 14;
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final StringRedisTemplate stringRedisTemplate;
 
     /**
      * JWT 비밀키를 Base64로 인코딩합니다.
@@ -144,7 +144,7 @@ public class JwtService {
      */
     public void compareRefreshToken(final String userId, final String refreshToken) {
         try {
-            final String storedRefreshToken = redisTemplate.opsForValue().get(userId);
+            final String storedRefreshToken = stringRedisTemplate.opsForValue().get(userId);
 
             if (storedRefreshToken == null) {
                 throw new CustomException(AuthErrorStatus._EXPIRED_OR_NOT_FOUND_REFRESH_TOKEN_IN_REDIS);
@@ -165,7 +165,7 @@ public class JwtService {
      * @param refreshToken 저장할 리프레시 토큰
      */
     public void saveRefreshToken(final String userId, final String refreshToken) {
-        redisTemplate.opsForValue().set(userId, refreshToken, REFRESH_TOKEN_EXPIRATION_DAYS, TimeUnit.DAYS);
+        stringRedisTemplate.opsForValue().set(userId, refreshToken, REFRESH_TOKEN_EXPIRATION_DAYS, TimeUnit.DAYS);
     }
 
     /**
@@ -174,7 +174,7 @@ public class JwtService {
      * @param userId 유저 ID
      */
     public void deleteRefreshToken(final String userId) {
-        redisTemplate.delete(userId);
+        stringRedisTemplate.delete(userId);
     }
 
     /**
