@@ -56,7 +56,7 @@ class EmojiServiceTest extends ServiceTestConfig {
         );
         PageRequest pageRequest = PageRequest.of(0, 70);
         Page<Emoji> emojiPage = new PageImpl<>(emojis, pageRequest, 3);
-        when(emojiRepository.findAllEmojis(eq(pageRequest))).thenReturn(emojiPage);
+        when(emojiRepository.findAllEmojis(pageRequest)).thenReturn(emojiPage);
 
         MobileType mobileType = MobileType.IOS;
 
@@ -72,7 +72,7 @@ class EmojiServiceTest extends ServiceTestConfig {
             EmojiResponseDto emojiResponseDto = emojiService.getGroupedEmojis(mobileType, 0, 70);
 
             // then
-            verify(emojiRepository, times(1)).findAllEmojis(eq(pageRequest));
+            verify(emojiRepository, times(1)).findAllEmojis(pageRequest);
             assertThat(emojiResponseDto.totalPageCount()).isEqualTo(1);
 
             Map<String, List<EmojiDto>> grouped = emojiResponseDto.groupEmojis();
