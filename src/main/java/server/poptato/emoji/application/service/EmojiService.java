@@ -24,6 +24,7 @@ public class EmojiService {
     /**
      * 그룹화된 이모지 목록을 페이지네이션 형식으로 조회합니다.
      *
+     * @param mobileType 모바일 타입
      * @param page 요청 페이지 번호
      * @param size 한 페이지당 항목 수
      * @return 그룹화된 이모지 목록 및 페이징 정보를 포함한 응답 객체
@@ -42,6 +43,7 @@ public class EmojiService {
      * 이모지를 그룹 이름으로 그룹화합니다.
      *
      * @param emojis 그룹화할 이모지 목록
+     * @param mobileType 모바일 타입
      * @return 그룹화된 이모지 목록 (그룹 이름별로 묶음)
      */
     private Map<String, List<EmojiDto>> groupEmojisByGroupName(List<Emoji> emojis, MobileType mobileType) {
