@@ -20,9 +20,11 @@ import server.poptato.auth.application.service.AuthService;
 import server.poptato.auth.application.service.JwtService;
 import server.poptato.auth.status.AuthErrorStatus;
 import server.poptato.configuration.ServiceTestConfig;
-import server.poptato.external.oauth.SocialService;
-import server.poptato.external.oauth.SocialServiceProvider;
-import server.poptato.external.oauth.SocialUserInfo;
+import server.poptato.infra.lock.DistributedLockFacade;
+import server.poptato.infra.lock.status.LockErrorStatus;
+import server.poptato.infra.oauth.SocialService;
+import server.poptato.infra.oauth.SocialServiceProvider;
+import server.poptato.infra.oauth.SocialUserInfo;
 import server.poptato.global.dto.TokenPair;
 import server.poptato.global.exception.CustomException;
 import server.poptato.user.application.event.CreateUserEvent;
@@ -36,11 +38,13 @@ import server.poptato.user.status.MobileErrorStatus;
 import server.poptato.user.validator.UserValidator;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AuthServiceTest extends ServiceTestConfig {
 
@@ -60,6 +64,9 @@ class AuthServiceTest extends ServiceTestConfig {
     MobileRepository mobileRepository;
 
     @Mock
+    DistributedLockFacade distributedLockFacade;
+
+    @Mock
     UserValidator userValidator;
 
     @Mock
@@ -70,7 +77,7 @@ class AuthServiceTest extends ServiceTestConfig {
 
     @ParameterizedTest
     @MethodSource("소셜_종류별")
-    @DisplayName("[SCN-AUTH-001][TC-LOGIN-001] 신규 유저 소셜 로그인 시, 유저가 생성되어 저장되고 응답에 isNew=true 가 포함된다")
+    @DisplayName("[SCN-SVC-AUTH-001][TC-SVC-LOGIN-001] 신규 유저 소셜 로그인 시, 유저가 생성되어 저장되고 응답에 isNew=true 가 포함된다")
     void login_새로운_유저_로그인_성공(LoginRequestDto requestDto, SocialUserInfo userInfo) {
         //given
         Long userId = 1L;
@@ -78,10 +85,18 @@ class AuthServiceTest extends ServiceTestConfig {
         // 1. 소셜 서비스 모킹
         Mockito.when(socialServiceProvider.getSocialService(requestDto.socialType())).thenReturn(socialService);
         Mockito.when(socialService.getUserData(requestDto)).thenReturn(userInfo);
-        // 2. 기존 유저 아님
+
+        // 2. 분산 락 모킹
+        Mockito.when(distributedLockFacade.executeWithLock(eq(userInfo.socialId()), any()))
+            .thenAnswer(invocation -> {
+                Supplier<LoginResponseDto> supplier = invocation.getArgument(1);
+                return supplier.get();
+            });
+
+        // 3. 기존 유저 아님
         Mockito.when(userRepository.findBySocialId(userInfo.socialId())).thenReturn(Optional.empty());
 
-        // 3. 새로운 유저 저장
+        // 4. 새로운 유저 저장
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         Mockito.when(userRepository.save(any(User.class)))
                 .thenAnswer(invocation -> {
@@ -90,16 +105,16 @@ class AuthServiceTest extends ServiceTestConfig {
                     return user;
                 });
 
-        // 4. 유저 수 조회
+        // 5. 유저 수 조회
         Mockito.when(userRepository.count()).thenReturn(1L);
 
-        // 5. FCM 저장 관련
+        // 6. FCM 저장 관련
         Mockito.when(mobileRepository.findByClientId(requestDto.clientId())).thenReturn(Optional.empty());
 
-        // 6. 이벤트 발행
+        // 7. 이벤트 발행
         Mockito.doNothing().when(eventPublisher).publishEvent(any(CreateUserEvent.class));
 
-        // 7. 토큰 생성
+        // 8. 토큰 생성
         TokenPair tokenPair = new TokenPair("access-token", "refresh-token");
         Mockito.when(jwtService.generateTokenPair(String.valueOf(userId))).thenReturn(tokenPair);
 
@@ -139,13 +154,20 @@ class AuthServiceTest extends ServiceTestConfig {
     }
 
     @Test
-    @DisplayName("[SCN-AUTH-001][TC-LOGIN-002] 신규 유저 애플 로그인 시, name이 null 인 경우 AuthErrorStatus._HAS_NOT_NEW_APPLE_USER_NAME 예외가 발생한다")
+    @DisplayName("[SCN-SVC-AUTH-001][TC-SVC-LOGIN-002] 신규 유저 애플 로그인 시, name이 null 인 경우 AuthErrorStatus._HAS_NOT_NEW_APPLE_USER_NAME 예외가 발생한다")
     void login_새로운_APPLE_유저_로그인_실패() {
         //given
         LoginRequestDto requestDto = new LoginRequestDto(SocialType.APPLE, "access-token", MobileType.IOS, "client-id", null, "test@test.com");
         SocialUserInfo userInfo = new SocialUserInfo("social-id", "테스터", "test@test.com", "https://image.com");
         Mockito.when(socialServiceProvider.getSocialService(requestDto.socialType())).thenReturn(socialService);
         Mockito.when(socialService.getUserData(requestDto)).thenReturn(userInfo);
+
+        Mockito.when(distributedLockFacade.executeWithLock(eq(userInfo.socialId()), any()))
+            .thenAnswer(invocation -> {
+                Supplier<LoginResponseDto> supplier = invocation.getArgument(1);
+                return supplier.get();
+            });
+
         Mockito.when(userRepository.findBySocialId(userInfo.socialId())).thenReturn(Optional.empty());
 
         // when
@@ -156,7 +178,7 @@ class AuthServiceTest extends ServiceTestConfig {
     }
 
     @Test
-    @DisplayName("[SCN-AUTH-001][TC-LOGIN-003] 기존 유저 소셜 로그인 시, 유저의 정보(이미지url, fcm토큰)가 업데이트 되고 응답에 isNew=false가 포함된다")
+    @DisplayName("[SCN-SVC-AUTH-001][TC-SVC-LOGIN-003] 기존 유저 소셜 로그인 시, 유저의 정보(이미지url, fcm토큰)가 업데이트 되고 응답에 isNew=false가 포함된다")
     void login_존재하는_유저_로그인_성공() {
         //given
         LoginRequestDto requestDto = new LoginRequestDto(SocialType.KAKAO, "access-token", MobileType.ANDROID, "client-id", null, null);
@@ -168,6 +190,13 @@ class AuthServiceTest extends ServiceTestConfig {
 
         Mockito.when(socialServiceProvider.getSocialService(requestDto.socialType())).thenReturn(socialService);
         Mockito.when(socialService.getUserData(requestDto)).thenReturn(userInfo);
+
+        Mockito.when(distributedLockFacade.executeWithLock(eq(userInfo.socialId()), any()))
+            .thenAnswer(invocation -> {
+                Supplier<LoginResponseDto> supplier = invocation.getArgument(1);
+                return supplier.get();
+            });
+
         Mockito.when(userRepository.findBySocialId(userInfo.socialId())).thenReturn(Optional.of(existingUser));
         Mockito.when(mobileRepository.findByClientId("client-id")).thenReturn(Optional.of(mock(Mobile.class))); // 중복
         Mockito.when(jwtService.generateTokenPair(String.valueOf(userId)))
@@ -189,7 +218,28 @@ class AuthServiceTest extends ServiceTestConfig {
     }
 
     @Test
-    @DisplayName("[SCN-AUTH-002][TC-LOGOUT-001] 로그아웃시 정상적으로 로그아웃된다")
+    @DisplayName("[SCN-SVC-AUTH-001][TC-SVC-LOGIN-004] 로그인 시 락 획득에 실패하면 AuthErrorStatus._SIGNUP_IN_PROGRESS 예외가 발생한다")
+    void login_락_획득_실패_시_SIGNUP_IN_PROGRESS_예외_발생() {
+        // given
+        LoginRequestDto requestDto = new LoginRequestDto(SocialType.KAKAO, "access-token", MobileType.ANDROID, "client-id", null, null);
+        SocialUserInfo userInfo = new SocialUserInfo("social-id", "테스터", "test@test.com", "https://image.com");
+
+        when(socialServiceProvider.getSocialService(requestDto.socialType())).thenReturn(socialService);
+        when(socialService.getUserData(requestDto)).thenReturn(userInfo);
+
+        // 분산 락 획득 실패 모킹
+        when(distributedLockFacade.executeWithLock(eq(userInfo.socialId()), any()))
+                .thenThrow(new CustomException(LockErrorStatus._LOCK_ACQUISITION_FAILED));
+
+        // when
+        CustomException exception = assertThrows(CustomException.class, () -> authService.login(requestDto));
+
+        // then
+        Assertions.assertThat(exception.getErrorCode()).isEqualTo(AuthErrorStatus._SIGNUP_IN_PROGRESS);
+    }
+
+    @Test
+    @DisplayName("[SCN-SVC-AUTH-002][TC-SVC-LOGOUT-001] 로그아웃시 정상적으로 로그아웃된다")
     void logout_로그아웃_성공() {
         //given
         Long userId = 1L;
@@ -209,7 +259,7 @@ class AuthServiceTest extends ServiceTestConfig {
     }
 
     @Test
-    @DisplayName("[SCN-AUTH-003][TC-JWT-001] 유효한 리프레시 토큰을 기반으로 새로운 토큰 페어를 생성하여 반환한다")
+    @DisplayName("[SCN-SVC-AUTH-003][TC-SVC-JWT-001] 유효한 리프레시 토큰을 기반으로 새로운 토큰 페어를 생성하여 반환한다")
     void refresh_jwt_토큰_갱신() {
         //given
         Long userId = 1L;
@@ -241,7 +291,7 @@ class AuthServiceTest extends ServiceTestConfig {
     }
 
     @Test
-    @DisplayName("[SCN-AUTH-004][TC-FCM-001] 존재하는 fcm토큰일 경우 접속한 날짜로 수정일을 변경한다")
+    @DisplayName("[SCN-SVC-AUTH-004][TC-SVC-FCM-001] 존재하는 fcm토큰일 경우 접속한 날짜로 수정일을 변경한다")
     void refreshFCMToken_존재하는_fcm토큰_정상_실행(){
         // given
         String clientId = "client-id";
@@ -258,7 +308,7 @@ class AuthServiceTest extends ServiceTestConfig {
     }
 
     @Test
-    @DisplayName("[SCN-AUTH-004][TC-FCM-002] 존재하지 않는 fcm토큰일 경우 예외가 발생한다")
+    @DisplayName("[SCN-SVC-AUTH-004][TC-SVC-FCM-002] 존재하지 않는 fcm토큰일 경우 예외가 발생한다")
     void refreshFCMToken_존재하지_않는_fcm토큰_예외발생(){
         // given
         String clientId = "client-id";

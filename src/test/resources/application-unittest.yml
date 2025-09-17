@@ -1,2 +1,20 @@
 server:
-  port: 8080
+  port: 1234
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+  datasource: { }
+
+logging:
+  level:
+    org.springframework: WARN
+    org.springframework.test.context.cache: DEBUG
+    org.hibernate.SQL: debug
+    org.hibernate.orm.jdbc.bind: trace
+    io.lettuce.core: WARN
+    io.lettuce.core.protocol.ConnectionWatchdog: ERROR

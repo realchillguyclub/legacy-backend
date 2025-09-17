@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@EnableFeignClients(basePackages = "server.poptato.external")
+@EnableFeignClients(basePackages = "server.poptato.infra")
 public class FeignConfig {
 
     @Bean
