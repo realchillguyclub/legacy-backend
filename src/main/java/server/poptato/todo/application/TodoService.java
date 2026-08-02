@@ -383,10 +383,13 @@ public class TodoService {
             findTodo.incompleteTodayTodo(minTodayOrder);
 
             // 기존 완료 기록이 존재하면 삭제, 없으면 예외 발생
-            CompletedDateTime completedDateTime = completedDateTimeRepository
-                    .findByTodoIdAndDate(findTodo.getId(), findTodo.getTodayDate())
-                    .orElseThrow(() -> new CustomException(TodoErrorStatus._COMPLETED_DATETIME_NOT_EXIST));
-            completedDateTimeRepository.delete(completedDateTime);
+            // 동시 요청 등으로 같은 날짜에 완료 기록이 다건 쌓일 수 있어, 잔여 기록이 히스토리에 남지 않도록 전부 삭제한다
+            List<CompletedDateTime> completedDateTimes = completedDateTimeRepository
+                    .findAllByTodoIdAndDate(findTodo.getId(), findTodo.getTodayDate());
+            if (completedDateTimes.isEmpty()) {
+                throw new CustomException(TodoErrorStatus._COMPLETED_DATETIME_NOT_EXIST);
+            }
+            completedDateTimes.forEach(completedDateTimeRepository::delete);
         }
     }
 
