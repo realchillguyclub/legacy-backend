@@ -9,17 +9,17 @@ import server.poptato.todo.domain.repository.CompletedDateTimeRepository;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 public interface JpaCompletedDateTimeRepository extends CompletedDateTimeRepository, JpaRepository<CompletedDateTime, Long> {
 
     @Query("""
     SELECT c
-    FROM CompletedDateTime c 
+    FROM CompletedDateTime c
     WHERE c.todoId = :todoId
       AND FUNCTION('DATE', c.dateTime) = :todayDate
+    ORDER BY c.dateTime DESC
     """)
-    Optional<CompletedDateTime> findByTodoIdAndDate(
+    List<CompletedDateTime> findAllByTodoIdAndDate(
             @Param("todoId") Long todoId,
             @Param("todayDate") LocalDate todayDate
     );

@@ -8,9 +8,14 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import server.poptato.configuration.DatabaseTestConfig;
 import server.poptato.configuration.MySqlDataJpaTest;
+import server.poptato.todo.domain.entity.CompletedDateTime;
 import server.poptato.todo.domain.entity.Todo;
 import server.poptato.todo.domain.value.TodayStatus;
 import server.poptato.todo.domain.value.Type;
@@ -34,6 +39,15 @@ public class JpaTodoRepositoryTest extends DatabaseTestConfig {
         tem.flush();
         tem.clear();
         return todo;
+    }
+
+    private void createCompletedDateTime(Long todoId, LocalDateTime dateTime) {
+        tem.persist(CompletedDateTime.builder()
+                .todoId(todoId)
+                .dateTime(dateTime)
+                .build());
+        tem.flush();
+        tem.clear();
     }
 
     private Boolean getIsDeleted(Long id) {
@@ -199,6 +213,52 @@ public class JpaTodoRepositoryTest extends DatabaseTestConfig {
             // then - active-todo만 조회됨
             assertThat(page.getContent()).hasSize(1);
             assertThat(page.getContent().get(0).getContent()).isEqualTo("active-todo");
+        }
+    }
+
+    @Nested
+    @DisplayName("[SCN-REP-TODO-002] 히스토리 조회 테스트")
+    @TestMethodOrder(MethodOrderer.DisplayName.class)
+    class FindHistoriesTests {
+
+        @Test
+        @DisplayName("[TC-HISTORY-001] 같은 날짜에 완료 기록이 여러 건이어도 히스토리 조회에 성공한다")
+        void findHistories_duplicatedCompletedDateTime_returnsTodoOnce() {
+            // given - 하나의 할 일에 같은 날짜의 완료 기록이 3건 존재
+            Long userId = 300L;
+            LocalDate completedDate = LocalDate.of(2025, 9, 30);
+            Todo todo = createTodo(userId, null, "중복 완료 할 일");
+            createCompletedDateTime(todo.getId(), completedDate.atTime(2, 18, 56));
+            createCompletedDateTime(todo.getId(), completedDate.atTime(10, 0, 0));
+            createCompletedDateTime(todo.getId(), completedDate.atTime(18, 30, 0));
+
+            // when
+            var page = jpaTodoRepository.findHistories(userId, completedDate, PageRequest.of(0, 10));
+
+            // then - 다건이어도 예외 없이 할 일이 한 번만 조회됨
+            assertThat(page.getContent()).hasSize(1);
+            assertThat(page.getContent().get(0).getId()).isEqualTo(todo.getId());
+        }
+
+        @Test
+        @DisplayName("[TC-HISTORY-002] 히스토리는 그날의 첫 완료 시각 오름차순으로 정렬된다")
+        void findHistories_multipleTodos_sortedByFirstCompletedTime() {
+            // given - 늦게 완료된 할 일이 중복 기록으로 이른 시각도 함께 가지도록 구성
+            Long userId = 301L;
+            LocalDate completedDate = LocalDate.of(2025, 10, 2);
+            Todo early = createTodo(userId, null, "먼저 완료");
+            Todo late = createTodo(userId, null, "나중 완료");
+            createCompletedDateTime(early.getId(), completedDate.atTime(9, 0, 0));
+            createCompletedDateTime(late.getId(), completedDate.atTime(11, 0, 0));
+            createCompletedDateTime(late.getId(), completedDate.atTime(23, 0, 0));
+
+            // when
+            var page = jpaTodoRepository.findHistories(userId, completedDate, PageRequest.of(0, 10));
+
+            // then
+            assertThat(page.getContent()).hasSize(2);
+            assertThat(page.getContent().get(0).getId()).isEqualTo(early.getId());
+            assertThat(page.getContent().get(1).getId()).isEqualTo(late.getId());
         }
     }
 }
