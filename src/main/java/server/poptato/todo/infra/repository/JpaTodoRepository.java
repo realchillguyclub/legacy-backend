@@ -191,6 +191,13 @@ public interface JpaTodoRepository extends JpaRepository<Todo, Long> {
             Pageable pageable
     );
 
+    /**
+     * 특정 날짜에 완료된 할 일을 완료 시각 오름차순으로 조회합니다.
+     * <p>
+     * 같은 할 일이 하루에 여러 번 완료될 수 있어 CompletedDateTime이 다건 존재할 수 있으므로,
+     * ORDER BY 절의 상관 서브쿼리는 반드시 MIN으로 단일 행을 보장해야 합니다.
+     * (스칼라 서브쿼리로 두면 다건일 때 MySQL 1242 "Subquery returns more than 1 row"로 실패)
+     */
     @Query("""
         SELECT t
         FROM Todo t
@@ -201,7 +208,7 @@ public interface JpaTodoRepository extends JpaRepository<Todo, Long> {
         )
           AND t.userId = :userId
         ORDER BY (
-            SELECT c.dateTime
+            SELECT MIN(c.dateTime)
             FROM CompletedDateTime c
             WHERE c.todoId = t.id
               AND DATE(c.dateTime) = :localDate
