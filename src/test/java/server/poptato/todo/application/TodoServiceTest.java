@@ -614,8 +614,8 @@ class TodoServiceTest extends ServiceTestConfig {
             doNothing().when(userValidator).checkIsExistUser(userId);
             when(todoRepository.findById(todoId)).thenReturn(Optional.of(todo));
             when(todoRepository.findMinTodayOrderByUserIdOrZero(userId)).thenReturn(1);
-            when(completedDateTimeRepository.findByTodoIdAndDate(todoId, todayDate))
-                    .thenReturn(Optional.of(completedDateTime));
+            when(completedDateTimeRepository.findAllByTodoIdAndDate(todoId, todayDate))
+                    .thenReturn(List.of(completedDateTime));
 
             // when
             todoService.updateIsCompleted(userId, todoId);
@@ -623,6 +623,37 @@ class TodoServiceTest extends ServiceTestConfig {
             // then
             verify(todo).incompleteTodayTodo(1);
             verify(completedDateTimeRepository).delete(completedDateTime);
+        }
+
+        @Test
+        @DisplayName("[TC-CMP-003] 완료 -> 미완료 변경 시 같은 날짜의 완료 기록이 다건이면 모두 삭제된다")
+        void updateIsCompleted_duplicatedCompletedDateTime_deletesAll() {
+            // given
+            Long userId = 1L;
+            Long todoId = 100L;
+            LocalDate todayDate = LocalDate.now();
+
+            Todo todo = mock(Todo.class);
+            when(todo.getUserId()).thenReturn(userId);
+            when(todo.getId()).thenReturn(todoId);
+            when(todo.getTodayStatus()).thenReturn(TodayStatus.COMPLETED);
+            when(todo.getTodayDate()).thenReturn(todayDate);
+
+            CompletedDateTime first = mock(CompletedDateTime.class);
+            CompletedDateTime second = mock(CompletedDateTime.class);
+
+            doNothing().when(userValidator).checkIsExistUser(userId);
+            when(todoRepository.findById(todoId)).thenReturn(Optional.of(todo));
+            when(todoRepository.findMinTodayOrderByUserIdOrZero(userId)).thenReturn(1);
+            when(completedDateTimeRepository.findAllByTodoIdAndDate(todoId, todayDate))
+                    .thenReturn(List.of(first, second));
+
+            // when
+            todoService.updateIsCompleted(userId, todoId);
+
+            // then - 잔여 기록이 히스토리에 남지 않도록 전부 삭제됨
+            verify(completedDateTimeRepository).delete(first);
+            verify(completedDateTimeRepository).delete(second);
         }
     }
 

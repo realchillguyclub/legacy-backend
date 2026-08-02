@@ -17,7 +17,6 @@ public interface JpaCompletedDateTimeRepository extends CompletedDateTimeReposit
     FROM CompletedDateTime c
     WHERE c.todoId = :todoId
       AND FUNCTION('DATE', c.dateTime) = :todayDate
-    ORDER BY c.dateTime DESC
     """)
     List<CompletedDateTime> findAllByTodoIdAndDate(
             @Param("todoId") Long todoId,

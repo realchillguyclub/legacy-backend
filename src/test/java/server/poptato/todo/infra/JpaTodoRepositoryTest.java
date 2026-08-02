@@ -243,22 +243,23 @@ public class JpaTodoRepositoryTest extends DatabaseTestConfig {
         @Test
         @DisplayName("[TC-HISTORY-002] 히스토리는 그날의 첫 완료 시각 오름차순으로 정렬된다")
         void findHistories_multipleTodos_sortedByFirstCompletedTime() {
-            // given - 늦게 완료된 할 일이 중복 기록으로 이른 시각도 함께 가지도록 구성
+            // given - 중복 기록을 가진 할 일이 단건 할 일의 완료 시각 앞뒤에 걸치도록 구성
+            //         (첫 완료 기준이면 duplicated가 먼저, 마지막 완료 기준이면 single이 먼저 정렬됨)
             Long userId = 301L;
             LocalDate completedDate = LocalDate.of(2025, 10, 2);
-            Todo early = createTodo(userId, null, "먼저 완료");
-            Todo late = createTodo(userId, null, "나중 완료");
-            createCompletedDateTime(early.getId(), completedDate.atTime(9, 0, 0));
-            createCompletedDateTime(late.getId(), completedDate.atTime(11, 0, 0));
-            createCompletedDateTime(late.getId(), completedDate.atTime(23, 0, 0));
+            Todo duplicated = createTodo(userId, null, "중복 기록 할 일");
+            Todo single = createTodo(userId, null, "단건 기록 할 일");
+            createCompletedDateTime(duplicated.getId(), completedDate.atTime(8, 0, 0));
+            createCompletedDateTime(duplicated.getId(), completedDate.atTime(20, 0, 0));
+            createCompletedDateTime(single.getId(), completedDate.atTime(12, 0, 0));
 
             // when
             var page = jpaTodoRepository.findHistories(userId, completedDate, PageRequest.of(0, 10));
 
-            // then
+            // then - 마지막 완료 시각(20:00)이 아니라 첫 완료 시각(08:00) 기준으로 정렬됨
             assertThat(page.getContent()).hasSize(2);
-            assertThat(page.getContent().get(0).getId()).isEqualTo(early.getId());
-            assertThat(page.getContent().get(1).getId()).isEqualTo(late.getId());
+            assertThat(page.getContent().get(0).getId()).isEqualTo(duplicated.getId());
+            assertThat(page.getContent().get(1).getId()).isEqualTo(single.getId());
         }
     }
 }

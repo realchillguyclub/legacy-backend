@@ -6,21 +6,16 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 public interface CompletedDateTimeRepository {
 
-    List<CompletedDateTime> findAllByTodoIdAndDate(Long todoId, LocalDate todayDate);
-
     /**
-     * 특정 할 일의 해당 날짜 완료 기록 중 가장 최근 1건을 조회합니다.
+     * 특정 할 일의 해당 날짜 완료 기록을 모두 조회합니다.
      * <p>
-     * 하루에 여러 번 완료되어 기록이 다건 존재할 수 있으므로 단건 조회로 두면 예외가 발생합니다.
-     * 미완료 토글 시 가장 마지막 완료 기록부터 제거하도록 최신 1건을 반환합니다.
+     * 동시 요청 등으로 같은 날짜에 기록이 다건 쌓일 수 있어 단건이 아닌 목록으로 반환합니다.
+     * todoId만으로 조회하므로 호출 전에 할 일의 소유권 검증이 선행되어야 합니다.
      */
-    default Optional<CompletedDateTime> findByTodoIdAndDate(Long todoId, LocalDate todayDate) {
-        return findAllByTodoIdAndDate(todoId, todayDate).stream().findFirst();
-    }
+    List<CompletedDateTime> findAllByTodoIdAndDate(Long todoId, LocalDate todayDate);
 
     void delete(CompletedDateTime completedDateTime);
 
